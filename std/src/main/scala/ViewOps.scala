@@ -17,6 +17,22 @@ trait DirectViewOps[A, Repr] extends Any {
   def sortByShow(implicit z: Show[A]): MapTo              = sortBy(_.to_s)
   def sortBy[B](f: A => B)(implicit ord: Order[B]): MapTo = sorted(orderBy[A](f))
   def sortDistinct(implicit ord: Order[A]): MapTo         = sorted distinct ord.toHashEq
+
+  def shuffle: View[A] = {
+    val buf = xs.indices.toArray
+    def swap(i1: Int, i2: Int) {
+      val tmp = buf(i1)
+      buf(i1) = buf(i2)
+      buf(i2) = tmp
+    }
+    var n = buf.length
+    while (n > 1) {
+      val k = randomNat(n)
+      swap(n - 1, k)
+      n -= 1
+    }
+    buf map (n => xs(n))
+  }
 }
 
 trait ApiViewOps[+A] extends Any {
