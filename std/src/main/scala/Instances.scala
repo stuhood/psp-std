@@ -32,6 +32,13 @@ trait OrderInstances {
   implicit def shortOrder: Order[Short]     = Order.fromInt[Short](_ - _)
   implicit def stringOrder: Order[String]   = Order.fromLong[String](_ compareTo _)
 
+  // Some unfortunate rocket dentistry necessary here.
+  // This doesn't work because scala comes up with "Any" due to the fbound.
+  // implicit def enumOrder[A <: jEnum[A]]: Order[A] = Order.fromInt[A](_.ordinal - _.ordinal)
+  //
+  // This one doesn't work if it's A <:< jEnum[A], but jEnum[_] is just enough to get what we need.
+  implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A] = Order.fromInt[A](_.ordinal - _.ordinal)
+
   implicit def indexOrder: Order[Index]              = orderBy[Index](_.indexValue)
   implicit def nthOrder: Order[Nth]                  = orderBy[Nth](_.nthValue)
   implicit def offsetOrder: Order[Offset]            = orderBy[Offset](_.offsetValue)
