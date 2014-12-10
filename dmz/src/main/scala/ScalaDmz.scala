@@ -31,6 +31,8 @@ object Console {
   def err = scala.Console.err
   def in  = scala.Console.in
 
+  def putErr(msg: Any): Unit  = try err print msg finally out.flush()
+  def putOut(msg: Any): Unit  = try out print msg finally out.flush()
   def echoErr(msg: Any): Unit = err println msg
   def echoOut(msg: Any): Unit = out println msg
 }

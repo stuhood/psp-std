@@ -72,6 +72,8 @@ final class CharOps(val ch: Char) extends AnyVal {
   def isLower                     = jl.Character isLowerCase ch
   def isWhitespace                = jl.Character isWhitespace ch
   def isControl                   = jl.Character isISOControl ch
+  def isLetter                    = jl.Character isLetter ch
+  def getType                     = jl.Character getType ch
   def to(end: Char): Direct[Char] = ch.toInt to end.toInt map (_.toChar)
 }
 

@@ -47,6 +47,18 @@ final class PspStringOps(val self: String) extends AnyVal with ops.DocStringOps 
   def nonEmpty: Boolean      = onull.length > 0
   def capitalize: String     = mapNonEmpty(x => x splitAt 1.index match { case Split(l, r) => l.force.toUpperCase ~ r.force })
 
+  // Ugh.
+  def toCamelCase: String =
+    mapNonEmpty(x => x splitAt 1.index match { case Split(l, r) =>
+      l.force.toUpperCase ~ {
+        val m = java.util.regex.Pattern compile "_([a-z])" matcher r.force
+        val sb = new java.lang.StringBuffer
+        while (m.find()) m.appendReplacement(sb, m group 1 toUpperCase)
+        m appendTail sb
+        sb.toString
+      }
+    })
+
   def ~ (that: String): String    = self + that
   def * (n: Int): String          = this * n.size
   def * (n: Precise): String  = n timesConst self mkString ""

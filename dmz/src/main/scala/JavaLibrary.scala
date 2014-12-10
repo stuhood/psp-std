@@ -38,6 +38,7 @@ trait JavaLibrary extends Any {
   type LinkageError                  = java.lang.LinkageError
   type NoClassDefFoundError          = java.lang.NoClassDefFoundError
   type NoSuchElementException        = java.util.NoSuchElementException
+  type NoSuchFileException           = java.nio.file.NoSuchFileException
   type RuntimeException              = java.lang.RuntimeException
   type Throwable                     = java.lang.Throwable
   type UnsupportedOperationException = java.lang.UnsupportedOperationException

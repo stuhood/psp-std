@@ -52,7 +52,7 @@ trait JavaPathMethods extends Any {
   def bufferedReader(implicit codec: Codec): BufferedReader                       = Files.newBufferedReader(path, codec.charSet)
   def bufferedWriter(options: OpenOption*)(implicit codec: Codec): BufferedWriter = Files.newBufferedWriter(path, codec.charSet, options: _*)
   def ensureDir(): Path                                                           = if (isDir) path else Files createDirectories path
-  def ensureFile(): Path                                                          = if (isFile) path else Files createFile path
+  def ensureFile(): Path                                                          = if (realPath.isFile) path else Files createFile path
   def inputStream(options: OpenOption*): InputStream                              = Files.newInputStream(path, options: _*)
   def outputStream(options: OpenOption*): OutputStream                            = Files.newOutputStream(path, options: _*)
   def size: Long                                                                  = Files size path
@@ -82,7 +82,7 @@ trait JavaPathMethods extends Any {
   def deepFiles: Paths                       = deepEntries() filterNot (_.isDir)
   def deepPackageNames: Strings              = deepClasses.map(_.packageName).sortDistinct
   def entries(): Paths                       = containerEntries(_ => true)
-  def files: Paths                           = filterChildren(pathFs, path, _.toFile.isFile)
+  def files: Paths                           = filterChildren(pathFs, path, x => !x.toFile.isDir)
   def filterEntries(p: PathPredicate): Paths = containerEntries(p)
   def subdirectories: Paths                  = filterChildren(pathFs, path, _.toFile.isDirectory)
   def lines(codec: Codec): Strings           = Files.readAllLines(path, codec.charSet).m
@@ -124,7 +124,7 @@ trait JavaPathMethods extends Any {
   private def containerEntries(p: PathPredicate): Paths = (
     if (path.isReadable && isDir)
       filterChildren(pathFs, path, p)
-    else if (path.isFile && isJarOrZip)
+    else if (!path.isDir && isJarOrZip)
       Try(getOrCreateFs(jarUri("")) |> (fs => filterChildren(fs, fs.provider getPath jarUri("!/"), p))) | exView()
     else
       exView()

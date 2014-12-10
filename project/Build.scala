@@ -76,15 +76,15 @@ object Build extends sbt.Build {
           watchSources <++= sources in Test in testOnly
   )
 
-  lazy val api    = project setup "api for psp's non-standard standard library"
-  lazy val dmz    = project setup "dmz for psp's non-standard standard library" dependsOn api
+  lazy val api    = project setup "psp's non-standard api"
+  lazy val dmz    = project setup "psp's non-standard dmz" dependsOn api
   lazy val std    = project setup "psp's non-standard standard library" dependsOn dmz also guava
-  lazy val pio    = project setup "io library for pps-std" dependsOn std
-  lazy val jvm    = project.usesCompiler.usesParsers setup "jvm library for psp's non-standard standard library" dependsOn pio
-  lazy val dev    = project setup "psp's even less stable code" dependsOn std
-  lazy val scalac = project.usesCompiler setup "psp's compiler-requiring code" dependsOn pio
+  lazy val pio    = project setup "psp's non-standard io library" dependsOn std
+  lazy val jvm    = project.usesCompiler.usesParsers setup "psp's non-standard jvm code" dependsOn pio
+  lazy val dev    = project setup "psp's non-standard unstable code" dependsOn std
+  lazy val scalac = project.usesCompiler setup "psp's non-standard scalac-requiring code" dependsOn pio
 
-  lazy val publishOnly = project.helper.noSources aggregate (api, dmz, std)
+  lazy val publishOnly = project.helper.noSources aggregate (api, dmz, std, pio)
   lazy val compileOnly = project.helper.noSources aggregate (projectRefs: _*)
   lazy val testOnly    = project.helper aggregate (projectRefs: _*) settings (
           testOptions in Test  +=  Tests.Argument(TestFrameworks.ScalaCheck, "-verbosity", "1"),
