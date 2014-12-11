@@ -85,6 +85,7 @@ trait JavaLibrary extends Any {
   type jArrayList[A]                           = java.util.ArrayList[A]
   type jArray[A]                               = Array[A with Object]
   type jAttributeName                          = java.util.jar.Attributes.Name
+  type jCallable[A]                            = java.util.concurrent.Callable[_ <: A]
   type jClass                                  = java.lang.Class[_]
   type jClassLoader                            = java.lang.ClassLoader
   type jCollection[A]                          = java.util.Collection[A]
@@ -97,6 +98,7 @@ trait JavaLibrary extends Any {
   type jFile                                   = java.io.File
   type jFilePermissions                        = jSet[PosixFilePermission]
   type jFileTime                               = jnfa.FileTime
+  type jFuture[A]                              = java.util.concurrent.Future[_ <: A]
   type jGenericArrayType                       = java.lang.reflect.GenericArrayType
   type jGenericDeclaration                     = java.lang.reflect.GenericDeclaration
   type jHashMap[K, V]                          = java.util.HashMap[K, V]

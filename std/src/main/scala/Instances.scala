@@ -23,14 +23,24 @@ trait ReadInstances {
   implicit def uriRead: Read[jUri]          = Read(jUri)
 }
 
-trait OrderInstances {
-  implicit def booleanOrder: Order[Boolean] = orderBy[Boolean](x => if (x) 1 else 0)
-  implicit def byteOrder: Order[Byte]       = Order.fromInt[Byte](_ - _)
-  implicit def charOrder: Order[Char]       = Order.fromInt[Char](_ - _)
-  implicit def intOrder: Order[Int]         = Order.fromInt[Int](_ - _)
-  implicit def longOrder: Order[Long]       = Order.fromLong[Long](_ - _)
-  implicit def shortOrder: Order[Short]     = Order.fromInt[Short](_ - _)
-  implicit def stringOrder: Order[String]   = Order.fromLong[String](_ compareTo _)
+trait OrderInstancesLow {
+  // If this is written in the obvious way, i.e.
+  //
+  //   implicit def comparableOrder[A <: Comparable[A]] : Order[A]
+  //
+  // Then it isn't found for infix operations on Comparables. We also can't call
+  // Order.natural[A]() because it has that bound, despite the implicit witness.
+  implicit def comparableOrder[A](implicit ev: A <:< Comparable[A]): Order[A] = Order.fromInt[A](_ compareTo _)
+}
+
+trait OrderInstances extends OrderInstancesLow {
+  implicit def booleanOrder: Order[Boolean]   = orderBy[Boolean](x => if (x) 1 else 0)
+  implicit def byteOrder: Order[Byte]         = Order.fromInt[Byte](_ - _)
+  implicit def charOrder: Order[Char]         = Order.fromInt[Char](_ - _)
+  implicit def intOrder: Order[Int]           = Order.fromInt[Int](_ - _)
+  implicit def longOrder: Order[Long]         = Order.fromLong[Long](_ - _)
+  implicit def shortOrder: Order[Short]       = Order.fromInt[Short](_ - _)
+  implicit def stringOrder: Order[String]     = Order.fromLong[String](_ compareTo _)
 
   // Some unfortunate rocket dentistry necessary here.
   // This doesn't work because scala comes up with "Any" due to the fbound.
@@ -63,7 +73,7 @@ trait ZeroInstances {
   implicit def zeroByte: Zero[Byte]             = Zero(0.toByte)
   implicit def zeroChar: Zero[Char]             = Zero(0.toChar)
   implicit def zeroDouble: Zero[Double]         = Zero(0d)
-  implicit def zeroFileTime: Zero[FileTime]     = Zero(NoFileTime)
+  implicit def zeroFileTime: Zero[FileTime]     = Zero(FileTime.empty)
   implicit def zeroFloat: Zero[Float]           = Zero(0f)
   implicit def zeroInt: Zero[Int]               = Zero(0)
   implicit def zeroLong: Zero[Long]             = Zero(0L)
@@ -71,19 +81,20 @@ trait ZeroInstances {
   implicit def zeroShow[A]: Zero[Show[A]]       = Zero(Show.natural[A]())
   implicit def zeroUnit: Zero[Unit]             = Zero(())
 
-  implicit def emptyDoc: Empty[Doc]                              = Empty(Doc.empty)
-  implicit def emptyExMap[K: HashEq, V] : Empty[ExMap[K, V]]     = Empty(exMap[K, V]())
-  implicit def emptyExSet[A: HashEq] : Empty[ExSet[A]]           = Empty(exSet[A]())
-  implicit def emptyInMap[K, V] : Empty[InMap[K, V]]             = Empty(inMap[K, V](false, _ => noSuchElementException("empty map")))
-  implicit def emptyInSet[A] : Empty[InSet[A]]                   = Empty(inSet[A](false))
-  implicit def emptyFile: Empty[jFile]                           = Empty(NoFile)
-  implicit def emptyIndex: Empty[Index]                          = Empty(NoIndex)
-  implicit def emptyIndexRange: Empty[IndexRange]                = Empty(IndexRange.empty)
-  implicit def emptyOption[A] : Empty[Option[A]]                 = Empty(None)
-  implicit def emptyPath: Empty[Path]                            = Empty(NoPath)
-  implicit def emptyShown: Empty[Shown]                          = Empty(Shown.empty)
-  implicit def emptyView[A] : Empty[View[A]]                     = Empty(exView())
-  implicit def emptyBaseView[A, Repr] : Empty[BaseView[A, Repr]] = Empty(new DirectView(Direct()))
+  implicit def emptyDoc: Empty[Doc]                                 = Empty(Doc.empty)
+  implicit def emptyCacheBuilder[K, V] : Empty[cache.Builder[K, V]] = Empty(cache.newBuilder[K, V]())
+  implicit def emptyExMap[K: HashEq, V] : Empty[ExMap[K, V]]        = Empty(exMap[K, V]())
+  implicit def emptyExSet[A: HashEq] : Empty[ExSet[A]]              = Empty(exSet[A]())
+  implicit def emptyInMap[K, V] : Empty[InMap[K, V]]                = Empty(inMap[K, V](false, _ => noSuchElementException("empty map")))
+  implicit def emptyInSet[A] : Empty[InSet[A]]                      = Empty(inSet[A](false))
+  implicit def emptyFile: Empty[jFile]                              = Empty(NoFile)
+  implicit def emptyIndex: Empty[Index]                             = Empty(NoIndex)
+  implicit def emptyIndexRange: Empty[IndexRange]                   = Empty(IndexRange.empty)
+  implicit def emptyOption[A] : Empty[Option[A]]                    = Empty(None)
+  implicit def emptyPath: Empty[Path]                               = Empty(NoPath)
+  implicit def emptyShown: Empty[Shown]                             = Empty(Shown.empty)
+  implicit def emptyView[A] : Empty[View[A]]                        = Empty(exView())
+  implicit def emptyBaseView[A, Repr] : Empty[BaseView[A, Repr]]    = Empty(new DirectView(Direct()))
 
   implicit def emptyTuple[A: Empty, B: Empty]: Empty[(A, B)]          = Empty(emptyValue[A] -> emptyValue[B])
   implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]     = Empty(z build Each.empty)

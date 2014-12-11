@@ -130,16 +130,15 @@ package object std extends psp.std.StdPackage {
   final val scmSeq          = scm.Seq
   final val scmSet          = scm.Set
 
-  final val ConstantTrue         = (x: Any) => true
-  final val ConstantFalse        = (x: Any) => false
-  final val CTag                 = scala.reflect.ClassTag
-  final val EOL                  = sys.props.getOrElse("line.separator", "\n")
-  final val NoFile: jFile        = jFile("")
-  final val NoPath: Path         = path("")
-  final val NoUri: jUri          = jUri("")
-  final val NoFileTime: FileTime = jnfa.FileTime fromMillis MinLong
-  final val NoIndex              = Index.undefined
-  final val NoNth                = Nth.undefined
+  final val ConstantTrue  = (x: Any) => true
+  final val ConstantFalse = (x: Any) => false
+  final val CTag          = scala.reflect.ClassTag
+  final val EOL           = sys.props.getOrElse("line.separator", "\n")
+  final val NoFile: jFile = jFile("")
+  final val NoPath: Path  = path("")
+  final val NoUri: jUri   = jUri("")
+  final val NoIndex       = Index.undefined
+  final val NoNth         = Nth.undefined
 
   // Methods similar to the more useful ones in scala's Predef.
   def ??? : Nothing                                                                        = throw new scala.NotImplementedError
@@ -170,8 +169,7 @@ package object std extends psp.std.StdPackage {
   def resource(name: String): Array[Byte]       = findLoader.fold(Array.empty[Byte])(_ getResourceAsStream name slurp)
   def resourceString(name: String): String      = utf8(resource(name)).to_s
   def classFilter[A: CTag] : Any ?=> A          = newPartial(_.isClass[A], _.castTo[A])
-
-  def path(s: String, ss: String*): Path          = ss.foldLeft(Paths get s)(_ resolve _)
+  def path(s: String): Path                     = Paths get s
 
   def eqBy[A]     = new ops.EqBy[A]
   def hashBy[A]   = new ops.HashBy[A]

@@ -3,13 +3,9 @@ package std
 package pio
 
 import api._
-import java.nio.file.Files
 
-/** A cache which maps paths to values. If the last modified
- *  time on the path changes, the cache entry is invalidated.
- */
 class PathCache[A](f: Path => A) extends (Path => A) {
-  private[this] val timestamps = mutableMap[Path, FileTime]() withDefaultValue NoFileTime
+  private[this] val timestamps = mutableMap[Path, FileTime]() withDefaultValue FileTime.empty
   private[this] val content    = mutableMap[Path, A]()
   private def timestampOk(path: Path) = path.lastModified == timestamps(path)
   private def updateCache(path: Path): A = {
@@ -28,6 +24,6 @@ class PathCache[A](f: Path => A) extends (Path => A) {
 
 object PathBytes extends PathCache[Bytes](Files readAllBytes _)
 object PathChars extends PathCache[Chars](path => utf8(PathBytes(path)).chars)
-object PathLines extends PathCache[View[String]](path => Files.readAllLines(path, utf8Charset).m)
+object PathLines extends PathCache[View[String]](Files readAllLines _ m)
 object PathSlurp extends PathCache[String](path => utf8(PathBytes(path)).to_s)
 object PathJars  extends PathCache[Jar](path => Jar(path))

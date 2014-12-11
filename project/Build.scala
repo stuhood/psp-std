@@ -17,6 +17,8 @@ object Build extends sbt.Build {
   def classpathDeps                    = convertSeq(subprojects): List[ClasspathDep[ProjectReference]]
   def projectRefs                      = convertSeq(subprojects): List[ProjectReference]
 
+  def jsr305 = "com.google.code.findbugs" % "jsr305" % "3.0.0"
+
   implicit class ProjectOps(val p: Project) {
     def setup(): Project             = p.alsoToolsJar also commonSettings(p) also (name := "psp-" + p.id)
     def setup(text: String): Project = setup() also (description := text)
@@ -78,7 +80,7 @@ object Build extends sbt.Build {
 
   lazy val api    = project setup "psp's non-standard api"
   lazy val dmz    = project setup "psp's non-standard dmz" dependsOn api
-  lazy val std    = project setup "psp's non-standard standard library" dependsOn dmz also guava
+  lazy val std    = project setup "psp's non-standard standard library" dependsOn dmz also (guava, jsr305)
   lazy val pio    = project setup "psp's non-standard io library" dependsOn std
   lazy val jvm    = project.usesCompiler.usesParsers setup "psp's non-standard jvm code" dependsOn pio
   lazy val dev    = project setup "psp's non-standard unstable code" dependsOn std
@@ -97,7 +99,7 @@ object Build extends sbt.Build {
   // A console project which pulls in misc additional dependencies currently being explored.
   // Removing all scalac options except the ones listed here, to eliminate all the warnings
   // repl startup code in resources/initialCommands.scala
-  lazy val consoleOnly = project.helper.usesCompiler.alsoToolsJar dependsOn (testOnly % "test->test") dependsOn (classpathDeps: _*) settings (
+  lazy val consoleOnly = project.helper.usesCompiler.alsoToolsJar dependsOn (testOnly % "test->test") dependsOn (classpathDeps: _*) also (guava, jsr305) settings (
                     libraryDependencies <+=  scalaCompiler,
     scalacOptions in (Compile, console)  :=  replArgs,
        scalacOptions in (Test, console)  :=  replArgs,

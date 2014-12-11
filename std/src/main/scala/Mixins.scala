@@ -4,7 +4,7 @@ package std
 import api._
 
 trait AndThis {
-  def andThis(x: Unit): this.type = this
+  def andThis(x: Unit, xs: Unit*): this.type = this
 }
 
 trait ClassLoaderTrait {
