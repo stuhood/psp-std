@@ -170,6 +170,7 @@ package object std extends psp.std.StdPackage {
   def resourceString(name: String): String      = utf8(resource(name)).to_s
   def classFilter[A: CTag] : Any ?=> A          = newPartial(_.isClass[A], _.castTo[A])
   def path(s: String): Path                     = Paths get s
+  def callable[A](body: => A): jCallable[A]     = new java.util.concurrent.Callable[A] { def call(): A = body }
 
   def eqBy[A]     = new ops.EqBy[A]
   def hashBy[A]   = new ops.HashBy[A]
