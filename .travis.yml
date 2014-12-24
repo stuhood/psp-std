@@ -3,8 +3,11 @@ sudo: false
 
 cache:
   directories:
-    - $HOME/.sbt
-    - $HOME/.ivy2
+    - $HOME/.ivy2/cache
+    # The latest sbt launcher version preinstalled in Travis VM image is 0.13.5 at the moment
+    - $HOME/.sbt/launchers/0.13.6
+    # already preinstalled:
+    #- $HOME/.sbt/boot/scala-2.10.4
 
 language: scala
 script: bin/run-travis
