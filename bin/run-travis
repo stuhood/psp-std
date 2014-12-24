@@ -9,13 +9,15 @@ runOnTravis () {
 -------------------- End Travis Prelude --------------------
 ------------------------------------------------------------
 EOM
-  echo "[info] $(date) - downloading ivy artifact bundle to travis"
-  $(dirname $0)/get-cache
 }
 
 runTests () {
   sbt test || exit 1
   echo "[info] $(date) - finished sbt test"
+
+  # Tricks to avoid unnecessary cache updates
+  find $HOME/.sbt -name "*.lock" | xargs rm
+  find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 }
 
 stripTerminalEscapeCodes () {
