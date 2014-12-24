@@ -14,5 +14,4 @@ script: bin/run-travis
 jdk:
   - oraclejdk7
   - oraclejdk8
-scala:
-  - 2.11.4
+scala: latest # set a dummy value as this build configuration does not rely on TRAVIS_SCALA_VERSION
