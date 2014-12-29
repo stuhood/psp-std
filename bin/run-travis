@@ -16,8 +16,8 @@ runTests () {
   echo "[info] $(date) - finished sbt test"
 
   # Tricks to avoid unnecessary cache updates
-  find $HOME/.sbt -name "*.lock" | xargs rm
-  find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+  find $HOME/.sbt -name "*.lock" -delete
+  find $HOME/.ivy2 -name "ivydata-*.properties" -delete
 }
 
 stripTerminalEscapeCodes () {
