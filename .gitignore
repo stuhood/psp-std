@@ -1,3 +1,8 @@
 .classpath
 .classpath-entries
 project/local.properties
+.cache
+.settings
+target
+.target
+.project

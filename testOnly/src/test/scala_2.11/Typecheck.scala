@@ -2,14 +2,25 @@ package psp
 package tests
 
 import psp.std._, api._, macros._
-import Expressions._, StdShow._
+import Expressions._
 
 class Typecheck extends ScalacheckBundle {
   def bundle = "Verifying Expected Failures"
+  
+  /** These are here so we do not accidentally rename them, making the shadowing below
+   *  useless.
+   */
+  private val _ = {
+    opsDirectString _
+    directStringIs _
+  }
+  
   // We don't want to protect scala library from itself so let's unmask augmentString etc.
   def checkScala() = {
+    // These two definitions are here to shadow implicits
     val opsDirectString = null
     val directStringIs = null
+    // This import is actually used in the test below
     import scala.Predef._
     divide("scala-library", typecheckedLines(scalaLibraryCode), expectedTypecheck = 24)
   }
