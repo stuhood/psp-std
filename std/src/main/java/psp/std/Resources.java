@@ -16,24 +16,7 @@ public class Resources {
       return new File(dirURL.toURI()).list();
     }
     if (dirURL != null && dirURL.getProtocol().equals("jar")) {
-      /* A JAR path */
-      String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
-      JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
-      Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
-      Set<String> result = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
-      while(entries.hasMoreElements()) {
-        String name = entries.nextElement().getName();
-        if (name.startsWith(path)) { //filter according to the path
-          String entry = name.substring(path.length());
-          int checkSubdir = entry.indexOf("/");
-          if (checkSubdir >= 0) {
-            // if it is a subdirectory, we just return the directory name
-            entry = entry.substring(0, checkSubdir);
-          }
-          result.add(entry);
-        }
-      }
-      return result.toArray(new String[result.size()]);
+      return getResourcesFromJar(path, dirURL);
     }
 
     throw new UnsupportedOperationException("Cannot list files for URL "+dirURL);
@@ -68,9 +51,17 @@ public class Resources {
     }
 
     if (dirURL.getProtocol().equals("jar")) {
-      /* A JAR path */
-      String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
-      JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
+      return getResourcesFromJar(path, dirURL);
+    }
+
+    throw new UnsupportedOperationException("Cannot list files for URL "+dirURL);
+  }
+  
+  private static String[] getResourcesFromJar(String path, URL dirURL) throws IOException, UnsupportedEncodingException {
+    /* A JAR path */
+    String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
+    JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
+    try {
       Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
       Set<String> result = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
       while(entries.hasMoreElements()) {
@@ -86,8 +77,8 @@ public class Resources {
         }
       }
       return result.toArray(new String[result.size()]);
+    } finally {
+      jar.close();
     }
-
-    throw new UnsupportedOperationException("Cannot list files for URL "+dirURL);
   }
 }
