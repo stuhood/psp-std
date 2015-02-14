@@ -56,7 +56,7 @@ public class Resources {
 
     throw new UnsupportedOperationException("Cannot list files for URL "+dirURL);
   }
-  
+
   private static String[] getResourcesFromJar(String path, URL dirURL) throws IOException, UnsupportedEncodingException {
     /* A JAR path */
     String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file

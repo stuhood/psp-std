@@ -10,7 +10,7 @@ class Nats extends Bundle {
   def strs = NatList(("a", "ab", "abc", "abcd"))
 
   def bundle = "Some text here, I don't know what Nats means"
-  
+
   def run(): Boolean = {
     import NatList._ // It would pick up another implicit
     assert((ints zip ints map (_ + _)).sum == (ints.sum * 2))
