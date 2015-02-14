@@ -109,6 +109,6 @@ object Build extends sbt.Build {
 
   def testDependencies = Def setting Seq(
     Deps.scalaReflect.value,
-    scalacheck
+    scalacheck.copy(configurations = None)
   )
 }
