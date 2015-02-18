@@ -23,6 +23,7 @@ abstract class StdPackage
          with GlobalShow
          with StdGateways
          with lowlevel.StdArrowAssoc
+         with ApiAliases
          with PolicyDmz {
 
   implicit class ApiOrderOps[A](val ord: Order[A]) {

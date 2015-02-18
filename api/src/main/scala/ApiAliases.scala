@@ -41,6 +41,7 @@ trait ApiAliases extends scala.Any {
   type Shower[-A]    = A => String
   type Suspended[+A] = (A => Unit) => Unit
   type Unary[A]      = A => A
+  type Bag[A]        = ExMap[A, Precise]
 }
 
 // Necessary to use those aliases within the api package.

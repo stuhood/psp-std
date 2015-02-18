@@ -5,11 +5,10 @@ import scala._
 import scala.{ collection => sc }
 import sc.{ generic => scg, mutable => scm, immutable => sci }
 import java.nio.{ file => jnf }
-import psp.std.api._
 
 /** Building a default namespace consciously rather than accretively.
  */
-trait ScalaLibrary extends Any with ApiAliases {
+trait ScalaLibrary extends Any {
   type BigDecimal                      = scala.math.BigDecimal
   type BigInt                          = scala.math.BigInt
   type CanBuildFrom[-From, -Elem, +To] = scg.CanBuildFrom[From, Elem, To]
@@ -76,7 +75,6 @@ trait ScalaLibrary extends Any with ApiAliases {
   type Array3[A]                 = Array[Array[Array[A]]]
   type Array4[A]                 = Array[Array[Array[Array[A]]]]
   type Array5[A]                 = Array[Array[Array[Array[Array[A]]]]]
-  type Bag[A]                    = ExMap[A, Precise]
   type Bytes                     = Array[Byte]
   type CTag[A]                   = scala.reflect.ClassTag[A]
   type CanBuildSelf[-Elem, Self] = scg.CanBuildFrom[Self, Elem, Self]
