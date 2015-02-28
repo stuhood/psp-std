@@ -37,6 +37,8 @@ object Build extends sbt.Build {
              licenses :=  pspLicenses,
          organization :=  pspOrg,
         scalacOptions ++= scalacOptionsFor(scalaBinaryVersion.value) ++ stdArgs,
+            maxErrors :=  5,
+     triggeredMessage :=  Watched.clearWhenTriggered,
     publishMavenStyle :=  true
   ) ++ (
     if (p.id == "root") Nil
