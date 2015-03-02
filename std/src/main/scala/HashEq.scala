@@ -3,7 +3,7 @@ package std
 
 import api._
 
-/** A bad idea in general, but so much less ceremony for limted-use classes.
+/** A bad idea in general, but so much less ceremony for limited-use classes.
  */
 trait NaturalHashEq
 

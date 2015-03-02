@@ -1,5 +1,4 @@
 package psp
-package std
 package api
 
 import ApiAliases._

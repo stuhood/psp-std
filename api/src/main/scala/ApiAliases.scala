@@ -1,5 +1,4 @@
 package psp
-package std
 package api
 
 // This mostly consists of "magic" types which cannot be avoided due to language privilege.

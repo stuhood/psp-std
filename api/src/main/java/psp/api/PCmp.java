@@ -1,4 +1,4 @@
-package psp.std.api;
+package psp.api;
 
 public enum PCmp {
   LT(-1), EQ(0), GT(1), NA(2);
