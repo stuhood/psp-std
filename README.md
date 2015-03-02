@@ -8,32 +8,21 @@ psp.std - a non-standard standard library
 Background
 ----------
 
-The scala standard library is lacking. This library attempts to fill some of the gaps and play defense against its hostility to correctness where possible.
-See [views](views.md) for some details.
+The scala standard library is deficient in many ways. This library is an
+attempt to rebuild it with some attention given to consistency, performance,
+and correctness. See [views](views.md) for some details.
 
 Usage
 -----
 
-Suggested contents for ```project/Build.scala```. You'll also want [sbt](https://github.com/paulp/sbt-extras).
+Suggested contents for ```build.sbt``` - note this syntax requires sbt 0.13.7, the "blank lines are optional" release.
 
 ```scala
-package scratch
-import sbt._, Keys._
-
-object ScratchProject extends sbt.Build {
-  lazy val scratch = project in file(".") settings (
-                          name :=  "scratch-project",
-                     resolvers +=  "bintray/paulp" at "https://dl.bintray.com/paulp/maven",
-                  scalaVersion :=  "2.11.2",
-    initialCommands in console :=  "import psp.std._",
-           libraryDependencies +=  "org.improving" %% "psp-std" % "0.4.8"
-  )
-}
-```
-
-Or if a self-contained project isn't your bag:
-```
-libraryDependencies += "org.improving" %% s"psp-std" % "0.4.8"
+                      name :=  "scratch"
+                 resolvers +=  "bintray/paulp" at "https://dl.bintray.com/paulp/maven"
+              scalaVersion :=  "2.11.4"
+initialCommands in console :=  "import psp._, std._, api._, StdEq._"
+       libraryDependencies +=  "org.improving" %% "psp-std" % "0.5.3"
 ```
 
 Then ```sbt console``` and you can look around.
