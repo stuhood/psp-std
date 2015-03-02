@@ -61,8 +61,8 @@ object NamedProp {
 trait ScalacheckBundle extends Bundle {
   def props: Direct[NamedProp]
 
-  def pass = GREEN + "pass" + RESET
-  def fail = RED + "fail" + RESET
+  def pass = PassGreen
+  def fail = FailRed
   def start = "+ " + BOLD + CYAN + bundle + RESET
 
   def pp(r: Result) = Pretty.pretty(r, Pretty.Params(0))

@@ -4,8 +4,12 @@ import org.scalacheck._, Prop._, Gen.Choose
 import org.scalacheck.util.Pretty
 import psp.std._, api._
 import StdShow._
+import scala.Console.{ println => _, _ }
 
 package object tests {
+  val PassGreen = GREEN + "\u2713" + RESET // check mark
+  val FailRed   = RED + "\u2717" + RESET   // cross mark
+
   lazy val isTestDebug = sys.props contains "psp.test.debug"
 
   implicit def assertions: Assertions = ImmediateTraceAssertions
