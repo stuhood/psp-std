@@ -166,7 +166,7 @@ trait StdUniversal extends Any with StdUniversal0 { implicit def opsAnyRef[A <: 
 //
 // [error] /mirror/r/psp/std/testOnly/src/test/scala/OperationCounts.scala:56: polymorphic expression cannot be instantiated to expected type;
 // [error]  found   : [CC[X] <: psp.std.Walkable[X]]tc.VC[psp.std.PolicyList[psp.std.Int]]
-// [error]  required: psp.std.api.View[psp.std.Int]
+// [error]  required: psp.std.View[psp.std.Int]
 // [error]     intRange(1, max / 2).m ++ nthRange(max / 2, max).toLinear.m
 // [error]                                                               ^
 // [error] one error found

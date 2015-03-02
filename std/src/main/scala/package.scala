@@ -4,7 +4,7 @@ import java.nio.file.Paths
 import java.nio.file.{ attribute => jnfa }
 import scala.{ collection => sc }
 import sc.{ mutable => scm, immutable => sci }
-import psp.std.api._
+import psp.api._
 import psp.std.lowlevel._
 import psp.std.StdShow._
 
@@ -71,7 +71,7 @@ package object std extends psp.std.StdPackage {
   type DocSeq = Each[Doc]
 
   /** Scala, so aggravating.
-   *  [error] could not find implicit value for parameter equiv: psp.std.api.Eq[psp.tests.Pint => psp.std.Boolean]
+   *  [error] could not find implicit value for parameter equiv: psp.api.Eq[psp.tests.Pint => psp.std.Boolean]
    *  The parameter can be given explicitly, it just won't be found unless the function type is invariant.
    *  The same issue arises with intensional sets.
    */

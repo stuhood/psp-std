@@ -1,4 +1,4 @@
-package psp.std.api;
+package psp.api;
 
 public enum Cmp {
   LT(-1), EQ(0), GT(1);
