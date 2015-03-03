@@ -24,7 +24,7 @@ package object tests {
   val Pretty              = org.scalacheck.util.Pretty
   type Result             = org.scalacheck.Test.Result
   type Failed             = org.scalacheck.Test.Failed
-  type Buildable[A, C[X]] = org.scalacheck.util.Buildable[A, C]
+  type Buildable[A, C[X]] = org.scalacheck.util.Buildable[A, C[A]]
   type GenParams          = Gen.Parameters
   type TestParams         = Test.Parameters
 
