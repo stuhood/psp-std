@@ -68,7 +68,10 @@ package std {
 }
 
 package object std extends psp.std.StdPackage {
-  type DocSeq = Each[Doc]
+  type DocSeq            = Each[Doc]
+  type BooleanAlgebra[R] = spire.algebra.Bool[R]
+  type UInt              = spire.math.UInt
+  type Natural           = spire.math.Natural
 
   /** Scala, so aggravating.
    *  [error] could not find implicit value for parameter equiv: psp.api.Eq[psp.tests.Pint => psp.std.Boolean]

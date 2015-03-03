@@ -105,10 +105,9 @@ final class IntOps(val self: Int) extends AnyVal {
   def until(end: Int): ExclusiveIntRange = intRange(self, end)
   def to(end: Int): ExclusiveIntRange    = nthRange(self, end)
 
-  def u: UInt                         = UInt(self)
-  def binary: String                  = jl.Integer.toBinaryString(self)
-  def hex: String                     = jl.Integer.toHexString(self)
-  def octal: String                   = jl.Integer.toOctalString(self)
+  def binary: String = jl.Integer.toBinaryString(self)
+  def hex: String    = jl.Integer.toHexString(self)
+  def octal: String  = jl.Integer.toOctalString(self)
 }
 
 final class LongOps(val self: Long) extends AnyVal {
@@ -141,8 +140,7 @@ final class LongOps(val self: Long) extends AnyVal {
       self.toInt
   }
 
-  def toUnsignedInt: UInt = UInt(self)
-  def binary: String      = jl.Long.toBinaryString(self)
-  def hex: String         = jl.Long.toHexString(self)
-  def octal: String       = jl.Long.toOctalString(self)
+  def binary: String = jl.Long.toBinaryString(self)
+  def hex: String    = jl.Long.toHexString(self)
+  def octal: String  = jl.Long.toOctalString(self)
 }

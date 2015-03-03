@@ -16,7 +16,6 @@ abstract class TestRunnerCommon {
     new StringExtensions,
     new GridSpec,
     new PolicyBasic,
-    new ValuesSpec,
     new SizeSpec,
     new InferenceSpec,
     new CollectionsSpec,
