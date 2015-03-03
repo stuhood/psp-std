@@ -70,7 +70,7 @@ trait JavaPathMethods extends Any {
   def isDir: Boolean                       = path.isDirectory()
   def isFile: Boolean                      = path.isRegularFile()
   def isJarOrZip: Boolean                  = Jar isJarOrZip path
-  def lastModified: FileTime               = attrs[BasicFileAttributes]().lastModifiedTime
+  def lastModified: FileTime               = attrs[BasicFileAttributes]() match { case null => FileTime.empty ; case x => x.lastModifiedTime }
 
   def deepJars: Paths = filterDeepFiles(_.isJarOrZip)
 
