@@ -6,25 +6,21 @@ import sbt._, Keys._, psp.libsbt._, Deps._
 import psp.std._
 
 object Build extends sbt.Build {
-  def stdArgs  = wordSeq("-Yno-predef -Yno-imports -Yno-adapted-args")
-  def replArgs = wordSeq("-language:_ -Yno-predef -Yno-adapted-args")
-
-  def javaBinaryVersion           = sys.props("java.specification.version")
-  def javaCrossTarget(id: String) = key.buildBase mapValue (_ / "target" / id / s"java_$javaBinaryVersion")
+  def commonArgs = wordSeq("-Yno-predef -Yno-adapted-args")
+  def stdArgs    = "-Yno-imports" +: commonArgs
+  def replArgs   = "-language:_" +: commonArgs
 
   def rootResourceDir: SettingOf[File] = resourceDirectory in Compile in LocalRootProject
   def subprojects                      = List[sbt.Project](api, dmz, std, pio, dev, jvm, scalac)
   def classpathDeps                    = convertSeq(subprojects): List[ClasspathDep[ProjectReference]]
   def projectRefs                      = convertSeq(subprojects): List[ProjectReference]
 
-  def jsr305 = "com.google.code.findbugs" % "jsr305" % "3.0.0"
-
   implicit class ProjectOps(val p: Project) {
     def setup(): Project             = p.alsoToolsJar also commonSettings(p) also (name := "psp-" + p.id)
     def setup(text: String): Project = setup() also (description := text)
     def usesCompiler                 = p settings (libraryDependencies += Deps.scalaCompiler.value)
     def usesReflect                  = p settings (libraryDependencies += Deps.scalaReflect.value)
-    def usesParsers                  = p settings (libraryDependencies += Deps.scalaParsers)
+    def usesParsers                  = p settings (libraryDependencies += scalaParsers)
     def helper(): Project            = p.noArtifacts setup "helper project" dependsOn (classpathDeps: _*)
     def noSources                    = p in file("target/helper/" + p.id)
   }
@@ -85,7 +81,7 @@ object Build extends sbt.Build {
   lazy val std    = project setup "psp's non-standard standard library" dependsOn (api, dmz) also (guava, spire, jsr305)
   lazy val pio    = project setup "psp's non-standard io library" dependsOn std
   lazy val jvm    = project.usesCompiler.usesParsers setup "psp's non-standard jvm code" dependsOn pio
-  lazy val dev    = project setup "psp's non-standard unstable code" dependsOn std
+  lazy val dev    = project setup "psp's non-standard unstable code" dependsOn std also (javaSysMon, squants, okhttp)
   lazy val scalac = project.usesCompiler setup "psp's non-standard scalac-requiring code" dependsOn pio
 
   lazy val publishOnly = project.helper.noSources aggregate (api, dmz, std, pio)
