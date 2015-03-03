@@ -22,7 +22,7 @@ Suggested contents for ```build.sbt``` - note this syntax requires sbt 0.13.7, t
                  resolvers +=  "bintray/paulp" at "https://dl.bintray.com/paulp/maven"
               scalaVersion :=  "2.11.4"
 initialCommands in console :=  "import psp._, std._, api._, StdEq._"
-       libraryDependencies +=  "org.improving" %% "psp-std" % "0.5.3"
+       libraryDependencies +=  "org.improving" %% "psp-std" % "0.5.4"
 ```
 
 Then ```sbt console``` and you can look around.
