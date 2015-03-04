@@ -4,6 +4,8 @@ import std._
 import com.squareup.{ okhttp => ok }
 
 package object dev {
+  type Id[X] = X
+
   val cacheSize     = 1024L * 1024L * 100L
   val cacheDir      = userHome.toFile / ".pspcache"
   val cacheInstance = new ok.Cache(cacheDir, cacheSize)
