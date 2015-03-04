@@ -66,7 +66,11 @@ trait MonoidInstances {
   implicit def vectorAddition[A] : Sums[Direct[A]] = Sums[Direct[A]](_ ++ _)(Zero(emptyValue[Direct[A]]))
 }
 
-trait ZeroInstances {
+trait ZeroInstances0 {
+  implicit def emptyCanBuild[R](implicit z: CanBuild[_, R]): Empty[R] = Empty(z().result)
+}
+
+trait ZeroInstances extends ZeroInstances0 {
   implicit def zeroBigDecimal: Zero[BigDecimal] = Zero(BigDecimal(0))
   implicit def zeroBigInt: Zero[BigInt]         = Zero(BigInt(0))
   implicit def zeroBoolean: Zero[Boolean]       = Zero(false)
@@ -98,7 +102,6 @@ trait ZeroInstances {
 
   implicit def emptyTuple[A: Empty, B: Empty]: Empty[(A, B)]          = Empty(emptyValue[A] -> emptyValue[B])
   implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]     = Empty(z build Each.empty)
-  implicit def emptyCanBuild[R](implicit z: CanBuild[_, R]): Empty[R] = Empty(z().result)
 }
 
 trait EqInstances {
