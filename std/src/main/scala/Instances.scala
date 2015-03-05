@@ -59,32 +59,11 @@ trait OrderInstances extends OrderInstancesLow {
   implicit def sizePartialOrder: PartialOrder[Size]                         = PartialOrder(Size.partialCompare)
 }
 
-trait MonoidInstances {
-  import StdZero._
-
-  implicit def seqAddition[A] : Sums[Each[A]]      = Sums[Each[A]](_ ++ _)(Zero(emptyValue[Each[A]]))
-  implicit def vectorAddition[A] : Sums[Direct[A]] = Sums[Direct[A]](_ ++ _)(Zero(emptyValue[Direct[A]]))
-}
-
-trait ZeroInstances0 {
+trait EmptyInstances0 {
   implicit def emptyCanBuild[R](implicit z: CanBuild[_, R]): Empty[R] = Empty(z().result)
 }
 
-trait ZeroInstances extends ZeroInstances0 {
-  implicit def zeroBigDecimal: Zero[BigDecimal] = Zero(BigDecimal(0))
-  implicit def zeroBigInt: Zero[BigInt]         = Zero(BigInt(0))
-  implicit def zeroBoolean: Zero[Boolean]       = Zero(false)
-  implicit def zeroByte: Zero[Byte]             = Zero(0.toByte)
-  implicit def zeroChar: Zero[Char]             = Zero(0.toChar)
-  implicit def zeroDouble: Zero[Double]         = Zero(0d)
-  implicit def zeroFileTime: Zero[FileTime]     = Zero(FileTime.empty)
-  implicit def zeroFloat: Zero[Float]           = Zero(0f)
-  implicit def zeroInt: Zero[Int]               = Zero(0)
-  implicit def zeroLong: Zero[Long]             = Zero(0L)
-  implicit def zeroShort: Zero[Short]           = Zero(0.toShort)
-  implicit def zeroShow[A]: Zero[Show[A]]       = Zero(Show.natural[A]())
-  implicit def zeroUnit: Zero[Unit]             = Zero(())
-
+trait EmptyInstances extends EmptyInstances0 {
   implicit def emptyDoc: Empty[Doc]                                 = Empty(Doc.empty)
   implicit def emptyCacheBuilder[K, V] : Empty[cache.Builder[K, V]] = Empty(cache.newBuilder[K, V]())
   implicit def emptyExMap[K: HashEq, V] : Empty[ExMap[K, V]]        = Empty(exMap[K, V]())
@@ -99,9 +78,8 @@ trait ZeroInstances extends ZeroInstances0 {
   implicit def emptyShown: Empty[Shown]                             = Empty(Shown.empty)
   implicit def emptyView[A] : Empty[View[A]]                        = Empty(exView())
   implicit def emptyBaseView[A, Repr] : Empty[BaseView[A, Repr]]    = Empty(new DirectView(Direct()))
-
-  implicit def emptyTuple[A: Empty, B: Empty]: Empty[(A, B)]          = Empty(emptyValue[A] -> emptyValue[B])
-  implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]     = Empty(z build Each.empty)
+  implicit def emptyTuple[A: Empty, B: Empty]: Empty[(A, B)]        = Empty(emptyValue[A] -> emptyValue[B])
+  implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]   = Empty(z build Each.empty)
 }
 
 trait EqInstances {

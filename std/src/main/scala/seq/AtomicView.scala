@@ -3,7 +3,7 @@ package std
 
 import Size._, api._
 import lowlevel.CircularBuffer
-import StdShow._, StdZero._
+import StdShow._
 
 sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] with ops.InvariantViewOps[A] {
   type This <: AtomicView[A, Repr]
@@ -133,24 +133,26 @@ sealed abstract class CompositeView[A, B, Repr](val description: String, val siz
   def viewOps = prev.viewOps :+ description
 
   final def foreach(f: B => Unit): Unit = {
-    def loop[C](xs: View[C])(f: C => Unit): Unit = xs match {
-      case FlattenSlice(xs, range)         => foreachSlice(xs, range, f)
-      case LabeledView(xs, _)              => loop[C](xs)(f)
-      case Mapped(xs, g)                   => loop(xs)(g andThen f)
-      case FlatMapped(xs, g)               => loop(xs)(x => g(x) foreach f)
-      case Filtered(xs, p: Predicate[C])   => loop(xs)(x => if (p(x)) f(x))
-      case TakenWhile(xs, p: Predicate[C]) => foreachTakeWhile(xs, f, p)
-      case DropWhile(xs, p: Predicate[C])  => foreachDropWhile(xs, f, p)
-      case Collected(xs, pf)               => loop(xs)(x => if (pf isDefinedAt x) f(pf(x)))
-      case Joined(xs, ys)                  => loop(xs)(f) ; loop(ys)(f)
-      case DroppedR(xs, n: Precise)        => foreachDropRight(xs, f, n)
-      case TakenR(xs, n: Precise)          => foreachTakeRight(xs, f, n)
-      case Dropped(xs, Precise(n))         => foreachSlice(xs, Index(n) until MaxIndex, f)
-      case Taken(xs, n: Precise)           => foreachSlice(xs, n.indices, f)
-      case xs: View[_]                     => xs foreach f
-      case _                               => abort(pp"Unexpected view class ${xs.shortClass}")
+    def loop[C](xs: View[C])(f: C => Unit): Unit = {
+      type Pred = (Predicate[C] @unchecked) // silencing patmat warnings
+      xs match {
+        case FlattenSlice(xs, range)  => foreachSlice(xs, range, f)
+        case LabeledView(xs, _)       => loop[C](xs)(f)
+        case Mapped(xs, g)            => loop(xs)(g andThen f)
+        case FlatMapped(xs, g)        => loop(xs)(x => g(x) foreach f)
+        case Filtered(xs, p: Pred)    => loop(xs)(x => if (p(x)) f(x))
+        case TakenWhile(xs, p: Pred)  => foreachTakeWhile(xs, f, p)
+        case DropWhile(xs, p: Pred)   => foreachDropWhile(xs, f, p)
+        case Collected(xs, pf)        => loop(xs)(x => if (pf isDefinedAt x) f(pf(x)))
+        case Joined(xs, ys)           => loop(xs)(f) ; loop(ys)(f)
+        case DroppedR(xs, n: Precise) => foreachDropRight(xs, f, n)
+        case TakenR(xs, n: Precise)   => foreachTakeRight(xs, f, n)
+        case Dropped(xs, Precise(n))  => foreachSlice(xs, Index(n) until MaxIndex, f)
+        case Taken(xs, n: Precise)    => foreachSlice(xs, n.indices, f)
+        case xs: View[_]              => xs foreach f
+        case _                        => abort(pp"Unexpected view class ${xs.shortClass}")
+      }
     }
-
     if (!size.isZero)
       loop(this)(f)
   }

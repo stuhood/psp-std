@@ -2,7 +2,7 @@ package psp
 package std
 package ops
 
-import api._, StdShow._, StdZero._
+import api._, StdShow._
 
 trait DirectViewOps[A, Repr] extends Any {
   def xs: DirectView[A, Repr]
@@ -142,9 +142,7 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
   def withoutEmpty(implicit z: Empty[A], eqs: Eq[A]): View[A]   = xs without z.empty
 
   def findOr(p: Predicate[A], alt: => A): A           = find(p) | alt
-  def product(implicit z: Products[A]): A             = xs.foldl(z.one)(z.product)
   def reducel(f: BinOp[A]): A                         = tail.foldl(head)(f)
-  def sum(implicit z: Sums[A]): A                     = xs.foldl(z.zero)(z.sum)
   def zapply(i: Index)(implicit z: Empty[A]): A       = xs drop i.sizeExcluding zhead
   def zfind(p: Predicate[A])(implicit z: Empty[A]): A = findOr(p, z.empty)
   def zhead(implicit z: Empty[A]): A                  = if (isEmpty) z.empty else head

@@ -37,6 +37,7 @@ trait ScalaLibrary extends Any {
   type tailrec   = scala.annotation.tailrec
   type transient = scala.transient
   type uV        = scala.annotation.unchecked.uncheckedVariance
+  type unchecked = scala.unchecked
   type volatile  = scala.volatile
 
   // scala types which I won't let win.

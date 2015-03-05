@@ -187,7 +187,6 @@ package object jvm extends psp.std.jvm.StdClasses {
     )
   }
   implicit class HasAttributesOps(val entity: HasAttributes) extends AnyVal {
-    import StdZero._
     import entity._
     // def signature: JvmSignature                 = attributes zfirst  { case attr.Signature(sig)                    => JvmSignature(sig) }
     def innerClasses: Array[InnerClassInfo]     = attributes zfirst  { case attr.InnerClasses(xs)                  => xs                }

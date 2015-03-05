@@ -201,10 +201,11 @@ package object std extends psp.std.StdPackage {
 
   def ?[A](implicit value: A): A                        = value
   def andFalse(x: Unit, xs: Unit*): Boolean             = false
-  def andTrue(x: Unit, xs: Unit*): Boolean              = true
   def andResult[A](x: A, xs: Unit*): A                  = x
+  def andTrue(x: Unit, xs: Unit*): Boolean              = true
   def direct[A](xs: A*): Direct[A]                      = Direct fromScala xs
   def each[A](xs: sCollection[A]): Each[A]              = Each fromScala xs
+  def emptyValue[A](implicit z: Empty[A]): A            = z.empty
   def indexRange(start: Int, end: Int): IndexRange      = IndexRange(start, end)
   def intRange(start: Int, end: Int): ExclusiveIntRange = ExclusiveIntRange(start, end)
   def nthRange(start: Int, end: Int): ExclusiveIntRange = ExclusiveIntRange(start, end + 1)
@@ -215,8 +216,6 @@ package object std extends psp.std.StdPackage {
   def partial[A, B](f: A ?=> B): A ?=> B                = f
   def regex(re: String): Regex                          = Regex(re)
   def show[A: Show] : Show[A]                           = ?
-  def zero[A](implicit z: Zero[A]): A                   = z.zero
-  def emptyValue[A](implicit z: Empty[A]): A            = z.empty
 
   def spawn[A](body: => A): Unit = {
     val t = new Thread() { override def run(): Unit = body }

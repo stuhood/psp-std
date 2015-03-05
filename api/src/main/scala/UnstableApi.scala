@@ -7,7 +7,6 @@ import java.lang.String
 /** Type classes I'm less certain about keeping.
  */
 
-trait Zero[A] extends Any       { def zero: A ; def isZero(x: A): Boolean }
 trait Empty[+A] extends Any     { def empty: A                            }
 trait Hash[-A] extends Any      { def hash(x: A): Int                     }
 trait Sums[A] extends Any       { def zero: A ; def sum(x: A, y: A): A    }

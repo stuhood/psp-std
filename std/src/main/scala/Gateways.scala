@@ -56,9 +56,7 @@ trait SetAndMapOps extends Any with SetAndMapOps1 {
 }
 
 trait StdOps0 extends Any {
-  implicit def numericToSums[A](implicit z: Numeric[A]): Sums[A]         = Sums[A](z.plus)(Zero(z.zero))
-  implicit def numericToProducts[A](implicit z: Numeric[A]): Products[A] = Products[A](z.times)(Zero(z.one))
-  implicit def opsForeach[A](xs: Each[A]): ops.ForeachOps[A]         = new ops.ForeachOps(xs)
+  implicit def opsForeach[A](xs: Each[A]): ops.ForeachOps[A] = new ops.ForeachOps(xs)
 
   implicit class ForeachableOps[A, Repr](repr: Repr)(implicit z: Foreachable.Coll[A, Repr]) {
     def m: AtomicView[A, Repr] = z wrap repr

@@ -3,7 +3,6 @@ package std
 
 import api._
 import StdEq.stringEq
-import StdZero._
 
 final class Label(val label: String) extends AnyVal {
   def matches(r: Regex)   = r isMatch label
