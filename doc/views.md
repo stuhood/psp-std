@@ -1,77 +1,50 @@
 psp view
 ========
 
-This is an alternative to the standard scala collections, which are unwieldy.
-All operations are lazy. Computation is deferred for as long as possible.
-It's still under development. Please don't use it unless you understand what that means.
-I'm working on integrating it into something more comprehensive: see paulp/psp-std.
+An alternative to the unwieldy scala-library collections. All operations are
+lazy. Computation is deferred for as long as possible. It's still under
+development. Please don't use it unless you understand what that means.
 
-Explanation of test output, reformatted to reduce width:
+Sample slightly reformatted test output:
 
-```
-Basis sequence was 1 to 1000
-<xs> map *3  dropR 11  slice [7,41)
- Linear   Sized  Direct  <EAGER>  ListV  Stream StreamV  RangeV VectorV
- ------   -----  ------  -------  -----  ------ -------  ------ -------
-     21      10       3     1000   1010      21    1010    1010    1010  //  24, 27, 30
-```
+| Ops                 | Linear    | Direct   | Result      |
+| :--                 | :--:      | :--:     | :--         |
+| dropR 77, x=>(x, x) | 79 <= 100 | 2 <= 100 | [ 1, 1, 2 ] |
 
-The "basis sequence" defines the initial contents of each sequence (Linear, Sized, etc. explained below.)
-Each test output line begins with a list of operations to be performed successively on each sequence type,
-with ```<xs>``` standing in for the initial sequence. In this case the operations are to multiply each element by 3,
-drop 11 elements from the right, and slice indices [7, 41) from what remains. Finally we take three elements
-(if available, or whatever remains) from the front of the sequence and display it at the end of the line.
+A scala collection and a comparable psp collection apply the same operations
+to the sequence 1..100 and the executed steps are counted and compared. The
+line shown above shows an example: dropRight 77 followed by a flatMap
+duplicating each element. In both cases scala gets the "maximum score" by
+walking every element in the original collection. In psp the minimum is walked
+in each case.
 
-```
-// In other words
-1 to 1000 map (_ * 3) dropRight 11 slice (7, 41) take 3 mkString ", "
-```
+The tests fail if there is any disagreement as to the result sequence among {
+psp, scala } x { linear, direct }, or if any psp collection ever requires more
+operations than the corresponding scala collection.
 
-All the sequence varieties, ours and scala, must arrive at the same answer or it is printed
-with angry exclamation points to indicate there is a bug somewhere.
+**Linear** is a sequential access sequence, similar to scala's List. Due to
+that access pattern, if elements must be taken from the right side of the list
+it will fare as poorly as an eager collection. This operation requires 79
+steps despite taking from the left because it must walk enough of the stream
+to establish that the elements are present. (If the list contained 77
+elements, then the final result would be empty, but this can't be known
+without walking those 77 elements.)
 
-- **Linear** is a sequential access sequence, similar to scala's List. Due to that access pattern,
-if elements must be taken from the right side of the list it will fare as poorly as an eager
-collection. This operation requires 21 steps because it must walk enough of the stream to
-establish that the dropRight 11 had no effect on the slice. The elements it needs are within
-the first 10, but it must traverse 10 + 11 before this fact is known.
-
-- **Sized** is Linear but with an additional wrapper containing its precise size. This sometimes
-allows work to be avoided, as it does here. Sized required 11 fewer steps than Linear,
-because with knowledge that the sequence contains 1000 elements, it can infer that dropRight 11
-followed by slice(7, 41) is the same as slice(7, 41), and ignore the drop.
-
-- **Direct** is a random access sequence, similar to scala's Vector or an Array. It should never
-require more steps than Sized; it will often require many fewer. In this case, as is common,
-it requires exactly three, which means it is optimal in terms of operations performed. This is
-possible because psp's map is deterministic - the input collection and output collection must
-have the same size - and dropRight and slice have a deterministic effect on the result's indices.
-The dropRight is safely ignored and after slice, the first three elements are indices 7, 8, 9.
-In the original sequence those indices contains the numbers 8, 9, 10, but as that sequence was
-mapped 3x the final result is 24, 27, 30.
-
-- **&lt;EAGER&gt;** is scala's List, but it could be any scala collection other than Stream.
-It will always be 1000 because scala will traverse the original 1000 elements one time
-in the course of making its first eager collection, and then it will never consult the
-original collection again.
-
-- **Stream** is scala's Stream, and **StreamV**, **RangeV**, and **VectorV** are the scala
-views of those collections. In this case the only one to avoid traversing the entire sequence
-and then some is Stream, which performs the same amount of work as does Linear.
+**Direct** is a random access sequence, similar to scala's Vector or an Array.
+In this case it doesn't even require three steps to obtain three elements;
+zero are required for dropRight because the size is known, and only two must
+be traversed to obtain the elements because the first flatMap produces two.
 
 Performance
 ===========
 
-As dramatic as the test result numbers are, they severely understate the difference.
-Since we only count steps which take place on the original collection, we count
-all of ours but only a portion of theirs. In particular the column <EAGER> which
-represents a scala eager collection should say 3000, not 1000, because 1000 steps
-are performed on three different collections.
+As dramatic as the results of a test run are, they severely understate the
+difference. Since we only count operations against the original collection, we
+count all of ours but only a portion of theirs. The difference seen here is a
+lower bound on the total difference, which is much higher and includes not
+only unnecessary computation but significant levels of unnecessary allocation.
 
-Unnecessary allocations damage performance even more than the unnecessary work,
-and this too is not shown in these statistics. Scala's eager approach creates full-sized
-intermediate collections which are often immediately discarded. Here's an example of
-what that can mean in practice.
+Here's an example of what that can mean in practice.
 ```
 scala> val xs = (1 to 1e7.toInt).toArray
 xs: Array[Int] = Array(1, 2, 3, 4, 5, 6, 7, 8, 9, ...)
