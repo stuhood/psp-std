@@ -12,7 +12,7 @@ trait DirectViewOps[A, Repr] extends Any {
   def sorted(implicit ord: Order[A]): MapTo = {
     val arr: Array[Object] = xs.castTo[View[Object]].toArray
     java.util.Arrays.sort(arr, ord.toScalaOrdering.castTo[Ordering[Object]])
-    new DirectView(Direct wrapArray[A] arr)
+    new DirectView(Direct.wrapArray[A](arr))
   }
   def sortByShow(implicit z: Show[A]): MapTo              = sortBy(_.to_s)
   def sortBy[B](f: A => B)(implicit ord: Order[B]): MapTo = sorted(orderBy[A](f))
