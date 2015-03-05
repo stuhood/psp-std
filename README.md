@@ -10,7 +10,9 @@ Background
 
 The scala standard library is deficient in many ways. This library is an
 attempt to rebuild it with some attention given to consistency, performance,
-and correctness. See [views](views.md) for some details.
+and correctness. See [views](doc/views.md) for some details.
+
+See [overview](doc/overview.md) for the project layout.
 
 Usage
 -----
@@ -34,4 +36,4 @@ res0: Boolean = true
 Requirements
 ------------
 
-scala 2.10+, java 7+.
+scala 2.11, java 7+.
