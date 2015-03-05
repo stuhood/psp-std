@@ -8,13 +8,25 @@ import scala.Int
 import scala.Long
 import java.lang.String
 
-/** The classic type class for encoding value equivalence.
+/** The classic type classes for encoding value equivalence and hash codes.
  */
-trait Eq[-A] extends Any { def equiv(x: A, y: A): Boolean }
+trait Eq[-A]     extends Any                         { def equiv(x: A, y: A): Boolean }
+trait Hash[-A]   extends Any                         { def hash(x: A): Int            }
+trait HashEq[-A] extends Any with Hash[A] with Eq[A]
 
 /** The classic type class for turning string representations into typed values.
  */
 trait Read[A] extends Any { def read(x: String): A }
+
+/** The classic type class for turning typed values into string representations.
+ */
+trait Show[-A] extends Any { def show(x: A): String }
+
+/** The original type class for providing the "empty" value of a particular type.
+ *  Suitable only for types with a unique (useful) definition of empty - but that's
+ *  a whole lot of types.
+ */
+trait Empty[+A] extends Any { def empty: A }
 
 /** The collections builder type class. Not especially classic in this presentation.
  */
