@@ -36,13 +36,6 @@ object ExMap {
     def size: Precise                         = keyVector.size
     def values: View[V]                       = keys map (x => lookup(x))
     def valuesIterator: scIterator[V]         = keysIterator map (x => lookup(x))
-
-    def merge(that: This)(implicit z: Sums[V]): This = that.domain.foldl(this)((res, key) =>
-      if (res contains key)
-        res + (key, z.sum(res(key), that(key)))
-      else
-        res + (key, that(key))
-    )
   }
 }
 object InMap {

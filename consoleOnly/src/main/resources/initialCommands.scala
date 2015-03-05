@@ -1,7 +1,7 @@
 import scala.collection.{ mutable => scm, immutable => sci }
 import java.nio.{ file => jnf }
 import psp._, std._, api._, ansi._, pio._, scalac._, jvm._, cache._
-import StdEq._, StdShow._, StdZero._, StdMonoid._
+import StdEq._, StdShow._
 import psp.std.repl.ReplImport._
 
 def flongs = Indexed from 0L map (n => printResult(s"> $n")(n))

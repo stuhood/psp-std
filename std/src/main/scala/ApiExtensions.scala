@@ -4,7 +4,6 @@ package ops
 
 import api._
 import Doc._
-import StdZero._
 
 trait DocStringOps extends Any {
   def self: String

@@ -33,7 +33,7 @@ object Build extends sbt.Build {
              licenses :=  pspLicenses,
          organization :=  pspOrg,
         scalacOptions ++= scalacOptionsFor(scalaBinaryVersion.value) ++ stdArgs,
-            maxErrors :=  5,
+            maxErrors :=  10,
      triggeredMessage :=  Watched.clearWhenTriggered,
     publishMavenStyle :=  true
   ) ++ (

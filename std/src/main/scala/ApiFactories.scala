@@ -42,30 +42,7 @@ object Builds {
   }
 }
 
-object Zero {
-  def apply[A](zero: A): Impl[A] = new Impl[A](zero)
-  final class Impl[A](val zero: A) extends AnyVal with Zero[A] {
-    def isZero(x: A): Boolean = zero == x
-  }
-}
-
 object Empty {
   def apply[A](empty: A): Impl[A] = new Impl[A](empty)
   final class Impl[A](val empty: A) extends AnyVal with Empty[A]
-}
-
-object Sums {
-  final class Impl[A](f: BinOp[A], z: Zero[A]) extends Sums[A] {
-    def zero: A = z.zero
-    def sum(x: A, y: A): A = f(x, y)
-  }
-  def apply[A](f: BinOp[A])(implicit z: Zero[A]): Sums[A] = new Impl(f, z)
-}
-
-object Products {
-  final class Impl[A](f: BinOp[A], z: Zero[A]) extends Products[A] {
-    def one: A = z.zero // That's right, one equals zero.
-    def product(x: A, y: A): A = f(x, y)
-  }
-  def apply[A](f: BinOp[A])(implicit z: Zero[A]): Products[A] = new Impl(f, z)
 }

@@ -3,7 +3,6 @@ package std
 
 import com.google.common.{ cache => guava }
 import guava.ForwardingLoadingCache.SimpleForwardingLoadingCache
-import StdZero._
 
 package cache {
   object Removal {
