@@ -1,7 +1,7 @@
 package psp
-package std
+package impl
 
-import api._, StdEq._
+import api._, std._, StdEq._
 
 object Size {
   val Empty    = 0.size
@@ -75,80 +75,5 @@ object Size {
     case (Bounded(l1, h1), Infinite)        => api.Size(l1, Infinite)
     case (Bounded(l1, h1), h2: Precise)     => api.Size(l1, h2)
     case (Bounded(l1, h1), Bounded(l2, h2)) => api.Size(l1, h2)
-  }
-
-  final class Ops(val lhs: Size) extends AnyVal {
-    def isNonZero    = !loBound.isZero
-    def isZero       = lhs match {
-      case Precise(0L) => true
-      case _           => false
-    }
-    def isFinite         = lhs.hiBound !== Infinite
-    def atLeast: Size    = bounded(lhs, Infinite)
-    def atMost: Size     = bounded(Empty, lhs)
-    def upTo(hi: Atomic) = bounded(lhs, hi)
-    def hiBound: Atomic = lhs match {
-      case Bounded(_, hi) => hi
-      case x: Atomic      => x
-    }
-    def loBound: Atomic = lhs match {
-      case Bounded(lo, _) => lo
-      case x: Atomic      => x
-    }
-
-    def mapAtomic(f: Precise => Precise, g: Atomic => Atomic): Size = lhs match {
-      case x: Atomic       => g(x)
-      case Bounded(lo, hi) => bounded(f(lo), g(hi))
-    }
-
-    def slice(range: IndexRange): Size = (this - range.toDrop) min range.toTake
-
-    /** For instance taking the union of two sets. The new size is
-     *  at least the size of the larger operand, but at most the sum
-     *  of the two sizes.
-     */
-    def union(rhs: Size): Size     = bounded(lhs max rhs, lhs + rhs)
-    def intersect(rhs: Size): Size = bounded(0.size, lhs min rhs)
-    def diff(rhs: Size): Size      = bounded(lhs - rhs, lhs)
-
-    def * (m: Long): Size = lhs match {
-      case Precise(n)                        => n * m size
-      case Bounded(Precise(lo), Precise(hi)) => bounded(lo * m size, hi * m size)
-      case Bounded(Precise(lo), Infinite)    => if (m == 0L) unknown else bounded(lo * m size, Infinite)
-      case Infinite                          => if (m == 0L) unknown else Infinite
-    }
-    def * (rhs: Size): Size = lhs match {
-      case Precise(n)                        => this * n
-      case Bounded(Precise(lo), Precise(hi)) => bounded(rhs * lo, rhs * hi)
-      case Bounded(Precise(lo), Infinite)    => if (rhs.isZero) unknown else bounded(rhs * lo, Infinite)
-      case Infinite                          => if (rhs.isZero) unknown else Infinite
-    }
-
-    def + (rhs: Size): Size = (lhs, rhs) match {
-      case (Infinite, _) | (_, Infinite)            => Infinite
-      case (Precise(l), Precise(r))                 => l + r size
-      case (GenBounded(l1, h1), GenBounded(l2, h2)) => bounded(l1 + l2, h1 + h2)
-    }
-    def - (rhs: Size): Size = (lhs, rhs) match {
-      case (Precise(l), Precise(r))         => l - r size
-      case (Infinite, Finite(_, _))         => Infinite
-      case (Finite(_, _), Infinite)         => Empty
-      case (Finite(l1, h1), Finite(l2, h2)) => bounded(l1 - h2, h1 - l2)
-      case (Bounded(l1, h1), rhs: Precise)  => bounded(l1 - rhs, h1 - rhs)
-      case _                                => unknown
-    }
-
-    def min(rhs: Size): Size = (lhs, rhs) match {
-      case (Infinite, _)                            => rhs
-      case (_, Infinite)                            => lhs
-      case (Precise(x), Precise(y))                 => if (x <= y) lhs else rhs
-      case (GenBounded(l1, h1), GenBounded(l2, h2)) => bounded(l1 min l2, h1 min h2)
-    }
-    def max(rhs: Size): Size = (lhs, rhs) match {
-      case (Infinite, _)                            => Infinite
-      case (_, Infinite)                            => Infinite
-      case (Precise(x), Precise(y))                 => if (x >= y) lhs else rhs
-      case (GenBounded(l1, h1), GenBounded(l2, h2)) => bounded(l1 max l2, h1 max h2)
-    }
   }
 }

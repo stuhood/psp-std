@@ -16,7 +16,7 @@ object Linear {
     def ::(x: A): This = WrapStream(sciStream.cons(x, xs))
 
     def isEmpty                 = xs.isEmpty
-    def size: Size              = if (isEmpty) Size.Empty else Size.NonEmpty
+    def size: Size              = impl.Size(xs)
     def head: A                 = xs.head
     def tail: WrapStream[A]     = WrapStream(xs.tail)
 
@@ -28,7 +28,7 @@ object Linear {
     def ::(x: A): This = WrapList(x :: xs)
 
     def isEmpty           = xs.isEmpty
-    def size: Size        = if (isEmpty) Size.Empty else Size.NonEmpty
+    def size: Size        = impl.Size(xs)
     def head: A           = xs.head
     def tail: WrapList[A] = WrapList(xs.tail)
     @inline def foreach(f: A => Unit): Unit = xs foreach f

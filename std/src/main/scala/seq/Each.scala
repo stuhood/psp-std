@@ -11,11 +11,11 @@ object Each {
   def builder[A] : Builds[A, Each[A]] = Builds(identity)
 
   final case class WrapJava[A](xs: jIterable[A]) extends AnyVal with Each[A] {
-    def size = Size(xs)
+    def size = impl.Size(xs)
     @inline def foreach(f: A => Unit): Unit = xs.iterator foreach f
   }
   final case class WrapScala[A](xs: sCollection[A]) extends AnyVal with Each[A] {
-    def size = Size(xs)
+    def size = impl.Size(xs)
     @inline def foreach(f: A => Unit): Unit = xs foreach f
   }
   /** We have to produce a scala Seq in order to return from an extractor.
@@ -77,7 +77,7 @@ object Each {
 
   def indices: Indexed[Index] = Indexed.indices
 
-  def apply[A](mf: Suspended[A]): Each[A]                       = new Impl[A](Size.unknown, mf)
+  def apply[A](mf: Suspended[A]): Each[A]                       = new Impl[A](impl.Size.Unknown, mf)
   def const[A](elem: A): Constant[A]                            = Constant[A](elem)
   def continuallyWhile[A](p: Predicate[A])(expr: => A): Each[A] = continually(expr) takeWhile p
   def continually[A](elem: => A): Continually[A]                = Continually[A](() => elem)

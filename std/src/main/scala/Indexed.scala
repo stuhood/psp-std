@@ -14,7 +14,7 @@ object Indexed {
   def from(start: Long): Indexed[Long]     = Pure(i => start + i.get)
 
   final case class Pure[A](f: Index => A) extends AnyVal with Indexed[A] {
-    def size                                = Size.Unknown
+    def size                                = impl.Size.Unknown
     def isEmpty                             = false
     def elemAt(i: Index): A                 = f(i)
     @inline def foreach(f: A => Unit): Unit = {

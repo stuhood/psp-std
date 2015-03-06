@@ -62,7 +62,7 @@ abstract class StdPackage
     def seq: Direct[A] = Direct(x._1, x._2)
   }
   implicit class IsEmptyOps(val lhs: IsEmpty) {
-    def emptyOrNonEmpty: Size = if (lhs.isEmpty) Size.Empty else Size.NonEmpty
+    def emptyOrNonEmpty: Size = if (lhs.isEmpty) impl.Size.Empty else impl.Size.NonEmpty
   }
   implicit class AnyTargetSeqOps[A: HashEq](root: A) {
     def transitiveDepth(maxDepth: Int, expand: A => Each[A]): Each[A] = {
@@ -99,4 +99,5 @@ abstract class StdPackage
 
   implicit def conforms[A] : (A <:< A) = new conformance[A]
 }
+
 

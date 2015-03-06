@@ -1,7 +1,7 @@
 package psp
 package dev
 
-import std._
+import api._, std._
 import com.squareup.{ okhttp => ok }
 
 final class Url(val url: String) extends AnyVal {
@@ -15,5 +15,3 @@ final class Url(val url: String) extends AnyVal {
   def contentType(): ok.MediaType = doGet.contentType
   def size(): api.Size            = Size(doGet.contentLength)
 }
-
-
