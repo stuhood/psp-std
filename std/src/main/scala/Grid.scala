@@ -11,7 +11,7 @@ final case class FunctionGrid[A, B](values: View[A], functions: View[A => B]) {
     val rowFormat = widths map (_.size.leftFormatString) mkString " "
     rows map (row => rowFormat.format(row.seq: _*))
   }
-  def render(implicit z: Show[B]): String = renderLines.joinLines.render
+  def render(implicit z: Show[B]): String = renderLines.joinLines
 }
 
 object Grid {

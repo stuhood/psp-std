@@ -67,7 +67,7 @@ package object jvm extends psp.std.jvm.StdClasses {
 
   implicit def showPoolEntry: Show[PoolEntry]           = Show(_.content)
   implicit def showInnerClassInfo: Show[InnerClassInfo] = Show(_.nestString)
-  implicit def jTypeSeqShow: Show[scSeq[jType]]         = Show(_.m.inParens.render)
+  implicit def jTypeSeqShow: Show[scSeq[jType]]         = Show(_.m.inParens)
   implicit def jTypeShow: Show[jType]                   = Show(_.scalaString)
   implicit def jMethodShow: Show[jMethod]               = Show(_.scalaString)
 

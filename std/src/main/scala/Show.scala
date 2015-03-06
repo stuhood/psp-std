@@ -68,7 +68,6 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
   def show(args: Shown*): String  = StringContext(stringContext.parts: _*).raw(args: _*)
   def pp(args: TryShown*): String = StringContext(stringContext.parts: _*).raw(args: _*)
   def shown(args: Shown*): Shown  = Shown(show(args: _*))
-  def doc(args: Doc*): Doc        = stringContext.parts.m.map(_.asis) intersperse args.m joinChars
 
   /** Can't see any way to reuse the standard (type-safe) f-interpolator, will
    *  apparently have to reimplement it entirely.

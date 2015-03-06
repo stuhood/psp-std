@@ -91,7 +91,7 @@ abstract class StdPackage
   }
 
   implicit def booleanToPredicate(value: Boolean): Predicate[Any] = if (value) ConstantTrue else ConstantFalse
-  implicit def jClassToPolicyClass(x: jClass): PolicyClass        = new PolicyClass(x)
+  implicit def jClassToJavaClass(x: jClass): JavaClass        = new JavaClass(x)
   implicit def intToPreciseSize(n: Int): IntSize                  = Precise(n)
   implicit def convertNilSeq[A](x: scala.Nil.type): Direct[A]     = Direct[A]()
 

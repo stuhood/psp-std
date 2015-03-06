@@ -73,7 +73,7 @@ trait jTypeAndClassOps extends Any {
   def scalaString = refString
   def defString: String = declaration match {
     case jTypeParam(name, lower, scSeq()) => name
-    case jTypeParam(name, lower, upper)   => show"$name <: ${upper.m.joinParents.render}"
+    case jTypeParam(name, lower, upper)   => show"$name <: ${upper.m.joinParents}"
     case _                                => refString
   }
   def refString: String = declaration match {
@@ -81,14 +81,14 @@ trait jTypeAndClassOps extends Any {
     case jAliased(alias)               => alias
     case jTypeParam(name, _, _)        => name
     case jTypeArg(Nil, Nil)            => "_"
-    case jTypeArg(lower, Nil)          => show"_ >: ${lower.m.joinParents.render}"
-    case jTypeArg(Nil, upper)          => show"_ <: ${upper.m.joinParents.render}"
-    case jTypeArg(lower, upper)        => show"_ >: ${lower.m.joinParents.render} <: ${upper.m.joinParents.render}"
+    case jTypeArg(lower, Nil)          => show"_ >: ${lower.m.joinParents}"
+    case jTypeArg(Nil, upper)          => show"_ <: ${upper.m.joinParents}"
+    case jTypeArg(lower, upper)        => show"_ >: ${lower.m.joinParents} <: ${upper.m.joinParents}"
     case jInfixType(lhs, name, rhs)    => show"$lhs $name $rhs"
     case sPartialFunction(scSeq(t, r)) => show"$t ?=> $r"
     case sFunction(scSeq(p) :+ last)   => show"$p => $last"
-    case sFunction(init :+ last)       => init.m.inParens <> " => " <> last.to_s render // show"$init => $last"
-    case sTuple(xs)                    => xs.m.inParens.render
+    case sFunction(init :+ last)       => init.m.inParens ~ " => " ~ last.to_s
+    case sTuple(xs)                    => xs.m.inParens
     case jAppliedArray(elem)           => show"Array[$elem]"
     case jApplied(tcon, Nil)           => show"$tcon"
     case jApplied(tcon, args)          => show"$tcon[${args mk_s ", "}]"
