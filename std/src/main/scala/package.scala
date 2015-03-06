@@ -74,7 +74,7 @@ package object std extends psp.std.StdPackage {
   final val ConstantTrue  = (x: Any) => true
   final val ConstantFalse = (x: Any) => false
   final val CTag          = scala.reflect.ClassTag
-  final val EOL           = sys.props.getOrElse("line.separator", "\n")
+  final val EOL           = sysprop.lineSeparator
   final val NoFile: jFile = jFile("")
   final val NoPath: Path  = path("")
   final val NoUri: jUri   = jUri("")
@@ -194,12 +194,4 @@ package object std extends psp.std.StdPackage {
   def newCmp(difference: Long): Cmp                         = if (difference < 0) Cmp.LT else if (difference > 0) Cmp.GT else Cmp.EQ
   def newArray[A: CTag](size: Precise): Array[A]            = new Array[A](size.intSize)
   def newSize(n: Long): Precise                             = if (n < 0) Precise(0) else if (n > MaxInt) Precise(n) else Precise(n.toInt)
-
-  object repl {
-    def show(arg: TryShown, maxElements: Int): String = {
-      val s = arg.try_s
-      val nl = if (s contains "\n") "\n" else ""
-      nl + s + "\n"
-    }
-  }
 }
