@@ -82,7 +82,7 @@ object Build extends sbt.Build {
   lazy val pio    = project setup "psp's non-standard io library" dependsOn std
   lazy val jvm    = project.usesCompiler.usesParsers setup "psp's non-standard jvm code" dependsOn pio
   lazy val dev    = project setup "psp's non-standard unstable code" dependsOn std also (javaSysMon, squants, okhttp)
-  lazy val scalac = project.usesCompiler setup "psp's non-standard scalac-requiring code" dependsOn pio
+  lazy val scalac = project.usesCompiler setup "psp's non-standard scalac-requiring code" dependsOn (pio, dev)
 
   lazy val publishOnly = project.helper.noSources aggregate (api, dmz, std, pio)
   lazy val compileOnly = project.helper.noSources aggregate (projectRefs: _*)
