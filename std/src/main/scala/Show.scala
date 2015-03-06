@@ -107,7 +107,7 @@ object ShowCollections {
     private def internalEach[A: Show](xs: Each[A]): String = Each.show[A](xs, minElements, maxElements)
 
     def showEach[A: Show](xs: Each[A]): String = xs match {
-      case xs: InSet[A] => showSet(xs)
+      case xs: InSet[_] => showSet(xs.castTo[InSet[A]]) // not matching on InSet[A] due to lame patmat warning
       case _            => "[ " ~ internalEach[A](xs) ~ " ]"
     }
     def showMap[K: Show, V: Show](xs: InMap[K, V]): String = xs match {

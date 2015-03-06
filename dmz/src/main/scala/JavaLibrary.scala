@@ -5,6 +5,7 @@ import scala._
 import scala.annotation.unchecked.{ uncheckedVariance => uV }
 import java.nio.{ file => jnf }
 import jnf.{ attribute => jnfa }
+import java.{ lang => jl }
 import java.lang.String
 
 object DmzAliases extends JavaLibrary with ScalaLibrary
@@ -31,6 +32,16 @@ trait JavaLibrary extends Any {
   def utf8Charset: Charset            = java.nio.charset.Charset forName "UTF-8"
   def threadSleep(ms: Long): Unit     = java.lang.Thread.sleep(ms)
   def threadYield(): Unit             = java.lang.Thread.`yield`
+
+  // Java lang wrappers.
+  type jlBool   = jl.Boolean
+  type jlByte   = jl.Byte
+  type jlChar   = jl.Character
+  type jlDouble = jl.Double
+  type jlFloat  = jl.Float
+  type jlInt    = jl.Integer
+  type jlLong   = jl.Long
+  type jlShort  = jl.Short
 
   // Exceptions and Throwables.
   type AssertionError                = java.lang.AssertionError

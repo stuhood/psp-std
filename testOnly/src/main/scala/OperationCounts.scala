@@ -66,7 +66,8 @@ class OperationCounts extends ScalacheckBundle {
 
   implicit def arbComposite: Arbitrary[CompositeOp] = Arbitrary(composite)
 
-  final case class CompositeOp(ops: Direct[ViewClass.Op]) {
+  // final, but this creates an (unsuppressable?) unchecked warning about the outer reference.
+  case class CompositeOp(ops: Direct[ViewClass.Op]) {
     lazy val Each(usLinear, themLinear, usDirect, themDirect) = outcomes
 
     lazy val viewOp: ViewClass.Op               = xs => ops.foldl(xs)((res, f) => f(res))

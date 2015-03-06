@@ -3,7 +3,7 @@ package std
 package ops
 
 import java.{ lang => jl }
-import api._, StdShow._
+import api._
 import lowlevel._
 
 final object UnitOps {

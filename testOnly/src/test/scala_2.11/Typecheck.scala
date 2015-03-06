@@ -20,6 +20,7 @@ class Typecheck extends ScalacheckBundle {
     // These two definitions are here to shadow implicits
     val opsDirectString = null
     val directStringIs = null
+    identity(opsDirectString) ; identity(directStringIs) // suppress "never used" warnings
     // This import is actually used in the test below
     import scala.Predef._
     divide("scala-library", typecheckedLines(scalaLibraryCode), expectedTypecheck = 24)

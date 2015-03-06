@@ -6,7 +6,7 @@ import sbt._, Keys._, psp.libsbt._, Deps._
 import psp.std._
 
 object Build extends sbt.Build {
-  def commonArgs = wordSeq("-Yno-predef -Yno-adapted-args")
+  def commonArgs = wordSeq("-Yno-predef -Yno-adapted-args -unchecked")
   def stdArgs    = "-Yno-imports" +: commonArgs
   def replArgs   = "-language:_" +: commonArgs
 
