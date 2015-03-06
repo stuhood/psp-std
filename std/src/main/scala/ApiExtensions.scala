@@ -71,12 +71,12 @@ trait HasPreciseSizeMethods extends Any {
   def isZero: Boolean     = longSize == 0L
   def isPositive: Boolean = longSize > 0L
   def indices: IndexRange = indexRange(0, intSize)
-  def nths: Direct[Nth]   = indices map (_.toNth)
+  def nths: Direct[Nth]   = indices mapNow (_.toNth)
   def lastIndex: Index    = Index(longSize - 1)  // effectively maps both undefined and zero to no index.
   def lastNth: Nth        = lastIndex.toNth
 
   def containsIndex(index: Index): Boolean            = indices contains index
-  @inline def mapIndices[A](f: Index => A): Direct[A] = indices map f force
+  @inline def mapIndices[A](f: Index => A): Direct[A] = indices mapNow f
   @inline def foreachIndex(f: Index => Unit): Unit    = indices foreach f
   @inline def foreachNth(f: Nth => Unit): Unit        = indices foreach (i => f(i.toNth))
 }

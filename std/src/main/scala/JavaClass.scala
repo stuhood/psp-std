@@ -24,23 +24,23 @@ final class JavaClass(val clazz: jClass) extends AnyVal with ForceShowDirect {
   def isPrimitive      = clazz.isPrimitive
   def isSynthetic      = clazz.isSynthetic
 
-  def ancestorNames: Direct[String]         = ancestors map (_.rawName)
+  def ancestorNames: Direct[String]         = ancestors mapNow (_.rawName)
   def ancestors: Direct[JavaClass]          = this transitiveClosure (_.parents) toDirect
   def exists: Boolean                       = clazz != null
   def fields: Direct[jField]                = clazz.getFields.toDirect
   def getCanonicalName: String              = clazz.getCanonicalName
   def getClassLoader: ClassLoader           = clazz.getClassLoader
-  def getClasses: Direct[JavaClass]         = clazz.getClasses.toDirect map toPolicy
+  def getClasses: Direct[JavaClass]         = clazz.getClasses.toDirect mapNow toPolicy
   def getComponentType: JavaClass           = clazz.getComponentType
-  def getDeclaredClasses: Direct[JavaClass] = clazz.getDeclaredClasses.toDirect map toPolicy
+  def getDeclaredClasses: Direct[JavaClass] = clazz.getDeclaredClasses.toDirect mapNow toPolicy
   def getDeclaringClass: JavaClass          = clazz.getDeclaringClass
   def getEnclosingClass: JavaClass          = clazz.getEnclosingClass
-  def getInterfaces: Direct[JavaClass]      = clazz.getInterfaces.toDirect map toPolicy
+  def getInterfaces: Direct[JavaClass]      = clazz.getInterfaces.toDirect mapNow toPolicy
   def getSuperclass: Option[JavaClass]      = Option(clazz.getSuperclass) map toPolicy
   def hasModuleName: Boolean                = rawName endsWith "$"
   def methods: Direct[jMethod]              = clazz.getMethods.toDirect
   def nameSegments: Direct[String]          = rawName.dottedSegments
-  def parentInterfaces: Direct[JavaClass]   = clazz.getInterfaces.toDirect map toPolicy
+  def parentInterfaces: Direct[JavaClass]   = clazz.getInterfaces.toDirect mapNow toPolicy
   def parents: Direct[JavaClass]            = getSuperclass.toDirect ++ parentInterfaces
   def qualifiedName: String                 = rawName.mapSplit('.')(decodeName)
   def rawName: String                       = clazz.getName

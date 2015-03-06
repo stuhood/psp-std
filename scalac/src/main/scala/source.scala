@@ -7,12 +7,12 @@ import api._, pio._, StdShow._, StdEq._, ansi._
 final case class Source(content: Array[Char], analysis: TokenAnalysis) {
   val newlineIndices: Direct[Index] = content indicesOf '\n'
 
-  lazy val lineStartIndices: Direct[Index]     = 0.index +: newlineIndices.map(_.next) filter content.containsIndex
-  lazy val lineStartOffsets: Direct[Offset]    = lineStartIndices map (_.toOffset)
-  lazy val lineVector: Direct[String]          = lineStartOffsets map lineFrom
-  lazy val numberedLines: Direct[NumberedLine] = lineVector.nths map numberedLine
-  lazy val anonymizedText: String              = numberedLines.map(_.anonymous_s).joinLines ~ "\n"
-  lazy val numberedText: String                = numberedLines.map(_.numbered_s).joinLines ~ "\n"
+  lazy val lineStartIndices: Direct[Index]     = 0.index +: newlineIndices.mapNow(_.next) filter content.containsIndex
+  lazy val lineStartOffsets: Direct[Offset]    = lineStartIndices mapNow (_.toOffset)
+  lazy val lineVector: Direct[String]          = lineStartOffsets mapNow lineFrom
+  lazy val numberedLines: Direct[NumberedLine] = lineVector.nths mapNow numberedLine
+  lazy val anonymizedText: String              = numberedLines.mapNow(_.anonymous_s).joinLines ~ "\n"
+  lazy val numberedText: String                = numberedLines.mapNow(_.numbered_s).joinLines ~ "\n"
 
   private def numberedLine(n: Nth)             = new NumberedLine(n, lineStartOffsets(n.toIndex), lineVector(n.toIndex), analysis.tokens filter (_.line == n))
   private def lineFrom(offset: Offset): String = content drop offset.toSize takeWhile (_ != '\n') force
@@ -38,7 +38,7 @@ final case class NumberedLine(line: Nth, offset: Offset, lineText: String, token
     case "." | "," | ":" | "]" | ")" => true
     case _                           => sciList("[", "(", ".") exists x.raw.endsWith
   }
-  def tokenString: ColorString = tokens map shownType zreduce ((x, y) => if (noSpace(x, y)) x <> y else x <+> y)
+  def tokenString: ColorString = tokens mapNow shownType zreduce ((x, y) => if (noSpace(x, y)) x <> y else x <+> y)
   def leadingSpace             = lineText takeWhile (_.isWhitespace) build
   def anonymous_s              = "%4s  %6s  %s%s".format(line.nthValue, offset.offsetValue, leadingSpace, tokenString.colorized)
   def numbered_s               = "%4s  %6s  %s".format(line.nthValue, offset.offsetValue, lineText)

@@ -70,7 +70,7 @@ final class CharOps(val ch: Char) extends AnyVal {
   def isControl                   = jl.Character isISOControl ch
   def isLetter                    = jl.Character isLetter ch
   def getType                     = jl.Character getType ch
-  def to(end: Char): Direct[Char] = ch.toInt to end.toInt map (_.toChar)
+  def to(end: Char): Direct[Char] = ch.toInt to end.toInt mapNow (_.toChar)
 }
 
 final class BooleanOps(val self: Boolean) extends AnyVal {

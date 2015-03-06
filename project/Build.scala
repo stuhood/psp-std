@@ -15,12 +15,18 @@ object Build extends sbt.Build {
   def classpathDeps                    = convertSeq(subprojects): List[ClasspathDep[ProjectReference]]
   def projectRefs                      = convertSeq(subprojects): List[ProjectReference]
 
+  def parserDep = Def setting {
+    scalaBinaryVersion.value match {
+      case "2.10" => Seq()
+      case _      => Seq(scalaParsers)
+    }
+  }
   implicit class ProjectOps(val p: Project) {
     def setup(): Project             = p.alsoToolsJar also commonSettings(p) also (name := "psp-" + p.id)
     def setup(text: String): Project = setup() also (description := text)
     def usesCompiler                 = p settings (libraryDependencies += Deps.scalaCompiler.value)
     def usesReflect                  = p settings (libraryDependencies += Deps.scalaReflect.value)
-    def usesParsers                  = p settings (libraryDependencies += scalaParsers)
+    def usesParsers                  = p settings (libraryDependencies ++= parserDep.value)
     def helper(): Project            = p.noArtifacts setup "helper project" dependsOn (classpathDeps: _*)
     def noSources                    = p in file("target/helper/" + p.id)
   }
