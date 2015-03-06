@@ -8,65 +8,6 @@ import psp.api._
 import psp.std.lowlevel._
 import psp.std.StdShow._
 
-package std {
-  trait ShowCollections {
-    def showEach[A: Show](xs: Each[A]): String
-    def showMap[K: Show, V: Show](xs: InMap[K, V]): String
-    def showSet[A: Show](xs: InSet[A]): String
-    def showJava[A: Show](xs: jIterable[A]): String
-    def showScala[A: Show](xs: sCollection[A]): String
-  }
-  object ShowCollections {
-    implicit object DefaultShowCollections extends DefaultShowCollections
-
-    class DefaultShowCollections extends ShowCollections {
-      def maxElements: Precise = 10
-      def minElements: Precise = 3
-
-      private def internalEach[A: Show](xs: Each[A]): String = Each.show[A](xs, minElements, maxElements)
-
-      def showEach[A: Show](xs: Each[A]): String = xs match {
-        case xs: InSet[A] => showSet(xs)
-        case _            => "[ " ~ internalEach[A](xs) ~ " ]"
-      }
-      def showMap[K: Show, V: Show](xs: InMap[K, V]): String = xs match {
-        case xs: ExMap[K, V] => xs.entries.tabular(x => fst(x).to_s, _ => "->", x => snd(x).to_s)
-        case xs              => s"$xs"
-      }
-      def showSet[A: Show](xs: InSet[A]): String = xs match {
-        case xs: ExSet[A] => "{ " ~ internalEach[A](xs) ~ " }"
-        case _            => InSet show xs
-      }
-      def showJava[A: Show](xs: jIterable[A]): String    = "j[ " ~ internalEach(Each fromJava xs) ~ " ]"
-      def showScala[A: Show](xs: sCollection[A]): String = "s[ " ~ internalEach(Each fromScala xs) ~ " ]"
-    }
-  }
-
-  trait Assertions {
-    def failed(msg: => String): Unit
-    def assert(assertion: Boolean, msg: => String): Unit = if (!assertion) failed(msg)
-  }
-  object Assertions {
-    private[this] var instance: Assertions = DefaultAssertions
-    def using[A](x: Assertions)(assertion: => Boolean, msg: => String): Unit = {
-      val saved = instance
-      instance = x
-      try instance.assert(assertion, msg) finally instance = saved
-    }
-    implicit object DefaultAssertions extends Assertions {
-      def failed(msg: => String): Unit = assertionError(msg)
-    }
-  }
-
-  object ImmediateTraceAssertions extends Assertions {
-    def failed(msg: => String): Unit = {
-      val t = new AssertionError(msg)
-      t.printStackTrace
-      throw t
-    }
-  }
-}
-
 package object std extends psp.std.StdPackage {
   type DocSeq            = Each[Doc]
 
@@ -253,4 +194,12 @@ package object std extends psp.std.StdPackage {
   def newCmp(difference: Long): Cmp                         = if (difference < 0) Cmp.LT else if (difference > 0) Cmp.GT else Cmp.EQ
   def newArray[A: CTag](size: Precise): Array[A]            = new Array[A](size.intSize)
   def newSize(n: Long): Precise                             = if (n < 0) Precise(0) else if (n > MaxInt) Precise(n) else Precise(n.toInt)
+
+  object repl {
+    def show(arg: TryShown, maxElements: Int): String = {
+      val s = arg.try_s
+      val nl = if (s contains "\n") "\n" else ""
+      nl + s + "\n"
+    }
+  }
 }

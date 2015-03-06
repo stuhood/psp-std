@@ -3,6 +3,7 @@ package std
 
 import api._
 import StdEq.stringEq
+import psp.std.scalac.token.Keyword
 
 final class Label(val label: String) extends AnyVal {
   def matches(r: Regex)   = r isMatch label
@@ -90,6 +91,39 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
   }
 }
 
+trait ShowCollections {
+  def showEach[A: Show](xs: Each[A]): String
+  def showMap[K: Show, V: Show](xs: InMap[K, V]): String
+  def showSet[A: Show](xs: InSet[A]): String
+  def showJava[A: Show](xs: jIterable[A]): String
+  def showScala[A: Show](xs: sCollection[A]): String
+}
+object ShowCollections {
+  implicit object DefaultShowCollections extends DefaultShowCollections
+
+  class DefaultShowCollections extends ShowCollections {
+    def maxElements: Precise = 10
+    def minElements: Precise = 3
+
+    private def internalEach[A: Show](xs: Each[A]): String = Each.show[A](xs, minElements, maxElements)
+
+    def showEach[A: Show](xs: Each[A]): String = xs match {
+      case xs: InSet[A] => showSet(xs)
+      case _            => "[ " ~ internalEach[A](xs) ~ " ]"
+    }
+    def showMap[K: Show, V: Show](xs: InMap[K, V]): String = xs match {
+      case xs: ExMap[K, V] => xs.entries.tabular(x => fst(x).to_s, _ => "->", x => snd(x).to_s)
+      case xs              => s"$xs"
+    }
+    def showSet[A: Show](xs: InSet[A]): String = xs match {
+      case xs: ExSet[A] => "{ " ~ internalEach[A](xs) ~ " }"
+      case _            => InSet show xs
+    }
+    def showJava[A: Show](xs: jIterable[A]): String    = "j[ " ~ internalEach(Each fromJava xs) ~ " ]"
+    def showScala[A: Show](xs: sCollection[A]): String = "s[ " ~ internalEach(Each fromScala xs) ~ " ]"
+  }
+}
+
 object Show {
   final class Impl[-A](val f: Shower[A]) extends AnyVal with Show[A] { def show(x: A) = f(x) }
 
@@ -106,6 +140,62 @@ object Show {
     }
   }
 }
+
+/** An incomplete selection of show compositors.
+ *  Not printing the way scala does.
+ */
+trait ShowInstances extends ShowEach {
+  implicit def showAttributeName : Show[jAttributeName]       = Show.natural()
+  implicit def showBoolean: Show[Boolean]                     = Show.natural()
+  implicit def showChar: Show[Char]                           = Show.natural()
+  implicit def showClass: Show[jClass]                        = Show(_.shortName)
+  implicit def showDirect: Show[ShowDirect]                   = Show(_.to_s)
+  implicit def showDouble: Show[Double]                       = Show.natural()
+  implicit def showIndex: Show[Index]                         = showBy(_.indexValue)
+  implicit def showInt: Show[Int]                             = Show.natural()
+  implicit def showLong: Show[Long]                           = Show.natural()
+  implicit def showNth: Show[Nth]                             = showBy[Nth](_.nthValue)
+  implicit def showOption[A: Show] : Show[Option[A]]          = Show(_.fold("-")(_.to_s))
+  implicit def showPath: Show[Path]                           = Show.natural()
+  implicit def showScalaNumber: Show[ScalaNumber]             = Show.natural()
+  implicit def showStackTraceElement: Show[StackTraceElement] = Show("\tat" + _ + "\n")
+  implicit def showString: Show[String]                       = Show.natural()
+  implicit def showTuple2[A: Show, B: Show] : Show[(A, B)]    = Show { case (x, y) => show"$x -> $y" }
+
+  implicit def showKeyword: Show[Keyword] = Show[Keyword] {
+    case Keyword.Empty            => ""
+    case Keyword.ClassConstructor => ""
+    case Keyword.ValueParameter   => ""
+    case Keyword.TypeParameter    => ""
+    case Keyword.Constructor      => "def this"
+    case Keyword.PackageObject    => "package object"
+    case Keyword.CaseObject       => "case object"
+    case Keyword.CaseClass        => "case class"
+    case k                        => k.toString.toLowerCase
+  }
+  implicit def showSize: Show[Size] = Show[Size] {
+    case IntSize(size)         => show"$size"
+    case LongSize(size)        => show"$size"
+    case Bounded(lo, Infinite) => show"$lo+"
+    case Bounded(lo, hi)       => show"[$lo,$hi]"
+    case Infinite              => "<inf>"
+  }
+}
+
+trait ShowEach0 {
+  implicit def showEach[A: Show, CC[X] <: Each[X]](implicit z: ShowCollections): Show[CC[A]] = Show(z.showEach[A])
+}
+trait ShowEach1 extends ShowEach0 {
+  implicit def showMap[K: Show, V: Show, CC[X, Y] <: InMap[X, Y]](implicit z: ShowCollections): Show[CC[K, V]] = Show(z.showMap[K, V])
+  implicit def showSet[A: Show, CC[X] <: InSet[X]](implicit z: ShowCollections): Show[CC[A]]                   = Show(z.showSet[A])
+  implicit def showJava [A: Show, CC[X] <: jIterable[X]](implicit z: ShowCollections): Show[CC[A]]             = Show(z.showJava[A])
+  implicit def showScala[A: Show, CC[X] <: sCollection[X]](implicit z: ShowCollections): Show[CC[A]]           = Show(z.showScala[A])
+}
+trait ShowEach extends ShowEach1 {
+  implicit def showJavaEnum[A <: jEnum[A]] : Show[jEnum[A]]                    = Show.natural()
+  implicit def showArray[A: Show](implicit z: ShowCollections): Show[Array[A]] = showBy[Array[A]](Direct.fromArray)
+}
+
 
 /** For this to have any hope of being smooth, we need the VALUE
  *  (the type class instance) to be inferred, but the TYPE
@@ -128,11 +218,14 @@ object Read {
 
   final class Impl[A](val f: String => A) extends AnyVal with Read[A] { def read(x: String): A = f(x) }
 }
-
-package object repl {
-  def show(arg: TryShown, maxElements: Int): String = {
-    val s = arg.try_s
-    val nl = if (s contains "\n") "\n" else ""
-    nl + s + "\n"
-  }
+trait ReadInstances {
+  implicit def bigDecRead: Read[BigDecimal] = Read(s => BigDecimal(s))
+  implicit def bigIntRead: Read[BigInt]     = Read(s => BigInt(s))
+  implicit def doubleRead: Read[Double]     = Read(_.toDouble)
+  implicit def floatRead: Read[Float]       = Read(_.toFloat)
+  implicit def intRead: Read[Int]           = Read(_.toInt)
+  implicit def longRead: Read[Long]         = Read(_.toLong)
+  implicit def regexRead: Read[Regex]       = Read(Regex)
+  implicit def stringRead: Read[String]     = Read(s => s)
+  implicit def uriRead: Read[jUri]          = Read(jUri)
 }
