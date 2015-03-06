@@ -1,8 +1,7 @@
 package psp
 package impl
 
-import api._
-import std.{ Size => _, _ }
+import api._, std._
 
 trait AlgebraInstances {
   implicit def identityAlgebra : BooleanAlgebra[Boolean]           = Algebras.Identity
@@ -43,7 +42,7 @@ trait OrderInstances extends OrderInstancesLow {
 
   implicit def tuple2Order[A: Order, B: Order] : Order[(A, B)]              = orderBy[(A, B)](fst) | snd
   implicit def tuple3Order[A: Order, B: Order, C: Order] : Order[(A, B, C)] = orderBy[(A, B, C)](_._1) | (_._2) | (_._3)
-  implicit def sizePartialOrder: PartialOrder[Size]                         = PartialOrder(psp.std.Size.partialCompare)
+  implicit def sizePartialOrder: PartialOrder[Size]                         = PartialOrder(Size.partialCompare)
 }
 
 trait EmptyInstances0 {
@@ -93,7 +92,7 @@ trait EqInstances {
   implicit def stringEq: HashEq[String]           = natural()
   implicit def policyClassEq: HashEq[PolicyClass] = natural()
 
-  implicit def sizeEq: HashEq[Size] = HashEq(psp.std.Size.equiv, psp.std.Size.hash)
+  implicit def sizeEq: HashEq[Size] = HashEq(Size.equiv, Size.hash)
   implicit def pathEq: HashEq[Path] = hashEqBy[Path](_.toString)
 
   /** The throwableEq defined above conveniently conflicts with the actual

@@ -1,7 +1,7 @@
 package psp
 package std
 
-import Size._, api._
+import impl.Size._, api._
 import lowlevel.CircularBuffer
 import StdShow._
 

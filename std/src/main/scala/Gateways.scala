@@ -131,7 +131,7 @@ trait StdOps3 extends Any with StdOps2 {
   implicit def opsPrecise(x: Precise): ops.PreciseOps                                                    = new ops.PreciseOps(x)
   implicit def opsPredicate[A](p: Predicate[A]): ops.PredicateOps[A]                                     = new ops.PredicateOps(p)
   implicit def opsShowableSeq[A: Show](x: Each[A]): ops.ShowableSeqOps[A]                                = new ops.ShowableSeqOps(x)
-  implicit def opsSize(x: Size): Size.Ops                                                                = new Size.Ops(x)
+  implicit def opsSize(x: Size): ops.SizeOps                                                             = new ops.SizeOps(x)
   implicit def opsStdOpt[A](x: Opt[A]): ops.StdOptOps[A]                                                 = new ops.StdOptOps[A](x)
   implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                                                       = new ops.TryOps[A](x)
   implicit def opsUnit(x: Unit): ops.UnitOps.type                                                        = ops.UnitOps
