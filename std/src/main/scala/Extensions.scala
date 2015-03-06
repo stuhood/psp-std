@@ -59,6 +59,7 @@ final class OptionOps[A](val x: Option[A]) extends AnyVal {
   def |?[A1 >: A](alt: => A1): A1                  = x getOrElse alt
   def ||?[A1 >: A](alt: => Option[A1]): Option[A1] = x orElse alt
 
+  def zfold[B: Empty](f: A => B): B    = x.fold[B](emptyValue)(f)
   def orEmpty(implicit z: Empty[A]): A = x getOrElse emptyValue[A]
   def or(alt: => A): A                 = x getOrElse alt
   def orFail(msg: String): A           = x getOrElse abort(msg)

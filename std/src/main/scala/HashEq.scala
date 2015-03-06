@@ -8,19 +8,15 @@ import api._
 trait NaturalHashEq
 
 object Hash {
-  final class Impl[-A](val f: A => Int) extends AnyVal with Hash[A] { def hash(x: A): Int = f(x) }
-
-  def reference[A](): Hash[Ref[A]]   = new Impl[Ref[A]](_.id_##)
-  def natural[A](): Hash[A]          = new Impl[A](_.##)
-  def apply[A](f: A => Int): Hash[A] = new Impl[A](f)
+  def reference[A](): Hash[Ref[A]]   = new impl.HashImpl[Ref[A]](_.id_##)
+  def natural[A](): Hash[A]          = new impl.HashImpl[A](_.##)
+  def apply[A](f: A => Int): Hash[A] = new impl.HashImpl[A](f)
 }
 
 object Eq {
-  final class Impl[-A](val f: Relation[A]) extends AnyVal with Eq[A] { def equiv(x: A, y: A) = f(x, y) }
-
-  def reference[A](): Eq[Ref[A]]      = new Impl[Ref[A]](_ id_== _)
-  def natural[A](): Eq[A]             = new Impl[A](_ == _)
-  def apply[A](f: Relation[A]): Eq[A] = new Impl[A](f)
+  def reference[A](): Eq[Ref[A]]      = new impl.EqImpl[Ref[A]](_ id_== _)
+  def natural[A](): Eq[A]             = new impl.EqImpl[A](_ == _)
+  def apply[A](f: Relation[A]): Eq[A] = new impl.EqImpl[A](f)
 }
 
 trait HashEqLow {
@@ -28,9 +24,9 @@ trait HashEqLow {
 }
 
 object HashEq extends HashEqLow {
-  implicit def composeHashEq[A](implicit eqs: Eq[A], hash: Hash[A]): HashEq[A] = new Impl[A](eqs.equiv, hash.hash)
+  implicit def composeHashEq[A](implicit eqs: Eq[A], hash: Hash[A]): HashEq[A] = new impl.HashEqImpl[A](eqs.equiv, hash.hash)
 
-  def apply[A](cmp: Relation[A], hashFn: A => Int): HashEq[A] = new Impl[A](cmp, hashFn)
+  def apply[A](cmp: Relation[A], hashFn: A => Int): HashEq[A] = new impl.HashEqImpl[A](cmp, hashFn)
 
   def natural[A](eqs: Eq[A]): HashEq[A]   = apply[A](eqs.equiv, _.##)
   def natural[A](): HashEq[A]             = apply[A](_ == _, _.##)
@@ -44,9 +40,5 @@ object HashEq extends HashEqLow {
       case _          => false
     }
     override def toString = pp"$value"
-  }
-  final class Impl[-A](isEquiv: Relation[A], hashFn: A => Int) extends HashEq[A] {
-    def equiv(x: A, y: A) = isEquiv(x, y)
-    def hash(x: A)        = hashFn(x)
   }
 }

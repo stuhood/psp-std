@@ -125,9 +125,7 @@ object ShowCollections {
 }
 
 object Show {
-  final class Impl[-A](val f: Shower[A]) extends AnyVal with Show[A] { def show(x: A) = f(x) }
-
-  def apply[A](f: Shower[A]): Show[A] = new Impl[A](f)
+  def apply[A](f: Shower[A]): Show[A] = new impl.ShowImpl[A](f)
   def natural[A](): Show[A]           = ToString
 
   /** This of course is not implicit as that would defeat the purpose of the endeavor.

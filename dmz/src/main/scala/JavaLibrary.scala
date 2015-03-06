@@ -7,6 +7,8 @@ import java.nio.{ file => jnf }
 import jnf.{ attribute => jnfa }
 import java.lang.String
 
+object DmzAliases extends JavaLibrary with ScalaLibrary
+
 trait JavaLibrary extends Any {
   // Exceptional factories.
   def assertionError(msg: String): Nothing                = throw new AssertionError(msg)
