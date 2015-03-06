@@ -73,7 +73,7 @@ class OperationCounts extends ScalacheckBundle {
     lazy val viewOp: ViewClass.Op               = xs => ops.foldl(xs)((res, f) => f(res))
     lazy val outcomes: Direct[CollectionResult] = collections map (f => new CollectionResult(viewOp, f))
     lazy val counts: String                     = "%s  %s".format(compare(usLinear.calls, themLinear.calls), compare(usDirect.calls, themDirect.calls))
-    lazy val results: Direct[String]            = outcomes map (_.result)
+    lazy val results: Direct[String]            = outcomes mapNow (_.result)
 
     lazy val failed = (
          results.distinct.size != 1.size

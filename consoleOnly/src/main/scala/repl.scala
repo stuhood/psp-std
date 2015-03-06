@@ -7,9 +7,9 @@ import StdShow._
 
 trait TargetCommon[A] {
   def target: Direct[A]
-  def >(implicit z: Show[A]): Direct[A]     = target doto (_ map z.show foreach println)
-  def >>(implicit z: TryShow[A]): Direct[A] = target doto (_ map z.show foreach println)
-  def !>(implicit z: Show[A]): Direct[A]    = target doto (xs => (xs map z.show).sorted.m foreach println)
+  def >(implicit z: Show[A]): Direct[A]     = target doto (_ mapNow z.show foreach println)
+  def >>(implicit z: TryShow[A]): Direct[A] = target doto (_ mapNow z.show foreach println)
+  def !>(implicit z: Show[A]): Direct[A]    = target doto (xs => (xs mapNow z.show).sorted foreach println)
 }
 
 trait ReplImportLow {

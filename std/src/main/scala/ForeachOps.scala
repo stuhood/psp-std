@@ -69,6 +69,11 @@ final class DirectOps[A](val xs: Direct[A]) extends AnyVal with ConversionOps[A]
     case Direct.Reversed(xs) => xs
     case _                   => new Direct.Reversed(xs)
   }
+  def mapNow[B](f: A => B): Direct[B] = {
+    val arr = newArray[Any](xs.size)
+    xs.indices foreach (i => arr(i.safeInt) = f(xs(i)))
+    Direct.wrapArray[B](arr)
+  }
 }
 
 final class LinearOps[A](val xs: Linear[A]) extends AnyVal with ConversionOps[A] {
