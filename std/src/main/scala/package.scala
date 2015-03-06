@@ -9,8 +9,6 @@ import psp.std.lowlevel._
 import psp.std.StdShow._
 
 package object std extends psp.std.StdPackage with psp.impl.CreateBy {
-  type DocSeq            = Each[Doc]
-
   /** Scala, so aggravating.
    *  [error] could not find implicit value for parameter equiv: psp.api.Eq[psp.tests.Pint => psp.std.Boolean]
    *  The parameter can be given explicitly, it just won't be found unless the function type is invariant.

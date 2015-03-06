@@ -7,9 +7,6 @@ object StdEq extends impl.EqInstances
 object StdShow extends ShowInstances
 
 object Unsafe extends LowPriorityUnsafe {
-  /** This would be great for string literals only. */
-  implicit def stringToDoc(s: String): Doc = Doc(s)
-
   implicit def universalEq[A] : HashEq[A]        = HashEq.natural()
   implicit def universalShow[A] : Show[A]        = Show.natural()
   implicit def showableOrder[A: Show] : Order[A] = orderBy[A](_.to_s)

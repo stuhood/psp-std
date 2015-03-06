@@ -106,7 +106,6 @@ trait StdOps3 extends Any with StdOps2 {
   implicit def infixOpsAlgebra[A: BooleanAlgebra](x: A): infix.AlgebraOps[A]         = new infix.AlgebraOps[A](x)
   implicit def infixOpsEq[A: Eq](x: A): infix.EqOps[A]                               = new infix.EqOps[A](x)
   implicit def infixOpsHash[A: Hash](x: A): infix.HashOps[A]                         = new infix.HashOps[A](x)
-  implicit def infixOpsShow[A: Show](x: A): infix.ShowOps[A]                         = new infix.ShowOps[A](x)
 
   implicit def opsDirectView[A, Repr](x: DirectView[A, Repr]): ops.DirectApiViewOps[A, Repr]             = new ops.DirectApiViewOps(x)
   implicit def opsPairView[R, A, B](x: View[R])(implicit z: PairDown[R, A, B]): ops.PairViewOps[R, A, B] = new ops.PairViewOps(x)
@@ -115,8 +114,6 @@ trait StdOps3 extends Any with StdOps2 {
   implicit def opsBooleanAlgebra[A](x: BooleanAlgebra[A]): ops.BooleanAlgebraOps[A]                      = new ops.BooleanAlgebraOps[A](x)
   implicit def opsChar(x: Char): ops.CharOps                                                             = new ops.CharOps(x)
   implicit def opsClassLoader(x: jClassLoader): ops.ClassLoaderOps                                       = new ops.ClassLoaderOps(x)
-  implicit def opsDoc(x: Doc): ops.DocOps                                                                = new ops.DocOps(x)
-  implicit def opsDocSeq(x: DocSeq): ops.DocSeqOps                                                       = new ops.DocSeqOps(x)
   implicit def opsFileTime(x: jFileTime): ops.FileTimeOps                                                = new ops.FileTimeOps(x)
   implicit def opsFunction1[T, R](f: T => R): ops.Function1Ops[T, R]                                     = new ops.Function1Ops(f)
   implicit def opsFunction2[T1, T2, R](f: (T1, T2) => R): ops.Function2Ops[T1, T2, R]                    = new ops.Function2Ops(f)
