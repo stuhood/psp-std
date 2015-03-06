@@ -98,9 +98,8 @@ trait ApiViewOps[+A] extends Any {
   def foldWithIndex[B](zero: B)(f: (B, A, Index) => B): B = foldFrom(zero) indexed f
   def foldl[B](zero: B)(f: (B, A) => B): B                = foldFrom(zero) left f
   def foldr[B](zero: B)(f: (A, B) => B): B                = foldFrom(zero) right f
-
-  def foldFrom[B](zero: B): FoldOps[A, B]          = FoldOpsClass(xs, zero)
-  def fold[B](implicit z: Empty[B]): FoldOps[A, B] = FoldOpsClass(xs, z.empty)
+  def fold[B](implicit z: Empty[B]): FoldOps[A, B]        = foldFrom(z.empty)
+  def foldFrom[B](zero: B): FoldOps[A, B]                 = FoldOpsClass(xs, zero)
 }
 
 trait ExtensionalOps[A] extends Any {
