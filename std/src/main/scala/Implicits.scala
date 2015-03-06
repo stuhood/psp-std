@@ -25,6 +25,7 @@ abstract class StdPackage
          with StdGateways
          with lowlevel.StdArrowAssoc
          with ApiAliases
+         with SpireIntegration
          with PolicyDmz {
 
   implicit class ApiOrderOps[A](val ord: Order[A]) {
