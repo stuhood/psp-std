@@ -2,25 +2,12 @@ package psp
 package std
 
 import api._
-import psp.std.scalac.token.Keyword
 import StdShow.showString
 
 trait AlgebraInstances {
   implicit def identityAlgebra : BooleanAlgebra[Boolean]           = Algebras.Identity
   implicit def predicateAlgebra[A] : BooleanAlgebra[Predicate[A]]  = new Algebras.Predicate[A]
   implicit def intensionalSetAlgebra[A] : BooleanAlgebra[InSet[A]] = new Algebras.InSetAlgebra[A]
-}
-
-trait ReadInstances {
-  implicit def bigDecRead: Read[BigDecimal] = Read(s => BigDecimal(s))
-  implicit def bigIntRead: Read[BigInt]     = Read(s => BigInt(s))
-  implicit def doubleRead: Read[Double]     = Read(_.toDouble)
-  implicit def floatRead: Read[Float]       = Read(_.toFloat)
-  implicit def intRead: Read[Int]           = Read(_.toInt)
-  implicit def longRead: Read[Long]         = Read(_.toLong)
-  implicit def regexRead: Read[Regex]       = Read(Regex)
-  implicit def stringRead: Read[String]     = Read(s => s)
-  implicit def uriRead: Read[jUri]          = Read(jUri)
 }
 
 trait OrderInstancesLow {
@@ -127,59 +114,4 @@ trait EqInstances {
 
   def equalizer[A, B: Eq](f: A => B, g: A => B): FunctionEqualizer[A, B] = new FunctionEqualizer(f, g)
   def symmetrically[A](f: Relation[A]): Relation[A]                      = (x, y) => f(x, y) && f(y, x)
-}
-
-/** An incomplete selection of show compositors.
- *  Not printing the way scala does.
- */
-trait ShowInstances extends ShowEach {
-  implicit def showAttributeName : Show[jAttributeName]       = Show.natural()
-  implicit def showBoolean: Show[Boolean]                     = Show.natural()
-  implicit def showChar: Show[Char]                           = Show.natural()
-  implicit def showClass: Show[jClass]                        = Show(_.shortName)
-  implicit def showDirect: Show[ShowDirect]                   = Show(_.to_s)
-  implicit def showDouble: Show[Double]                       = Show.natural()
-  implicit def showIndex: Show[Index]                         = showBy(_.indexValue)
-  implicit def showInt: Show[Int]                             = Show.natural()
-  implicit def showLong: Show[Long]                           = Show.natural()
-  implicit def showNth: Show[Nth]                             = showBy[Nth](_.nthValue)
-  implicit def showOption[A: Show] : Show[Option[A]]          = Show(_.fold("-")(_.to_s))
-  implicit def showPath: Show[Path]                           = Show.natural()
-  implicit def showScalaNumber: Show[ScalaNumber]             = Show.natural()
-  implicit def showStackTraceElement: Show[StackTraceElement] = Show("\tat" + _ + "\n")
-  implicit def showString: Show[String]                       = Show.natural()
-  implicit def showTuple2[A: Show, B: Show] : Show[(A, B)]    = Show { case (x, y) => show"$x -> $y" }
-
-  implicit def showKeyword: Show[Keyword] = Show[Keyword] {
-    case Keyword.Empty            => ""
-    case Keyword.ClassConstructor => ""
-    case Keyword.ValueParameter   => ""
-    case Keyword.TypeParameter    => ""
-    case Keyword.Constructor      => "def this"
-    case Keyword.PackageObject    => "package object"
-    case Keyword.CaseObject       => "case object"
-    case Keyword.CaseClass        => "case class"
-    case k                        => k.toString.toLowerCase
-  }
-  implicit def showSize: Show[Size] = Show[Size] {
-    case IntSize(size)         => show"$size"
-    case LongSize(size)        => show"$size"
-    case Bounded(lo, Infinite) => show"$lo+"
-    case Bounded(lo, hi)       => show"[$lo,$hi]"
-    case Infinite              => "<inf>"
-  }
-}
-
-trait ShowEach0 {
-  implicit def showEach[A: Show, CC[X] <: Each[X]](implicit z: ShowCollections): Show[CC[A]] = Show(z.showEach[A])
-}
-trait ShowEach1 extends ShowEach0 {
-  implicit def showMap[K: Show, V: Show, CC[X, Y] <: InMap[X, Y]](implicit z: ShowCollections): Show[CC[K, V]] = Show(z.showMap[K, V])
-  implicit def showSet[A: Show, CC[X] <: InSet[X]](implicit z: ShowCollections): Show[CC[A]]                   = Show(z.showSet[A])
-  implicit def showJava [A: Show, CC[X] <: jIterable[X]](implicit z: ShowCollections): Show[CC[A]]             = Show(z.showJava[A])
-  implicit def showScala[A: Show, CC[X] <: sCollection[X]](implicit z: ShowCollections): Show[CC[A]]           = Show(z.showScala[A])
-}
-trait ShowEach extends ShowEach1 {
-  implicit def showJavaEnum[A <: jEnum[A]] : Show[jEnum[A]]                    = Show.natural()
-  implicit def showArray[A: Show](implicit z: ShowCollections): Show[Array[A]] = showBy[Array[A]](Direct.fromArray)
 }

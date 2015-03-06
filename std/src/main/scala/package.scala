@@ -8,70 +8,8 @@ import psp.api._
 import psp.std.lowlevel._
 import psp.std.StdShow._
 
-package std {
-  trait ShowCollections {
-    def showEach[A: Show](xs: Each[A]): String
-    def showMap[K: Show, V: Show](xs: InMap[K, V]): String
-    def showSet[A: Show](xs: InSet[A]): String
-    def showJava[A: Show](xs: jIterable[A]): String
-    def showScala[A: Show](xs: sCollection[A]): String
-  }
-  object ShowCollections {
-    implicit object DefaultShowCollections extends DefaultShowCollections
-
-    class DefaultShowCollections extends ShowCollections {
-      def maxElements: Precise = 10
-      def minElements: Precise = 3
-
-      private def internalEach[A: Show](xs: Each[A]): String = Each.show[A](xs, minElements, maxElements)
-
-      def showEach[A: Show](xs: Each[A]): String = xs match {
-        case xs: InSet[A] => showSet(xs)
-        case _            => "[ " ~ internalEach[A](xs) ~ " ]"
-      }
-      def showMap[K: Show, V: Show](xs: InMap[K, V]): String = xs match {
-        case xs: ExMap[K, V] => xs.entries.tabular(x => fst(x).to_s, _ => "->", x => snd(x).to_s)
-        case xs              => s"$xs"
-      }
-      def showSet[A: Show](xs: InSet[A]): String = xs match {
-        case xs: ExSet[A] => "{ " ~ internalEach[A](xs) ~ " }"
-        case _            => InSet show xs
-      }
-      def showJava[A: Show](xs: jIterable[A]): String    = "j[ " ~ internalEach(Each fromJava xs) ~ " ]"
-      def showScala[A: Show](xs: sCollection[A]): String = "s[ " ~ internalEach(Each fromScala xs) ~ " ]"
-    }
-  }
-
-  trait Assertions {
-    def failed(msg: => String): Unit
-    def assert(assertion: Boolean, msg: => String): Unit = if (!assertion) failed(msg)
-  }
-  object Assertions {
-    private[this] var instance: Assertions = DefaultAssertions
-    def using[A](x: Assertions)(assertion: => Boolean, msg: => String): Unit = {
-      val saved = instance
-      instance = x
-      try instance.assert(assertion, msg) finally instance = saved
-    }
-    implicit object DefaultAssertions extends Assertions {
-      def failed(msg: => String): Unit = assertionError(msg)
-    }
-  }
-
-  object ImmediateTraceAssertions extends Assertions {
-    def failed(msg: => String): Unit = {
-      val t = new AssertionError(msg)
-      t.printStackTrace
-      throw t
-    }
-  }
-}
-
 package object std extends psp.std.StdPackage {
   type DocSeq            = Each[Doc]
-  type BooleanAlgebra[R] = spire.algebra.Bool[R]
-  type UInt              = spire.math.UInt
-  type Natural           = spire.math.Natural
 
   /** Scala, so aggravating.
    *  [error] could not find implicit value for parameter equiv: psp.api.Eq[psp.tests.Pint => psp.std.Boolean]
@@ -136,7 +74,7 @@ package object std extends psp.std.StdPackage {
   final val ConstantTrue  = (x: Any) => true
   final val ConstantFalse = (x: Any) => false
   final val CTag          = scala.reflect.ClassTag
-  final val EOL           = sys.props.getOrElse("line.separator", "\n")
+  final val EOL           = sysprop.lineSeparator
   final val NoFile: jFile = jFile("")
   final val NoPath: Path  = path("")
   final val NoUri: jUri   = jUri("")
