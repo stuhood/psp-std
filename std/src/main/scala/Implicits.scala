@@ -98,3 +98,4 @@ abstract class StdPackage
 
   implicit def conforms[A] : (A <:< A) = new conformance[A]
 }
+  

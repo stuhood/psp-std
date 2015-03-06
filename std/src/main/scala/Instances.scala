@@ -51,22 +51,27 @@ trait EmptyInstances0 {
 }
 
 trait EmptyInstances extends EmptyInstances0 {
-  implicit def emptyDoc: Empty[Doc]                                 = Empty(Doc.empty)
+  implicit def emptyBaseView[A, Repr] : Empty[BaseView[A, Repr]]    = Empty(new DirectView(Direct()))
+  implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]   = Empty(z build Each.empty)
   implicit def emptyCacheBuilder[K, V] : Empty[cache.Builder[K, V]] = Empty(cache.newBuilder[K, V]())
   implicit def emptyExMap[K: HashEq, V] : Empty[ExMap[K, V]]        = Empty(exMap[K, V]())
   implicit def emptyExSet[A: HashEq] : Empty[ExSet[A]]              = Empty(exSet[A]())
   implicit def emptyInMap[K, V] : Empty[InMap[K, V]]                = Empty(inMap[K, V](false, _ => noSuchElementException("empty map")))
   implicit def emptyInSet[A] : Empty[InSet[A]]                      = Empty(inSet[A](false))
-  implicit def emptyFile: Empty[jFile]                              = Empty(NoFile)
-  implicit def emptyIndex: Empty[Index]                             = Empty(NoIndex)
-  implicit def emptyIndexRange: Empty[IndexRange]                   = Empty(IndexRange.empty)
+  implicit def emptyJavaList[A] : Empty[jList[A]]                   = Empty(jList[A]())
+  implicit def emptyJavaMap[K, V] : Empty[jMap[K, V]]               = Empty(jMap[K, V]())
+  implicit def emptyJavaSet[A] : Empty[jSet[A]]                     = Empty(jSet[A]())
   implicit def emptyOption[A] : Empty[Option[A]]                    = Empty(None)
-  implicit def emptyPath: Empty[Path]                               = Empty(NoPath)
-  implicit def emptyShown: Empty[Shown]                             = Empty(Shown.empty)
-  implicit def emptyView[A] : Empty[View[A]]                        = Empty(exView())
-  implicit def emptyBaseView[A, Repr] : Empty[BaseView[A, Repr]]    = Empty(new DirectView(Direct()))
   implicit def emptyTuple[A: Empty, B: Empty]: Empty[(A, B)]        = Empty(emptyValue[A] -> emptyValue[B])
-  implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]   = Empty(z build Each.empty)
+  implicit def emptyView[A] : Empty[View[A]]                        = Empty(exView())
+
+  implicit def emptyDoc: Empty[Doc]               = Empty(Doc.empty)
+  implicit def emptyFile: Empty[jFile]            = Empty(NoFile)
+  implicit def emptyIndex: Empty[Index]           = Empty(NoIndex)
+  implicit def emptyIndexRange: Empty[IndexRange] = Empty(IndexRange.empty)
+  implicit def emptyPath: Empty[Path]             = Empty(NoPath)
+  implicit def emptyShown: Empty[Shown]           = Empty(Shown.empty)
+  implicit def emptyString: Empty[String]         = Empty("")
 }
 
 trait EqInstances {
