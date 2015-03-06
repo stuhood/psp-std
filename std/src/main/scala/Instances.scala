@@ -20,13 +20,13 @@ trait OrderInstancesLow {
 }
 
 trait OrderInstances extends OrderInstancesLow {
-  implicit def booleanOrder: Order[scala.Boolean]   = orderBy[scala.Boolean](x => if (x) 1 else 0)
-  implicit def byteOrder: Order[scala.Byte]         = Order.fromInt(_ - _)
-  implicit def charOrder: Order[scala.Char]         = Order.fromInt[Char](_ - _)
-  implicit def intOrder: Order[scala.Int]           = Order.fromInt[Int](_ - _)
-  implicit def longOrder: Order[scala.Long]         = Order.fromLong[Long](_ - _)
-  implicit def shortOrder: Order[scala.Short]       = Order.fromInt[Short](_ - _)
-  implicit def stringOrder: Order[java.lang.String] = Order.fromLong[String](_ compareTo _)
+  implicit def booleanOrder: Order[Boolean] = orderBy[Boolean](x => if (x) 1 else 0)
+  implicit def byteOrder: Order[Byte]       = Order.fromInt(_ - _)
+  implicit def charOrder: Order[Char]       = Order.fromInt[Char](_ - _)
+  implicit def intOrder: Order[Int]         = Order.fromInt[Int](_ - _)
+  implicit def longOrder: Order[Long]       = Order.fromLong[Long](_ - _)
+  implicit def shortOrder: Order[Short]     = Order.fromInt[Short](_ - _)
+  implicit def stringOrder: Order[String]   = Order.fromLong[String](_ compareTo _)
 
   // Some unfortunate rocket dentistry necessary here.
   // This doesn't work because scala comes up with "Any" due to the fbound.
@@ -90,7 +90,7 @@ trait EqInstances {
   // implicit def nthEq: HashEq[Nth]                 = natural()
   implicit def offsetEq: HashEq[Offset]           = natural()
   implicit def stringEq: HashEq[String]           = natural()
-  implicit def policyClassEq: HashEq[PolicyClass] = natural()
+  implicit def policyClassEq: HashEq[JavaClass] = natural()
 
   implicit def sizeEq: HashEq[Size] = HashEq(Size.equiv, Size.hash)
   implicit def pathEq: HashEq[Path] = hashEqBy[Path](_.toString)

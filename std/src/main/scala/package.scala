@@ -102,7 +102,7 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   def loaderOf[A: CTag] : ClassLoader       = noNull(classLoaderOf[A], nullLoader)
   def nullLoader(): ClassLoader             = NullClassLoader
   def findLoader(): Option[ClassLoader]     = noNull(contextClassLoader, loaderOf[this.type]) |> (x => option(x ne null, x))
-  def pClassOf[A: CTag](): PolicyClass      = new PolicyClass(classOf[A])
+  def pClassOf[A: CTag](): JavaClass      = new JavaClass(classOf[A])
 
   def resourceNames(root: Path): Direct[String] = findLoader.fold(direct[String]())(cl => Resources.getResourceNames(cl, root).toDirect)
   def resource(name: String): Array[Byte]       = findLoader.fold(Array.empty[Byte])(_ getResourceAsStream name slurp)
