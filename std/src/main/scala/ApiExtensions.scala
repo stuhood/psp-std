@@ -103,8 +103,9 @@ class DocOps(val lhs: Doc) extends AnyVal {
 trait DocSeqCommonOps extends Any {
   def docs: DocSeq
 
-  private def nonEmpties    = docs filterNot (_.isEmpty)
-  private def isOnlyEmpties = nonEmpties.isEmpty
+  private def nonEmpties                    = docs filterNot (_.isEmpty)
+  private def isOnlyEmpties                 = nonEmpties.isEmpty
+  private implicit def emptyDoc: Empty[Doc] = Empty(Doc.empty)
 
   // Empty if the seq is empty, otherwise apply the function.
   def opt(f: DocSeq => Doc): Doc = if (docs.isEmpty) empty else f(docs)
@@ -256,9 +257,3 @@ final class StdOptOps[A](val x: Opt[A]) extends AnyVal {
   def fold[B](none: => B)(f: A => B): B = if (x.isEmpty) none else f(x.get)
   def |[A1 >: A](alt: => A1): A1        = if (x.isEmpty) alt else x.get
 }
-
-final class OrderBy[A]   { def apply[B](f: A => B)(implicit z: Order[B]): Order[A]   = Order[A]((x, y) => z.compare(f(x), f(y))) }
-final class EqBy[A]      { def apply[B](f: A => B)(implicit z: Eq[B]): Eq[A]         = Eq[A]((x, y) => z.equiv(f(x), f(y)))      }
-final class ShowBy[A]    { def apply[B](f: A => B)(implicit z: Show[B]): Show[A]     = Show[A](x => z show f(x))                 }
-final class HashBy[A]    { def apply[B](f: A => B)(implicit z: Hash[B]): Hash[A]     = Hash[A](x => z hash f(x))                 }
-final class HashEqBy[A]  { def apply[B](f: A => B)(implicit z: HashEq[B]): HashEq[A] = HashEq[A]((x, y) => z.equiv(f(x), f(y)), x => z hash f(x)) }

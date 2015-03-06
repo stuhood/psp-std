@@ -1,8 +1,8 @@
 package psp
-package std
+package impl
 
 import api._
-import StdShow.showString
+import std.{ Size => _, _ }
 
 trait AlgebraInstances {
   implicit def identityAlgebra : BooleanAlgebra[Boolean]           = Algebras.Identity
@@ -21,13 +21,13 @@ trait OrderInstancesLow {
 }
 
 trait OrderInstances extends OrderInstancesLow {
-  implicit def booleanOrder: Order[Boolean]   = orderBy[Boolean](x => if (x) 1 else 0)
-  implicit def byteOrder: Order[Byte]         = Order.fromInt[Byte](_ - _)
-  implicit def charOrder: Order[Char]         = Order.fromInt[Char](_ - _)
-  implicit def intOrder: Order[Int]           = Order.fromInt[Int](_ - _)
-  implicit def longOrder: Order[Long]         = Order.fromLong[Long](_ - _)
-  implicit def shortOrder: Order[Short]       = Order.fromInt[Short](_ - _)
-  implicit def stringOrder: Order[String]     = Order.fromLong[String](_ compareTo _)
+  implicit def booleanOrder: Order[scala.Boolean]   = orderBy[scala.Boolean](x => if (x) 1 else 0)
+  implicit def byteOrder: Order[scala.Byte]         = Order.fromInt(_ - _)
+  implicit def charOrder: Order[scala.Char]         = Order.fromInt[Char](_ - _)
+  implicit def intOrder: Order[scala.Int]           = Order.fromInt[Int](_ - _)
+  implicit def longOrder: Order[scala.Long]         = Order.fromLong[Long](_ - _)
+  implicit def shortOrder: Order[scala.Short]       = Order.fromInt[Short](_ - _)
+  implicit def stringOrder: Order[java.lang.String] = Order.fromLong[String](_ compareTo _)
 
   // Some unfortunate rocket dentistry necessary here.
   // This doesn't work because scala comes up with "Any" due to the fbound.
@@ -37,13 +37,13 @@ trait OrderInstances extends OrderInstancesLow {
   implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A] = Order.fromInt[A](_.ordinal - _.ordinal)
 
   implicit def indexOrder: Order[Index]              = orderBy[Index](_.indexValue)
-  implicit def nthOrder: Order[Nth]                  = orderBy[Nth](_.nthValue)
-  implicit def offsetOrder: Order[Offset]            = orderBy[Offset](_.offsetValue)
+  // implicit def nthOrder: Order[Nth]                  = orderBy[Nth](_.nthValue)
+  // implicit def offsetOrder: Order[Offset]            = orderBy[Offset](_.offsetValue)
   implicit def preciseOrder[A <: Precise] : Order[A] = orderBy[A](_.value)
 
   implicit def tuple2Order[A: Order, B: Order] : Order[(A, B)]              = orderBy[(A, B)](fst) | snd
   implicit def tuple3Order[A: Order, B: Order, C: Order] : Order[(A, B, C)] = orderBy[(A, B, C)](_._1) | (_._2) | (_._3)
-  implicit def sizePartialOrder: PartialOrder[Size]                         = PartialOrder(Size.partialCompare)
+  implicit def sizePartialOrder: PartialOrder[Size]                         = PartialOrder(psp.std.Size.partialCompare)
 }
 
 trait EmptyInstances0 {
@@ -65,7 +65,6 @@ trait EmptyInstances extends EmptyInstances0 {
   implicit def emptyTuple[A: Empty, B: Empty]: Empty[(A, B)]        = Empty(emptyValue[A] -> emptyValue[B])
   implicit def emptyView[A] : Empty[View[A]]                        = Empty(exView())
 
-  implicit def emptyDoc: Empty[Doc]               = Empty(Doc.empty)
   implicit def emptyFile: Empty[jFile]            = Empty(NoFile)
   implicit def emptyIndex: Empty[Index]           = Empty(NoIndex)
   implicit def emptyIndexRange: Empty[IndexRange] = Empty(IndexRange.empty)
@@ -89,12 +88,12 @@ trait EqInstances {
 
   implicit def indexEq: HashEq[Index]             = natural()
   implicit def jTypeEq: HashEq[jType]             = natural()
-  implicit def nthEq: HashEq[Nth]                 = natural()
+  // implicit def nthEq: HashEq[Nth]                 = natural()
   implicit def offsetEq: HashEq[Offset]           = natural()
   implicit def stringEq: HashEq[String]           = natural()
   implicit def policyClassEq: HashEq[PolicyClass] = natural()
 
-  implicit def sizeEq: HashEq[Size] = HashEq(Size.equiv, Size.hash)
+  implicit def sizeEq: HashEq[Size] = HashEq(psp.std.Size.equiv, psp.std.Size.hash)
   implicit def pathEq: HashEq[Path] = hashEqBy[Path](_.toString)
 
   /** The throwableEq defined above conveniently conflicts with the actual

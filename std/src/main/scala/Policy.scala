@@ -3,7 +3,7 @@ package std
 
 import api._
 
-object StdEq extends EqInstances
+object StdEq extends impl.EqInstances
 object StdShow extends ShowInstances
 
 object Unsafe extends LowPriorityUnsafe {

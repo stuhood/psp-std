@@ -8,7 +8,7 @@ import psp.api._
 import psp.std.lowlevel._
 import psp.std.StdShow._
 
-package object std extends psp.std.StdPackage {
+package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   type DocSeq            = Each[Doc]
 
   /** Scala, so aggravating.
@@ -87,8 +87,6 @@ package object std extends psp.std.StdPackage {
   def assert(assertion: => Boolean, msg: => Any)(implicit z: Assertions): Unit             = Assertions.using(z)(assertion, s"assertion failed: $msg")
   def asserting[A](x: A)(assertion: => Boolean, msg: => String)(implicit z: Assertions): A = x sideEffect assert(assertion, msg)
   def echoErr[A: TryShow](x: A): Unit                                                      = Console echoErr pp"$x"
-  def identity[A](x: A): A                                                                 = x
-  def implicitly[A](implicit x: A): A                                                      = x
   def printResult[A: TryShow](msg: String)(result: A): A                                   = result doto (r => println(pp"$msg: $r"))
   def printResultIf[A: TryShow : Eq](show: A, msg: String)(result: A): A                   = result doto (r => if (r === show) println(pp"$msg: $r"))
   def print[A: TryShow](x: A): Unit                                                        = Console putOut pp"$x"
@@ -113,12 +111,6 @@ package object std extends psp.std.StdPackage {
   def path(s: String): Path                     = Paths get s
   def callable[A](body: => A): jCallable[A]     = new java.util.concurrent.Callable[A] { def call(): A = body }
 
-  def eqBy[A]     = new ops.EqBy[A]
-  def hashBy[A]   = new ops.HashBy[A]
-  def hashEqBy[A] = new ops.HashEqBy[A]
-  def orderBy[A]  = new ops.OrderBy[A]
-  def showBy[A]   = new ops.ShowBy[A]
-
   // Operations involving encoding/decoding of string data.
   def utf8(xs: Array[Byte]): Utf8   = new Utf8(xs)
   def decodeName(s: String): String = s.mapSplit('.')(NameTransformer.decode)
@@ -137,23 +129,19 @@ package object std extends psp.std.StdPackage {
   def nullAs[A] : A                        = asExpected[A](null)
   def asExpected[A](body: Any): A          = body.castTo[A]
 
-  def ?[A](implicit value: A): A                        = value
   def andFalse(x: Unit, xs: Unit*): Boolean             = false
   def andResult[A](x: A, xs: Unit*): A                  = x
   def andTrue(x: Unit, xs: Unit*): Boolean              = true
   def direct[A](xs: A*): Direct[A]                      = Direct fromScala xs
   def each[A](xs: sCollection[A]): Each[A]              = Each fromScala xs
-  def emptyValue[A](implicit z: Empty[A]): A            = z.empty
   def indexRange(start: Int, end: Int): IndexRange      = IndexRange(start, end)
   def intRange(start: Int, end: Int): ExclusiveIntRange = ExclusiveIntRange(start, end)
   def nthRange(start: Int, end: Int): ExclusiveIntRange = ExclusiveIntRange(start, end + 1)
   def nullStream(): InputStream                         = NullInputStream
   def offset(x: Int): Offset                            = Offset(x)
   def option[A](p: Boolean, x: => A): Option[A]         = if (p) Some(x) else None
-  def ordering[A: Order] : Ordering[A]                  = ?[Order[A]].toScalaOrdering
   def partial[A, B](f: A ?=> B): A ?=> B                = f
   def regex(re: String): Regex                          = Regex(re)
-  def show[A: Show] : Show[A]                           = ?
 
   def spawn[A](body: => A): Unit = {
     val t = new Thread() { override def run(): Unit = body }
@@ -191,7 +179,5 @@ package object std extends psp.std.StdPackage {
   def randomNat(max: Int): Int                              = scala.util.Random.nextInt(max)
   def bufferMap[A, B: Empty](): scmMap[A, B]                = scmMap[A, B]() withDefaultValue emptyValue[B]
   def newPartial[K, V](p: K => Boolean, f: K => V): K ?=> V = { case x if p(x) => f(x) }
-  def newCmp(difference: Long): Cmp                         = if (difference < 0) Cmp.LT else if (difference > 0) Cmp.GT else Cmp.EQ
-  def newArray[A: CTag](size: Precise): Array[A]            = new Array[A](size.intSize)
   def newSize(n: Long): Precise                             = if (n < 0) Precise(0) else if (n > MaxInt) Precise(n) else Precise(n.toInt)
 }

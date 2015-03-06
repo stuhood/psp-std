@@ -150,7 +150,7 @@ trait StdOps extends Any with StdOps3 {
   // concrete type which has all the other ones.
   implicit def apiIndexPromote(x: Index): IndexImpl                    = Index impl x
   implicit def apiIndexRangePromote(x: IndexRange): LongRange          = IndexRange impl x
-  implicit def apiOrderPromote[A](ord: Order[A]): Order.Impl[A]        = Order(ord.compare)
+  implicit def apiOrderPromote[A](ord: Order[A]): impl.OrderImpl[A]    = Order(ord.compare)
   implicit def apiExSetPromote[A](x: ExSet[A]): ExSet.Impl[A]          = ExSet impl x
   implicit def apiExMapPromote[K, V](x: ExMap[K, V]): ExMap.Impl[K, V] = ExMap impl x
 }

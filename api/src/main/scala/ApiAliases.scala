@@ -4,6 +4,7 @@ package api
 // This mostly consists of "magic" types which cannot be avoided due to language privilege.
 trait ApiAliases extends scala.Any {
   type Array[A]                = scala.Array[A]
+  type CTag[A]                 = scala.reflect.ClassTag[A]
   type Dynamic                 = scala.Dynamic
   type PartialFunction[-A, +B] = scala.PartialFunction[A, B]
   type Product                 = scala.Product
@@ -45,3 +46,16 @@ trait ApiAliases extends scala.Any {
 
 // Necessary to use those aliases within the api package.
 object ApiAliases extends ApiAliases
+
+trait ApiMethods extends scala.Any {
+  import ApiAliases._
+
+  def ?[A](implicit value: A): A                 = value
+  def emptyValue[A](implicit z: Empty[A]): A     = z.empty
+  def identity[A](x: A): A                       = x
+  def implicitly[A](implicit x: A): A            = x
+  def newArray[A: CTag](size: Precise): Array[A] = new Array[A](size.intValue)
+  def show[A: Show] : Show[A]                    = ?
+  def longCmp(diff: Long): Cmp                   = if (diff < 0) Cmp.LT else if (diff > 0) Cmp.GT else Cmp.EQ
+}
+object ApiMethods extends ApiMethods

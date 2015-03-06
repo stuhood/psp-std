@@ -16,15 +16,16 @@ import psp.dmz.PolicyDmz
  *  like inheritance, specificity, method dispatch, and so forth.
  */
 abstract class StdPackage
-      extends OrderInstances
-         with EmptyInstances
+      extends impl.OrderInstances
+         with impl.EmptyInstances
          with StdTypeclasses
          with StdProperties
-         with AlgebraInstances
+         with impl.AlgebraInstances
          with GlobalShow
          with StdGateways
          with lowlevel.StdArrowAssoc
          with ApiAliases
+         with ApiMethods
          with SpireIntegration
          with PolicyDmz {
 
@@ -98,4 +99,4 @@ abstract class StdPackage
 
   implicit def conforms[A] : (A <:< A) = new conformance[A]
 }
-  
+
