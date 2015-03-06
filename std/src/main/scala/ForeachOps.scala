@@ -24,7 +24,10 @@ trait ConversionOps[A] extends Any {
   def toLinear: Linear[A]                                                 = xs match { case xs: Linear[A] => xs   ; case _ => Linear.builder[A] build xs            }
   def toDirect: Direct[A]                                                 = xs match { case xs: Direct[A] => xs   ; case _ => Direct.builder[A] build xs            }
   def toExSet(implicit z: HashEq[A]): ExSet[A]                            = xs match { case xs: ExSet[A] => xs    ; case _ => ExSet.builder[A] build xs             }
-  def toExMap[K, V](implicit ev: A <:< (K, V), z: HashEq[K]): ExMap[K, V] = xs match { case xs: ExMap[K, V] => xs ; case _ => ExMap.builder[K, V] build (xs map ev) }
+  def toExMap[K, V](implicit ev: A <:< (K, V), z: HashEq[K]): ExMap[K, V] = xs match {
+    case xs: ExMap[_,_] => xs.castTo[ExMap[K, V]] // suppressing lame patmat warning by not matching on ExMap[K, V]
+    case _              => ExMap.builder[K, V] build (xs map ev)
+  }
 
   def toScalaIterable: scIterable[A]                            = toScala[scIterable]
   def toScalaList: sciList[A]                                   = toScala[sciList]
