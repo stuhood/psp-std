@@ -2,7 +2,7 @@ package psp
 package std
 package scalac
 
-import api._, pio._, StdShow._, StdEq._, ansi._
+import api._, StdShow._, StdEq._, ansi._
 
 final case class Source(content: Array[Char], analysis: TokenAnalysis) {
   val newlineIndices: Direct[Index] = content indicesOf '\n'

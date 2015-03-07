@@ -1,7 +1,7 @@
 package psp
 package tests
 
-import psp.std._, api._, macros._
+import psp._, std._, api._, macros._
 import Expressions._
 
 class Typecheck extends ScalacheckBundle {
