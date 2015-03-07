@@ -118,8 +118,6 @@ final class PreciseOps(val size: Precise) extends AnyRef with HasPreciseSizeMeth
   def leftFormatString  = if (size.isZero) "%s" else "%%-%ds" format intSize
   def rightFormatString = if (size.isZero) "%s" else "%%%ds" format intSize
 
-  def containsRange(range: IndexRange): Boolean = range.endInt <= intSize
-
   override def toString = s"$longSize"
 }
 
