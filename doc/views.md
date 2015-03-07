@@ -49,31 +49,19 @@ Here's an example of what that can mean in practice.
 scala> val xs = (1 to 1e7.toInt).toArray
 xs: Array[Int] = Array(1, 2, 3, 4, 5, 6, 7, 8, 9, ...)
 
-// Import scala's array operations implicit (we usually shadow it)
-scala> import Predef.intArrayOps
-import Predef.intArrayOps
+// Prepare scala's array operations implicit - otherwise not in scope under -Yno-predef
+scala> def ops = Predef.intArrayOps _
+ops: Array[Int] => scala.collection.mutable.ArrayOps[Int]
 
-// Typically about 1000ms to complete.
-scala> timed(xs map (_ + 1) map (_ + 1) map (_ + 1) take 3 mkString ", ")
-Elapsed: 859.385 ms
+// Typically about 300ms to complete.
+scala> timed(ops(xs) map (_ + 1) map (_ + 1) map (_ + 1) take 3 mkString ", ")
+Elapsed: 307.322 ms
 res0: String = 4, 5, 6
 
-scala> timed(xs map (_ + 1) map (_ + 1) map (_ + 1) take 3 mkString ", ")
-Elapsed: 1016.358 ms
+// Now with psp. Typically about 3ms to complete.
+scala> timed(xs map (_ + 1) map (_ + 1) map (_ + 1) take 3 mk_s ", ")
+Elapsed: 3.529 ms
 res1: String = 4, 5, 6
-
-// Shadow it so we use psp collections.
-scala> import psp.std.intArrayOps
-import psp.std.intArrayOps
-
-// Typically about 1ms to complete.
-scala> timed(xs map (_ + 1) map (_ + 1) map (_ + 1) take 3 mk_s ", ")
-Elapsed: 1.406 ms
-res2: String = 4, 5, 6
-
-scala> timed(xs map (_ + 1) map (_ + 1) map (_ + 1) take 3 mk_s ", ")
-Elapsed: 1.342 ms
-res3: String = 4, 5, 6
 ```
 
 Of course pervasive laziness offers many other benefits as well. Sometimes we succeed where scala would throw an unnecessary exception:
@@ -83,23 +71,23 @@ scala> val xs = Array(0, 0, 0, 0, 0, 1)
 xs: Array[Int] = Array(0, 0, 0, 0, 0, 1)
 
 // In scala, failure
-scala> xs map (5 / _) takeRight 1 mkString ""
+scala> ops(xs) map (5 / _) takeRight 1 mkString ""
 java.lang.ArithmeticException: / by zero
   at $anonfun$1.apply$mcII$sp(<console>:23)
 
 // In psp, success
-scala> xs map (5 / _) takeRight 1 join ""
+scala> xs map (5 / _) takeRight 1 mk_s ""
 res0: String = 5
 ```
 
 Other times we succeed where scala opts for non-termination.
 
 ```
-scala> val xs = Each from BigInt(1)
-xs: psp.std.core.Each[BigInt] = unfold from 1
+scala> val xs = Each.unfold(BigInt(1))(_ + 1)
+xs: psp.std.Each.Unfold[scala.math.BigInt] = Unfold(1)
 
 // We drop 1000 elements off the right side of infinity, then take the first three.
-scala> xs dropRight 1000 take 3 join ", "
+scala> xs dropRight 1000 take 3 mk_s ", "
 res0: String = 1, 2, 3
 
 // Try it with a Stream view (it does terminate with Stream.)
