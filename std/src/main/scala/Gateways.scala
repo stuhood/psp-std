@@ -117,7 +117,6 @@ trait StdOps3 extends Any with StdOps2 {
   implicit def opsFunction2[T1, T2, R](f: (T1, T2) => R): ops.Function2Ops[T1, T2, R]                    = new ops.Function2Ops(f)
   implicit def opsHasPreciseSize(x: HasPreciseSize): ops.HasPreciseSizeOps                               = new ops.HasPreciseSizeOps(x)
   implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A]                               = new ops.JavaIteratorOps[A](x)
-  implicit def opsIndexRange(x: IndexRange): ops.IndexRangeOps                                           = new ops.IndexRangeOps(x)
   implicit def opsInputStream(x: InputStream): ops.InputStreamOps                                        = new ops.InputStreamOps(x)
   implicit def opsInt(x: Int): ops.IntOps                                                                = new ops.IntOps(x)
   implicit def opsLong(x: Long): ops.LongOps                                                             = new ops.LongOps(x)
@@ -144,7 +143,6 @@ trait StdOps extends Any with StdOps3 {
   // Promotion of the api type (which has as few methods as possible) to the
   // concrete type which has all the other ones.
   implicit def apiIndexPromote(x: Index): IndexImpl                    = Index impl x
-  implicit def apiIndexRangePromote(x: IndexRange): LongRange          = IndexRange impl x
   implicit def apiOrderPromote[A](ord: Order[A]): impl.OrderImpl[A]    = Order(ord.compare)
   implicit def apiExSetPromote[A](x: ExSet[A]): ExSet.Impl[A]          = ExSet impl x
   implicit def apiExMapPromote[K, V](x: ExMap[K, V]): ExMap.Impl[K, V] = ExMap impl x

@@ -443,7 +443,7 @@ abstract class JvmOpcodes {
     + "DDDEEEEEEEEEEEEEEEEEEEEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
     + "AAAAAAAAAAAAAAAAANAAAAAAAAAAAAAAAAAAAAJJJJJJJJJJJJJJJJDOPAA"
     + "AAAAGGGGGGGHIFBFAAFFAARQJJKKJJJJJJJJJJJJJJJJJJ"
-  ).toCharArray.mapInPlace(_ - 'A' toChar)
+  ).toCharArray.inPlace.map(_ - 'A' toChar)
 
   def opcodeType(code: Int) = instructionTypes(code)
 

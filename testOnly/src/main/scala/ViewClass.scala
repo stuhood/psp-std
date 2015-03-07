@@ -2,7 +2,6 @@ package psp
 package tests
 
 import psp.std._, api._, StdShow._
-import lowlevel.ExclusiveIntRange
 import scala.{ collection => sc }
 import sc.{ mutable => scm, immutable => sci }
 
@@ -26,7 +25,6 @@ trait ViewClass extends ForceShowDirect {
   def flatMap(f: Int => Each[Int]): This
   def foreach(f: Int => Unit): Unit
   def map(f: Int => Int): This
-  // def reverse: This
   def slice(range: IndexRange): This
   def take(n: Precise): This
   def takeRight(n: Precise): This
@@ -47,7 +45,6 @@ final case class ScalaViewClass(name: String, xs: scIterable[Int]) extends ViewC
   def flatMap(f: Int => Each[Int])  = xs flatMap (x => f(x).toScalaTraversable)
   def foreach(f: Int => Unit)       = xs foreach f
   def map(f: Int => Int)            = xs map f
-  // def reverse                       = xs.reverse
   def slice(range: IndexRange)      = xs slice (range.startInt, range.endInt)
   def take(n: Precise)              = xs take n.safeInt
   def takeRight(n: Precise)         = xs takeRight n.safeInt
@@ -69,7 +66,6 @@ final case class PolicyViewClass(name: String, xs: View[Int]) extends ViewClass 
   def flatMap(f: Int => Each[Int])  = xs flatMap f
   def foreach(f: Int => Unit)       = xs foreach f
   def map(f: Int => Int)            = xs map f
-  // def reverse                       = xs.reverse
   def slice(range: IndexRange)      = xs drop range.toDrop take range.toTake
   def take(n: Precise)              = xs take n
   def takeRight(n: Precise)         = xs takeRight n

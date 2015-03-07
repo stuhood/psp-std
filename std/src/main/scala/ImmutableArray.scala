@@ -3,6 +3,9 @@ package std
 
 import api._
 
+/** A basic specialized immutable Array. The apply copies everything in so nobody
+ *  can get too clever on us.
+ */
 final class ImmutableArray[@spec A] private[std] (xs: Array[A]) extends Direct.DirectImpl[A] {
   val size: Precise                                 = Precise(xs.length)
   def elemAt(i: Index): A                           = xs(i)

@@ -70,10 +70,6 @@ trait ExMap[K, +V]        extends Any with Extensional[(K, V)] with InMap[K, V] 
 
 /** Enhanced value representations.
  */
-trait IndexRange extends Any with Direct[Index] {
-  def start: Index
-  def end: Index
-}
 trait Index extends Any with OptLong {
   def indexValue: Long
 }

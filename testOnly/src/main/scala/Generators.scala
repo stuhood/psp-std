@@ -50,6 +50,6 @@ package object gen {
   def zeroPlusLong: Gen[Long]       = 0L upTo MaxLong
 
   def letterFrom(s: String): Gen[Char]                      = oneOf(s.seq)
-  def indexFrom(r: IndexRange): Gen[Index]                  = Gen.choose(r.start, r.endInclusive)
+  def indexFrom(r: IndexRange): Gen[Index]                  = Gen.choose(r.head, r.last)
   def indexRangeFrom(sMax: Int, eMax: Int): Gen[IndexRange] = (0 upTo sMax, 0 upTo eMax) ^^ indexRange
 }

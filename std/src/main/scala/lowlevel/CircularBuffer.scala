@@ -16,13 +16,13 @@ final class CircularBuffer[A](capacity: Precise) extends Direct.DirectImpl[A] wi
 
   @inline def foreach(f: A => Unit): Unit = this foreachIndex (i => f(elemAt(i)))
 
-  def head: A                        = elemAt(0.index)
-  def isFull                         = seen >= cap
-  def elemAt(index: Index): A        = buffer((readPointer + index.safeInt) % cap).castTo[A]
-  def size: Precise                  = capacity min Size(seen)
+  def head: A                     = elemAt(0.index)
+  def isFull                      = seen >= cap
+  def elemAt(index: Index): A     = buffer((readPointer + index.safeInt) % cap).castTo[A]
+  def size: Precise               = capacity min Size(seen)
   def ++=(xs: Each[A]): this.type = andThis(xs foreach setHead)
-  def += (x: A): this.type           = andThis(this setHead x)
-  def push(x: A): A                  = if (isFull) head sideEffect setHead(x) else abort("push on non-full buffer")
+  def += (x: A): this.type        = andThis(this setHead x)
+  def push(x: A): A               = if (isFull) head sideEffect setHead(x) else abort("push on non-full buffer")
 }
 
 object CircularBuffer {

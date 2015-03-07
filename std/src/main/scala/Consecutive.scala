@@ -21,18 +21,29 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
   def foreach(g: A => Unit): Unit = if (!isEmpty) lowlevel.foreachConsecutive(startInt, lastInt, f andThen g)
   def map[B](g: A => B)           = new Consecutive[B](startInt, lastInt, f andThen g)
 
-  def drop(n: Precise): Consecutive[A]      = create(startInt + n.safeInt, size - n)
-  def dropRight(n: Precise): Consecutive[A] = create(startInt, size - n)
-  def take(n: Precise): Consecutive[A]      = create(startInt, size min n)
-  def takeRight(n: Precise): Consecutive[A] = (size min n) |> (s => create(lastInt + 1 - s.safeInt, s))
-  def slice(s: Int, e: Int): Consecutive[A] = if (e <= 0 || e <= s) empty else this drop s take (e - s)
-  def slice(r: IndexRange): Consecutive[A]  = slice(r.startInt, r.endInt)
-  def toDrop: Precise                       = Precise(startInt)
-  def toTake: Precise                       = size
+  def drop(n: Precise): Consecutive[A]           = create(startInt + n.safeInt, size - n)
+  def dropRight(n: Precise): Consecutive[A]      = create(startInt, size - n)
+  def take(n: Precise): Consecutive[A]           = create(startInt, size min n)
+  def takeRight(n: Precise): Consecutive[A]      = (size min n) |> (s => create(endInt - s.safeInt, s))
+  def slice(s: Int, e: Int): Consecutive[A]      = if (e <= 0 || e <= s) empty else this drop s take (e - s)
+  def slice(r: IndexRange): Consecutive[A]       = slice(r.startInt, r.endInt)
+  def dropWhile(p: Predicate[A]): Consecutive[A] = prefixLength(p) |> (len => create(startInt + len, size - len))
+  def takeWhile(p: Predicate[A]): Consecutive[A] = create(startInt, Precise(prefixLength(p)))
+  def >> (n: Int): Consecutive[A]                = create(startInt + n, size)
+  def << (n: Int): Consecutive[A]                = create(startInt - n, size)
 
-  def >> (n: Int): Consecutive[A] = create(startInt + n, size)
-  def << (n: Int): Consecutive[A] = create(startInt - n, size)
-  override def toString = if (isEmpty) "[0..0)" else s"[$startInt..$lastInt]"
+  def toDrop: Precise = Precise(startInt)
+  def toTake: Precise = size
+  def prefixLength(p: Predicate[A]): Int = {
+    var count = 0
+    while (count < size.safeInt) {
+      if (!p(f(startInt + count))) return count
+      count += 1
+    }
+    count
+  }
+
+  override def toString = if (isEmpty) "[]" else s"[$startInt..$lastInt]"
 }
 
 object Consecutive {
@@ -40,6 +51,7 @@ object Consecutive {
   final class Ints private[std] (s: Int, e: Int) extends Consecutive[Int](s, e, id)
   val empty = new Consecutive[Nothing](0, -1, _ => sys.error("empty"))
 
-  def to(start: Int, end: Int): Consecutive[Int]    = if (end < start) empty else new Ints(start, end)
-  def until(start: Int, end: Int): Consecutive[Int] = if (end <= start) empty else new Ints(start, end - 1)
+  def to(start: Int, end: Int): Consecutive[Int]                  = if (end < start) empty else new Ints(start, end)
+  def until(start: Int, end: Int): Consecutive[Int]               = if (end <= start) empty else new Ints(start, end - 1)
+  def until[A](start: Int, end: Int, f: Int => A): Consecutive[A] = if (end <= start) empty else new Consecutive(start, end - 1, f)
 }
