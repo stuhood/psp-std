@@ -77,7 +77,7 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
   final def sm(args: Any*): String = {
     def isLineBreak(c: Char) = c == '\n' || c == '\f' // compatible with StringLike#isLineBreak
     def stripTrailingPart(s: String) = {
-      val index: Int   = (s indexWhere isLineBreak).safeInt
+      val index: Int   = (s indexWhere isLineBreak).getInt
       val pre: String  = s take index force
       val post: String = s drop index force;
       pre ~ post.stripMargin
@@ -148,10 +148,10 @@ trait ShowInstances extends ShowEach {
   implicit def showClass: Show[jClass]                        = Show(_.shortName)
   implicit def showDirect: Show[ShowDirect]                   = Show(_.to_s)
   implicit def showDouble: Show[Double]                       = Show.natural()
-  implicit def showIndex: Show[Index]                         = showBy(_.indexValue)
+  implicit def showIndex: Show[Index]                         = showBy(_.get)
   implicit def showInt: Show[Int]                             = Show.natural()
   implicit def showLong: Show[Long]                           = Show.natural()
-  implicit def showNth: Show[Nth]                             = showBy[Nth](_.nthValue)
+  implicit def showNth: Show[Nth]                             = showBy[Nth](_.nth)
   implicit def showOption[A: Show] : Show[Option[A]]          = Show(_.fold("-")(_.to_s))
   implicit def showPath: Show[Path]                           = Show.natural()
   implicit def showScalaNumber: Show[ScalaNumber]             = Show.natural()

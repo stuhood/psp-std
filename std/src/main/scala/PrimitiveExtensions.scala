@@ -121,9 +121,8 @@ final class LongOps(val self: Long) extends AnyVal {
   def zeroPlus: Long            = lowerBound(0)
   def isNonZero: Boolean        = self != 0L
 
-  def left32: Int            = (self >>> 32).toInt
-  def right32: Int           = self.toInt
-  def <<(index: Index): Long = self << index.indexValue
+  def left32: Int  = (self >>> 32).toInt
+  def right32: Int = self.toInt
 
   /** Safe in the senses that it won't silently truncate values, and
    *  will translate MaxLong to MaxInt instead of -1.
