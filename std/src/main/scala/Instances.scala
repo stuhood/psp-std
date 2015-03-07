@@ -66,7 +66,7 @@ trait EmptyInstances extends EmptyInstances0 {
 
   implicit def emptyFile: Empty[jFile]            = Empty(NoFile)
   implicit def emptyIndex: Empty[Index]           = Empty(NoIndex)
-  implicit def emptyIndexRange: Empty[IndexRange] = Empty(IndexRange.empty)
+  implicit def emptyIndexRange: Empty[IndexRange] = Empty(indexRange(0, 0))
   implicit def emptyPath: Empty[Path]             = Empty(NoPath)
   implicit def emptyShown: Empty[Shown]           = Empty(Shown.empty)
   implicit def emptyString: Empty[String]         = Empty("")

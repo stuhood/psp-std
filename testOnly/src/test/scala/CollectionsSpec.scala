@@ -130,7 +130,7 @@ class CollectionsSpec extends ScalacheckBundle {
       "abc" flatMap (_.toString * 3) build
     ),
     expectTypes[Array[Int]](
-      arr mapInPlace identity,
+      arr.inPlace map identity,
       arr.m.build,
       arr.m flatMap (x => Direct(x)) build,
       arr.flatMap(x => Direct(x)).force[Array[Int]]

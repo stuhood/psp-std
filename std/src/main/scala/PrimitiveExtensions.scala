@@ -4,7 +4,6 @@ package ops
 
 import java.{ lang => jl }
 import api._
-import lowlevel._
 
 final object UnitOps {
   @inline def thenReturn[A](value: A): A = value
@@ -98,8 +97,9 @@ final class IntOps(val self: Int) extends AnyVal {
   def zeroPlus: Int           = lowerBound(0)
 
   def isOr(p: Int => Boolean)(alt: => Int): Int = if (p(self)) self else alt
-  def until(end: Int): ExclusiveIntRange = intRange(self, end)
-  def to(end: Int): ExclusiveIntRange    = nthRange(self, end)
+
+  def until(end: Int): IntRange = Consecutive.until(self, end)
+  def to(end: Int): IntRange    = Consecutive.to(self, end)
 
   def binary: String = jl.Integer.toBinaryString(self)
   def hex: String    = jl.Integer.toHexString(self)

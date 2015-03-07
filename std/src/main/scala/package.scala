@@ -5,7 +5,6 @@ import java.nio.file.{ attribute => jnfa }
 import scala.{ collection => sc }
 import sc.{ mutable => scm, immutable => sci }
 import psp.api._
-import psp.std.lowlevel._
 import psp.std.StdShow._
 
 package object std extends psp.std.StdPackage with psp.impl.CreateBy {
@@ -18,6 +17,10 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   type InvariantInSet[A]     = InSet[A]
   type View2D[+A]            = View[View[A]]
   type Each2D[+A]            = Each[Each[A]]
+  type IndexRange            = Consecutive[Index]
+  type IntRange              = Consecutive[Int]
+
+  def fullIndexRange: IndexRange  = indexRange(0, MaxInt)
 
   // Inlinable.
   final val InputStreamBufferSize = 8192
@@ -127,19 +130,19 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   def nullAs[A] : A                        = asExpected[A](null)
   def asExpected[A](body: Any): A          = body.castTo[A]
 
-  def andFalse(x: Unit, xs: Unit*): Boolean             = false
-  def andResult[A](x: A, xs: Unit*): A                  = x
-  def andTrue(x: Unit, xs: Unit*): Boolean              = true
-  def direct[A](xs: A*): Direct[A]                      = Direct fromScala xs
-  def each[A](xs: sCollection[A]): Each[A]              = Each fromScala xs
-  def indexRange(start: Int, end: Int): IndexRange      = IndexRange(start, end)
-  def intRange(start: Int, end: Int): ExclusiveIntRange = ExclusiveIntRange(start, end)
-  def nthRange(start: Int, end: Int): ExclusiveIntRange = ExclusiveIntRange(start, end + 1)
-  def nullStream(): InputStream                         = NullInputStream
-  def offset(x: Int): Offset                            = Offset(x)
-  def option[A](p: Boolean, x: => A): Option[A]         = if (p) Some(x) else None
-  def partial[A, B](f: A ?=> B): A ?=> B                = f
-  def regex(re: String): Regex                          = Regex(re)
+  def andFalse(x: Unit, xs: Unit*): Boolean        = false
+  def andResult[A](x: A, xs: Unit*): A             = x
+  def andTrue(x: Unit, xs: Unit*): Boolean         = true
+  def direct[A](xs: A*): Direct[A]                 = Direct fromScala xs
+  def each[A](xs: sCollection[A]): Each[A]         = Each fromScala xs
+  def indexRange(start: Int, end: Int): IndexRange = Consecutive.until(start, end, Index(_))
+  def intRange(start: Int, end: Int): IntRange     = Consecutive.until(start, end)
+  def nthRange(start: Int, end: Int): IntRange     = Consecutive.to(start, end)
+  def nullStream(): InputStream                    = NullInputStream
+  def offset(x: Int): Offset                       = Offset(x)
+  def option[A](p: Boolean, x: => A): Option[A]    = if (p) Some(x) else None
+  def partial[A, B](f: A ?=> B): A ?=> B           = f
+  def regex(re: String): Regex                     = Regex(re)
 
   def spawn[A](body: => A): Unit = {
     val t = new Thread() { override def run(): Unit = body }

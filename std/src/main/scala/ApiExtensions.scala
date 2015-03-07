@@ -2,7 +2,7 @@ package psp
 package std
 package ops
 
-import api._
+import api._, StdEq._
 
 final class ShowableSeqOps[A: Show](xs: Each[A]) {
   private def strs: Each[String]       = xs map (_.to_s)
@@ -12,9 +12,6 @@ final class ShowableSeqOps[A: Show](xs: Each[A]) {
   def joinComma: String                = nonEmpties mkString ", "
   def joinParents: String              = nonEmpties mkString " with "
   def joinWords: String                = nonEmpties mkString " "
-}
-final class IndexRangeOps(xs: IndexRange) {
-  def *(n: Int): IndexRange = indexRange(xs.startInt * n, xs.endInt * n)
 }
 
 final class InMapOps[K, V](xs: InMap[K, V]) {
@@ -66,19 +63,21 @@ final class ExSetOps[A](xs: ExSet[A]) {
 trait HasPreciseSizeMethods extends Any {
   def size: Precise
 
-  def longSize: Long      = size.value
-  def intSize: Int        = longSize.safeInt
-  def isZero: Boolean     = longSize == 0L
-  def isPositive: Boolean = longSize > 0L
-  def indices: IndexRange = indexRange(0, intSize)
-  def nths: Direct[Nth]   = indices mapNow (_.toNth)
-  def lastIndex: Index    = Index(longSize - 1)  // effectively maps both undefined and zero to no index.
-  def lastNth: Nth        = lastIndex.toNth
+  def longSize: Long       = size.value
+  def intSize: Int         = longSize.safeInt
+  def isZero: Boolean      = longSize == 0L
+  def isPositive: Boolean  = longSize > 0L
+  def indices: IndexRange  = indexRange(0, intSize)
+  def nths: Direct[Nth]    = indices mapNow (_.toNth)
+  def lastIntIndex: Int    = lastIndex.safeInt
+  def lastIndex: Index     = Index(longSize - 1)  // effectively maps both undefined and zero to no index.
+  def lastNth: Nth         = lastIndex.toNth
 
-  def containsIndex(index: Index): Boolean            = indices contains index
-  @inline def mapIndices[A](f: Index => A): Direct[A] = indices mapNow f
-  @inline def foreachIndex(f: Index => Unit): Unit    = indices foreach f
-  @inline def foreachNth(f: Nth => Unit): Unit        = indices foreach (i => f(i.toNth))
+  def containsIndex(index: Index): Boolean = indices contains index
+
+  @inline def foreachIndex(f: Index => Unit): Unit     = if (isPositive) lowlevel.foreachConsecutive(0, lastIntIndex, i => f(Index(i)))
+  @inline def foreachIntIndex(f: Int => Unit): Unit    = if (isPositive) lowlevel.foreachConsecutive(0, lastIntIndex, f)
+  @inline def mapIndices[A](f: Index => A): Direct[A]  = indices mapNow f
 }
 
 final class HasPreciseSizeOps(val x: HasPreciseSize) extends HasPreciseSizeMethods {
@@ -117,8 +116,6 @@ final class PreciseOps(val size: Precise) extends AnyRef with HasPreciseSizeMeth
 
   def leftFormatString  = if (size.isZero) "%s" else "%%-%ds" format intSize
   def rightFormatString = if (size.isZero) "%s" else "%%%ds" format intSize
-
-  def containsRange(range: IndexRange): Boolean = range.endInt <= intSize
 
   override def toString = s"$longSize"
 }

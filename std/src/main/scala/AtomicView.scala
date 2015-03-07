@@ -33,7 +33,7 @@ final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr]
   def viewOps = Direct("<list>")
   def size    = underlying.size
 
-  @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, IndexRange.full, f)
+  @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, fullIndexRange, f)
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = linearlySlice(underlying, range, f)
 }
 
@@ -44,7 +44,7 @@ final class ExSetView[A, Repr](underlying: ExSet[A]) extends AtomicView[A, Repr]
   def hashEq      = underlying.hashEq
   def apply(x: A) = underlying(x)
 
-  @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, IndexRange.full, f)
+  @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, fullIndexRange, f)
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = linearlySlice(underlying, range, f)
 }
 

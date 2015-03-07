@@ -28,7 +28,6 @@ final class IndexImpl private[std] (val indexValue: Long) extends AnyVal with In
   def until(end: Index): IndexRange = indexRange(safeInt, end.safeInt)
   def sizeExcluding: Precise        = indexValue.size
   def sizeIncluding: Precise        = indexValue.size + 1
-  def toBit1: Bit1                  = Bit1(this)
   def toIndex: Index                = this
   def toNth: Nth                    = Nth(indexValue + 1)
   def toOffset: Offset              = if (isUndefined) abort("undefined") else Offset(safeInt)
