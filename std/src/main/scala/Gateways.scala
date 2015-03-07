@@ -63,8 +63,6 @@ trait StdOps0 extends Any {
   }
 }
 trait StdOps1 extends Any with StdOps0 {
-  implicit def arraySpecificOps[A](xs: Array[A]): ops.ArraySpecificOps[A]             = new ops.ArraySpecificOps[A](xs)
-
   implicit def unViewify0[A, CC[A]](xs: View[A])(implicit z: Builds[A, CC[A]]): CC[A] = z build xs
 
   implicit class ForeachableSetOps[A, Repr](repr: Repr)(implicit z: ForeachableSet.Coll[A, Repr]) {
