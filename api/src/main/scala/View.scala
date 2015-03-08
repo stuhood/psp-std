@@ -10,22 +10,47 @@ trait AnyView[+A] extends Any with Each[A] {
 trait SetView[A] extends Any with AnyView[A] with ExSet[A] {
 }
 
-trait View[+A] extends Any with AnyView[A] {
-  type MapTo[+X] <: View[X]
+trait ContiguousView[+A] extends Any with AnyView[A] {
+  def init: ContiguousView[A]
+  def tail: ContiguousView[A]
+  def drop(n: Precise): ContiguousView[A]
+  def dropRight(n: Precise): ContiguousView[A]
+  def dropWhile(p: Predicate[A]): ContiguousView[A]
+  def take(n: Precise): ContiguousView[A]
+  def takeRight(n: Precise): ContiguousView[A]
+  def takeWhile(p: Predicate[A]): ContiguousView[A]
+}
 
+trait NonContiguousView[+A] extends Any with AnyView[A] {
   def ++[A1 >: A](that: View[A1]): View[A1]
   def collect[B](pf: A ?=> B): MapTo[B]
-  def drop(n: Precise): MapTo[A]
-  def dropRight(n: Precise): MapTo[A]
-  def dropWhile(p: Predicate[A]): MapTo[A]
-  def flatMap[B](f: A => Each[B]): MapTo[B]
   def map[B](f: A => B): MapTo[B]
-  def take(n: Precise): MapTo[A]
-  def takeRight(n: Precise): MapTo[A]
-  def takeWhile(p: Predicate[A]): MapTo[A]
-  def viewOps: Direct[String]
+  def flatMap[B](f: A => Each[B]): MapTo[B]
   def withFilter(p: Predicate[A]): MapTo[A]
 }
+
+trait View[+A] extends Any with ContiguousView[A] with NonContiguousView[A] {
+  type MapTo[+X] <: View[X]
+
+  def viewOps: Direct[String]
+}
+
+// trait View[+A] extends Any with AnyView[A] {
+//   type MapTo[+X] <: View[X]
+
+//   def ++[A1 >: A](that: View[A1]): View[A1]
+//   def collect[B](pf: A ?=> B): MapTo[B]
+//   def drop(n: Precise): MapTo[A]
+//   def dropRight(n: Precise): MapTo[A]
+//   def dropWhile(p: Predicate[A]): MapTo[A]
+//   def flatMap[B](f: A => Each[B]): MapTo[B]
+//   def map[B](f: A => B): MapTo[B]
+//   def take(n: Precise): MapTo[A]
+//   def takeRight(n: Precise): MapTo[A]
+//   def takeWhile(p: Predicate[A]): MapTo[A]
+//   def viewOps: Direct[String]
+//   def withFilter(p: Predicate[A]): MapTo[A]
+// }
 
 trait InvariantView[A] extends Any with View[A] {
   def join(that: InvariantView[A]): InvariantView[A]
