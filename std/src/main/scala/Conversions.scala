@@ -8,7 +8,7 @@ final class Conversions[A](val xs: Each[A]) extends AnyVal {
   def to[CC[X]](implicit z: Builds[A, CC[A]]): CC[A]        = z build xs
   def toScala[CC[X]](implicit z: CanBuild[A, CC[A]]): CC[A] = to[CC](Builds wrap z)
   def toArray(implicit z: CTag[A]): Array[A]                = Array.newBuilder[A] ++= trav result
-  def toRefArray(implicit ev: A <:< AnyRef): Array[A]       = (Array.newBuilder[Any] ++= trav result).castTo[Array[A]]
+  def toRefArray(implicit ev: A <:< AnyRef): Array[AnyRef]  = (Array.newBuilder[Any] ++= trav result).castTo[Array[AnyRef]]
   def toPartial[K, V](implicit ev: A <:< (K, V)): K ?=> V   = toScalaMap[K, V]
 
   /** psp collections. */
