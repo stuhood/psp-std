@@ -6,6 +6,11 @@ import sbt._, Keys._, psp.libsbt._, Deps._
 import psp.std._
 
 object Build extends sbt.Build {
+  // Assign settings logger here during initialization so it won't be garbage collected.
+  // sbt otherwise will throw an exception if it is used after project loading.
+  private[this] var settingsLogger: Logger = _
+
+  def slog       = settingsLogger
   def commonArgs = wordSeq("-Yno-predef -Yno-adapted-args -unchecked")
   def stdArgs    = "-Yno-imports" +: commonArgs
   def replArgs   = "-language:_" +: commonArgs
@@ -68,6 +73,7 @@ object Build extends sbt.Build {
   }
 
   lazy val root = project.root.setup dependsOn (classpathDeps: _*) settings (
+    initialize := { this.settingsLogger = (sLog in GlobalScope).value ; initialize.value },
     commands ++= Seq(
       aggregateIn(clean, compileOnly),
       aggregateIn(compile in Compile, compileOnly),
