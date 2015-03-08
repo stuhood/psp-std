@@ -92,5 +92,3 @@ final class FileTimeOps(val time: jFileTime) extends AnyVal {
   def isOlder(that: jFileTime) = (time compareTo that) < 0
   def isSame(that: jFileTime)  = (time compareTo that) == 0
 }
-
-final class ClassLoaderOps(val loader: jClassLoader) extends ClassLoaderTrait

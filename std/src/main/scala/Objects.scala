@@ -12,28 +12,3 @@ object +: {
   def unapply[A](xs: Each[A])        = xs match { case Each(hd, _*) => Some(hd -> (xs drop 1)) ; case _ => None }
   def unapply[A](xs: sCollection[A]) = if (xs.isEmpty) None else Some(xs.head -> xs.tail)
 }
-
-
-object Logic {
-  object quantifier {
-    val universal   = "∀"
-    val existential = "∃"
-    val uniqueness  = "∃!"
-  }
-  object connective {
-    val tautology     = "⊤"
-    val contradiction = "⊥"
-    val negation      = "¬"
-    val implication   = "→" // "⊃"
-    val conjunction   = "∧" //
-    val disjunction   = "∨" //
-    val biconditional = "↔" // "⇔" "≡"
-
-    val xor  = "⊻"
-    val nand = "↑"
-    val nor  = "↓"
-  }
-  val definition = ":="
-  val derives    = "⊢" // syntactic consequence
-  val entails    = "⊨" // semantic consequence
-}

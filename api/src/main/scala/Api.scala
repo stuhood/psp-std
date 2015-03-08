@@ -49,6 +49,7 @@ trait IsEmpty extends Any                { def isEmpty: Boolean }
 trait Opt[+A] extends Any with IsEmpty   { def get: A           }
 trait OptInt extends Any with Opt[Int]   { def get: Int         }
 trait OptLong extends Any with Opt[Long] { def get: Long        }
+trait Index extends Any with OptLong     { def index: Long      }
 
 /** Collections interfaces.
  *  We'd much prefer not to extend Function1 here, but the consequences
@@ -70,9 +71,6 @@ trait ExMap[K, +V]        extends Any with Extensional[(K, V)] with InMap[K, V] 
 
 /** Enhanced value representations.
  */
-trait Index extends Any with OptLong {
-  def indexValue: Long
-}
 trait PairDown[-R, +A, +B] {
   def left(x: R): A
   def right(x: R): B

@@ -15,7 +15,7 @@ object Streams {
     loop() sideEffect in.close()
   }
   def slurp(in: BufferedInputStream, size: Precise): Array[Byte] = {
-    val len = size.safeInt
+    val len = size.getInt
     val buf = newArray[Byte](len)
     def loop(remaining: Int): Array[Byte] = {
       if (remaining == 0) buf

@@ -35,9 +35,7 @@ trait OrderInstances extends OrderInstancesLow {
   // This one doesn't work if it's A <:< jEnum[A], but jEnum[_] is just enough to get what we need.
   implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A] = Order.fromInt[A](_.ordinal - _.ordinal)
 
-  implicit def indexOrder: Order[Index]              = orderBy[Index](_.indexValue)
-  // implicit def nthOrder: Order[Nth]                  = orderBy[Nth](_.nthValue)
-  // implicit def offsetOrder: Order[Offset]            = orderBy[Offset](_.offsetValue)
+  implicit def indexOrder: Order[Index]              = orderBy[Index](_.get)
   implicit def preciseOrder[A <: Precise] : Order[A] = orderBy[A](_.value)
 
   implicit def tuple2Order[A: Order, B: Order] : Order[(A, B)]              = orderBy[(A, B)](fst) | snd

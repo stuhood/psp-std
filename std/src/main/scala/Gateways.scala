@@ -111,7 +111,6 @@ trait StdOps3 extends Any with StdOps2 {
   implicit def opsBoolean(x: Boolean): ops.BooleanOps                                                    = new ops.BooleanOps(x)
   implicit def opsBooleanAlgebra[A](x: BooleanAlgebra[A]): ops.BooleanAlgebraOps[A]                      = new ops.BooleanAlgebraOps[A](x)
   implicit def opsChar(x: Char): ops.CharOps                                                             = new ops.CharOps(x)
-  implicit def opsClassLoader(x: jClassLoader): ops.ClassLoaderOps                                       = new ops.ClassLoaderOps(x)
   implicit def opsFileTime(x: jFileTime): ops.FileTimeOps                                                = new ops.FileTimeOps(x)
   implicit def opsFunction1[T, R](f: T => R): ops.Function1Ops[T, R]                                     = new ops.Function1Ops(f)
   implicit def opsFunction2[T1, T2, R](f: (T1, T2) => R): ops.Function2Ops[T1, T2, R]                    = new ops.Function2Ops(f)

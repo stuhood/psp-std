@@ -10,7 +10,7 @@ import api._
 object Indexed {
   def indices: Indexed[Index]              = Pure(identity)
   def from(start: BigInt): Indexed[BigInt] = Pure(i => start + i.get)
-  def from(start: Int): Indexed[Int]       = Pure(i => start + i.safeInt)
+  def from(start: Int): Indexed[Int]       = Pure(i => start + i.getInt)
   def from(start: Long): Indexed[Long]     = Pure(i => start + i.get)
 
   final case class Pure[A](f: Index => A) extends AnyVal with Indexed[A] {
@@ -55,7 +55,7 @@ object Indexed {
       while (index.sizeIncluding > seen && hasNext) {
         next()
       }
-      memo(index.safeInt)
+      memo(index.getInt)
     }
     def isDefinedAt(i: Index): Boolean = {
       !i.isUndefined && (

@@ -26,8 +26,8 @@ final class ArrayInPlaceOps[A](val xs: Array[A]) extends AnyVal with HasPreciseS
 
 final class ArraySpecificOps[A](val xs: Array[A]) extends AnyVal with HasPreciseSizeMethods {
   def size: IntSize                          = Precise(xs.length)
-  def apply(idx: Index): A                   = xs(idx.safeInt)
-  def updated(idx: Index, value: A): xs.type = andThis(xs(idx.safeInt) = value)
+  def apply(idx: Index): A                   = xs(idx.getInt)
+  def updated(idx: Index, value: A): xs.type = andThis(xs(idx.getInt) = value)
   def mapNow[B: CTag](f: A => B): Array[B]   = newArray[B](size) doto (arr => foreachIntIndex(i => arr(i) = f(xs(i))))
   def inPlace: ArrayInPlaceOps[A]            = new ArrayInPlaceOps[A](xs)
   private def andThis(op: Unit): xs.type = xs
@@ -90,7 +90,7 @@ final class DirectOps[A](val xs: Direct[A]) extends AnyVal with ConversionOps[A]
   }
   def mapNow[B](f: A => B): Direct[B] = {
     val arr = newArray[Any](xs.size)
-    xs.indices foreach (i => arr(i.safeInt) = f(xs(i)))
+    xs.indices foreach (i => arr(i.getInt) = f(xs(i)))
     Direct.wrapArray[B](arr)
   }
 }

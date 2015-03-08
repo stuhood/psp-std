@@ -63,13 +63,13 @@ final class ExSetOps[A](xs: ExSet[A]) {
 trait HasPreciseSizeMethods extends Any {
   def size: Precise
 
-  def longSize: Long       = size.value
-  def intSize: Int         = longSize.safeInt
+  def longSize: Long       = size.longValue
+  def intSize: Int         = size.intValue
   def isZero: Boolean      = longSize == 0L
   def isPositive: Boolean  = longSize > 0L
   def indices: IndexRange  = indexRange(0, intSize)
   def nths: Direct[Nth]    = indices mapNow (_.toNth)
-  def lastIntIndex: Int    = lastIndex.safeInt
+  def lastIntIndex: Int    = lastIndex.getInt
   def lastIndex: Index     = Index(longSize - 1)  // effectively maps both undefined and zero to no index.
   def lastNth: Nth         = lastIndex.toNth
 
@@ -85,8 +85,8 @@ final class HasPreciseSizeOps(val x: HasPreciseSize) extends HasPreciseSizeMetho
 }
 
 final class PreciseOps(val size: Precise) extends AnyRef with HasPreciseSizeMethods {
-  def get: Long        = longSize
-  def safeInt          = get.safeInt
+  def get: Long        = size.longValue
+  def getInt: Int      = size.intValue
   def toDouble: Double = get.toDouble
 
   def + (n: Int): Precise = (longSize + n).size

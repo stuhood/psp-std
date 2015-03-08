@@ -23,8 +23,9 @@ import scala._
 sealed trait Size extends Any
 sealed trait Atomic extends Any with Size
 sealed trait Precise extends Any with Atomic {
-  def intValue: Int = value.toInt
   def value: Long
+  def intValue: Int     = value.toInt
+  def longValue: Long   = value
   override def toString = s"$value"
 }
 

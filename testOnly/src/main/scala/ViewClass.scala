@@ -37,8 +37,8 @@ final case class ScalaViewClass(name: String, xs: scIterable[Int]) extends ViewC
   private implicit def liftResult(xs: scIterable[Int]): This = copy(xs = xs)
 
   def collect(pf: Int ?=> Int)      = xs collect pf
-  def drop(n: Precise)              = xs drop n.safeInt
-  def dropRight(n: Precise)         = xs dropRight n.safeInt
+  def drop(n: Precise)              = xs drop n.getInt
+  def dropRight(n: Precise)         = xs dropRight n.getInt
   def dropWhile(p: Predicate[Int])  = xs dropWhile p
   def filter(p: Predicate[Int])     = xs filter p
   def filterNot(p: Predicate[Int])  = xs filterNot p
@@ -46,8 +46,8 @@ final case class ScalaViewClass(name: String, xs: scIterable[Int]) extends ViewC
   def foreach(f: Int => Unit)       = xs foreach f
   def map(f: Int => Int)            = xs map f
   def slice(range: IndexRange)      = xs slice (range.startInt, range.endInt)
-  def take(n: Precise)              = xs take n.safeInt
-  def takeRight(n: Precise)         = xs takeRight n.safeInt
+  def take(n: Precise)              = xs take n.getInt
+  def takeRight(n: Precise)         = xs takeRight n.getInt
   def takeWhile(p: Predicate[Int])  = xs takeWhile p
   def withFilter(p: Predicate[Int]) = xs filter p
   def to_s: String                  = xs mkString ("[ ", ", ", " ]")

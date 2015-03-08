@@ -8,7 +8,7 @@ import api._, StdEq._
 object NullClassLoader extends jClassLoader
 object NullInputStream extends InputStream { def read(): Int = -1 }
 
-/** Wrapper for java.lang.Class and other java friends.
+/** Wrapper for java.lang.Class/ClassLoader and other java friends.
  */
 final class JavaClass(val clazz: jClass) extends AnyVal with ForceShowDirect {
   private def toPolicy(x: jClass): JavaClass = new JavaClass(x)
@@ -47,4 +47,24 @@ final class JavaClass(val clazz: jClass) extends AnyVal with ForceShowDirect {
   def shortName: String                     = unqualifiedName
   def to_s: String                          = s"$clazz"
   def unqualifiedName: String               = decodeName(nameSegments.last)
+}
+
+final class JavaClassLoader(val loader: jClassLoader) extends AnyVal with ForceShowDirect with ClassLoaderTrait {
+  def to_s: String = s"$loader"
+}
+
+trait ClassLoaderTrait extends Any {
+  def loader: jClassLoader
+
+  def parentChain: Each[jClassLoader] = {
+    def loop(cl: jClassLoader): View[jClassLoader] = cl match {
+      case null => exView()
+      case _    => cl +: loop(cl.getParent)
+    }
+    loop(loader)
+  }
+  def uris: Each[jUri] = loader match {
+    case cl: URLClassLoader => cl.getURLs.toEach map (_.toURI)
+    case _                  => Nil
+  }
 }

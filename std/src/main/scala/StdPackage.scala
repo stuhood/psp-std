@@ -94,8 +94,10 @@ abstract class StdPackage
     def mmap[B](f: A => B): View[View[B]] = xss map (_ map f)
   }
 
+  implicit def wrapClass(x: jClass): JavaClass                   = new JavaClass(x)
+  implicit def wrapClassLoader(x: jClassLoader): JavaClassLoader = new JavaClassLoader(x)
+
   implicit def booleanToPredicate(value: Boolean): Predicate[Any] = if (value) ConstantTrue else ConstantFalse
-  implicit def jClassToJavaClass(x: jClass): JavaClass        = new JavaClass(x)
   implicit def intToPreciseSize(n: Int): IntSize                  = Precise(n)
   implicit def convertNilSeq[A](x: scala.Nil.type): Direct[A]     = Direct[A]()
 
@@ -103,5 +105,3 @@ abstract class StdPackage
 
   implicit def conforms[A] : (A <:< A) = new conformance[A]
 }
-
-

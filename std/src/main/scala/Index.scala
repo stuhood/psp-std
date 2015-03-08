@@ -15,39 +15,39 @@ import api._
  *
  *  Manipulations of undefined values remain undefined, like NaN.
  */
-final class IndexImpl private[std] (val indexValue: Long) extends AnyVal with Index {
-  def get: Long                     = indexValue
+final class IndexImpl private[std] (val index: Long) extends AnyVal with Index {
+  def get: Long                     = index
+  def getInt: Int                   = index.safeInt
   def /(size: Int): Index           = this / Precise(size: Long)
   def %(size: Int): Index           = this % Precise(size: Long)
-  def /(size: LongSize): Index      = if (isUndefined) this else Index(indexValue / size.value)
-  def %(size: LongSize): Index      = if (isUndefined) this else Index(indexValue % size.value)
-  def +(n: Long): Index             = if (isUndefined) this else Index(indexValue + n)
-  def -(n: Long): Index             = if (isUndefined) this else Index(indexValue - n)
+  def /(size: LongSize): Index      = if (isUndefined) this else Index(index / size.value)
+  def %(size: LongSize): Index      = if (isUndefined) this else Index(index % size.value)
+  def +(n: Long): Index             = if (isUndefined) this else Index(index + n)
+  def -(n: Long): Index             = if (isUndefined) this else Index(index - n)
   def prev: Index                   = this - 1
   def next: Index                   = this + 1
-  def until(end: Index): IndexRange = indexRange(safeInt, end.safeInt)
-  def sizeExcluding: Precise        = indexValue.size
-  def sizeIncluding: Precise        = indexValue.size + 1
+  def until(end: Index): IndexRange = indexRange(getInt, end.getInt)
+  def sizeExcluding: Precise        = index.size
+  def sizeIncluding: Precise        = index.size + 1
   def toIndex: Index                = this
-  def toNth: Nth                    = Nth(indexValue + 1)
-  def toOffset: Offset              = if (isUndefined) abort("undefined") else Offset(safeInt)
-  def safeInt: Int                  = indexValue.safeInt
-  def isUndefined                   = indexValue < 0
+  def toNth: Nth                    = Nth(index + 1)
+  def toOffset: Offset              = if (isUndefined) abort("undefined") else Offset(getInt)
+  def isUndefined                   = index < 0
   def isEmpty                       = isUndefined
-  override def toString             = if (isUndefined) "undefined" else s"$indexValue"
+  override def toString             = if (isUndefined) "undefined" else s"$index"
 }
 
 /** Nth is a 1-based index. The recorded indexValue is 0-based as with Index.
  */
-final class Nth private[std] (val nthValue: Long) extends AnyVal {
-  def -(n: Long): Nth   = if (isUndefined) this else Nth(nthValue - n)
-  def +(n: Long): Nth   = if (isUndefined) this else Nth(nthValue + n)
-  def toIndex: Index    = Index(nthValue - 1)
+final class Nth private[std] (val nth: Long) extends AnyVal {
+  def -(n: Long): Nth   = if (isUndefined) this else Nth(nth - n)
+  def +(n: Long): Nth   = if (isUndefined) this else Nth(nth + n)
+  def toIndex: Index    = Index(nth - 1)
   def toNth: Nth        = this
   def toOffset: Offset  = toIndex.toOffset
-  def safeInt: Int      = nthValue.safeInt
-  def isUndefined       = nthValue <= 0
-  override def toString = if (isUndefined) "undefined" else s"#$nthValue"
+  def getInt: Int       = nth.safeInt
+  def isUndefined       = nth <= 0
+  override def toString = if (isUndefined) "undefined" else s"#$nth"
 }
 
 /** Unlike an Index, an Offset can have any integer value.

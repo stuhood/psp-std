@@ -80,9 +80,9 @@ package object tests {
     def stream: Each[A]                                                    = Each continually g.sample flatMap (_.toDirect)
     def take(n: Int): Direct[A]                                            = stream take n
   }
-  implicit def chooseIndex: Choose[Index]  = Choose.xmap[Long, Index](_.index, _.indexValue)
+  implicit def chooseIndex: Choose[Index]  = Choose.xmap[Long, Index](_.index, _.index)
   implicit def chooseSize: Choose[Precise] = Choose.xmap[Long, Precise](_.size, _.value)
-  implicit def chooseNth: Choose[Nth]      = Choose.xmap[Long, Nth](_.nth, _.nthValue)
+  implicit def chooseNth: Choose[Nth]      = Choose.xmap[Long, Nth](_.nth, _.nth)
 
   def preNewline(s: String) = if (s contains "\n") "\n" + s.mapLines("| " ~ _) else s
   def showsAs[A: Show](expected: String, x: A): NamedProp         = preNewline(expected) -> (expected =? show"$x")
@@ -98,7 +98,7 @@ package object tests {
 
   implicit class PropOps(p: Prop) {
     def mapParams(f: Unary[TestParams]): Prop = new NamedProp.MapParams(p, f)
-    def minSuccessful(size: Precise): Prop    = mapParams(_ withMinSuccessfulTests size.safeInt)
+    def minSuccessful(size: Precise): Prop    = mapParams(_ withMinSuccessfulTests size.getInt)
     def unary_! : Prop                        = p map (r => !r)
   }
   implicit class PropResultOps(r: Prop.Result) {

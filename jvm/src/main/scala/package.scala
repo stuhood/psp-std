@@ -63,7 +63,6 @@ package object jvm extends psp.std.jvm.StdClasses {
   implicit def opsClass[A](x: Class[A]): jClassOps[A]                                               = new jClassOps[A](x)
   implicit def opsParameterizedType(x: jParameterizedType): jParameterizedTypeOps                   = new jParameterizedTypeOps(x)
   implicit def opsJTypeVariable[D <: jGenericDeclaration](x: jTypeVariable[D]): jTypeVariableOps[D] = new jTypeVariableOps[D](x)
-  // implicit def opsClassLoader(x: jClassLoader): jClassLoaderOps                                     = new jClassLoaderOps(x)
 
   implicit def showPoolEntry: Show[PoolEntry]           = Show(_.content)
   implicit def showInnerClassInfo: Show[InnerClassInfo] = Show(_.nestString)

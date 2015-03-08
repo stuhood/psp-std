@@ -12,19 +12,24 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
   private def hops = if (isEmpty) -1 else lastInt - startInt
   private def create(startInt: Int, size: Precise): Consecutive[A] =
     if (size.isZero) empty
-    else new Consecutive[A](startInt, startInt + size.safeInt - 1, f)
+    else new Consecutive[A](startInt, startInt + size.getInt - 1, f)
 
-  def endInt                      = lastInt + 1
-  def size                        = Precise(hops + 1)
-  def isEmpty                     = lastInt < startInt
-  def elemAt(i: Index): A         = f(startInt + i.safeInt)
-  def foreach(g: A => Unit): Unit = if (!isEmpty) lowlevel.foreachConsecutive(startInt, lastInt, f andThen g)
-  def map[B](g: A => B)           = new Consecutive[B](startInt, lastInt, f andThen g)
+  def endInt: Int         = lastInt + 1
+  def size: Precise       = Precise(hops + 1)
+  def isEmpty: Boolean    = lastInt < startInt
+  def elemAt(i: Index): A = f(startInt + i.getInt)
+  def map[B](g: A => B)   = new Consecutive[B](startInt, lastInt, f andThen g)
 
-  def drop(n: Precise): Consecutive[A]           = create(startInt + n.safeInt, size - n)
+  def foreach(g: A => Unit): Unit        = if (!isEmpty) lowlevel.foreachConsecutive(startInt, lastInt, f andThen g)
+  def foreachReverse(g: A => Unit): Unit = if (!isEmpty) {
+    val h = f andThen g
+    lowlevel.foreachConsecutive(0, hops, i => h(lastInt - i))
+  }
+
+  def drop(n: Precise): Consecutive[A]           = create(startInt + n.getInt, size - n)
   def dropRight(n: Precise): Consecutive[A]      = create(startInt, size - n)
   def take(n: Precise): Consecutive[A]           = create(startInt, size min n)
-  def takeRight(n: Precise): Consecutive[A]      = (size min n) |> (s => create(endInt - s.safeInt, s))
+  def takeRight(n: Precise): Consecutive[A]      = (size min n) |> (s => create(endInt - s.getInt, s))
   def slice(s: Int, e: Int): Consecutive[A]      = if (e <= 0 || e <= s) empty else this drop s take (e - s)
   def slice(r: IndexRange): Consecutive[A]       = slice(r.startInt, r.endInt)
   def dropWhile(p: Predicate[A]): Consecutive[A] = prefixLength(p) |> (len => create(startInt + len, size - len))
@@ -36,7 +41,7 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
   def toTake: Precise = size
   def prefixLength(p: Predicate[A]): Int = {
     var count = 0
-    while (count < size.safeInt) {
+    while (count < size.getInt) {
       if (!p(f(startInt + count))) return count
       count += 1
     }
