@@ -99,7 +99,7 @@ trait ApiViewOps[+A] extends Any {
   def foldl[B](zero: B)(f: (B, A) => B): B                = foldFrom(zero) left f
   def foldr[B](zero: B)(f: (A, B) => B): B                = foldFrom(zero) right f
   def fold[B](implicit z: Empty[B]): FoldOps[A, B]        = foldFrom(z.empty)
-  def foldFrom[B](zero: B): FoldOps[A, B]                 = FoldOpsClass(xs, zero)
+  def foldFrom[B](zero: B): FoldOps[A, B]                 = new FoldOps(xs, zero)
 }
 
 trait ExtensionalOps[A] extends Any {
@@ -202,4 +202,14 @@ final class PairViewOps[R, A, B](val xs: View[R])(implicit paired: PairDown[R, A
   def mapPairs[C](f: (A, B) => C): View[C]                                  = xs map (x => f(paired left x, paired right x))
   def mapLeft[R1, A1](f: A => A1)(implicit z: PairUp[R1, A1, B]): View[R1]  = xs map (x => z.create(f(paired left x), paired right x))
   def mapRight[R1, B1](f: B => B1)(implicit z: PairUp[R1, A, B1]): View[R1] = xs map (x => z.create(paired left x, f(paired right x)))
+}
+
+
+/** If we user the initial value as a jumping-off point can we improve the
+ *  interface to folds?
+ */
+final class FoldOps[+A, B](xs: View[A], initial: B) {
+  def indexed(f: (B, A, Index) => B): B = lowlevel.foldLeftIndexed(xs, initial, f)
+  def left(f: (B, A) => B): B           = lowlevel.foldLeft(xs, initial, f)
+  def right(f: (A, B) => B): B          = lowlevel.foldRight(xs, initial, f)
 }
