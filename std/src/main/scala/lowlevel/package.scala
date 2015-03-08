@@ -17,7 +17,27 @@ package object lowlevel {
       if (elem == last) return
     }
   }
-  // public final void foreachInt(int, int, scala.Function1<java.lang.Object, scala.runtime.BoxedUnit>);
+  /** Here's the bytecode the above produces. We'd like a test which ensures it
+   *  stays this way. There is some code in the scala distribution which verifies bytecode
+   *  is as expected but it's still not the smoothest process. TODO: test.
+   *
+   *  In the interim one can inspect the bytecode from "sbt console" via
+   *
+   *    :javap psp.std.lowlevel.package$
+   *
+   *  The critical elements are that the only non-local call is the function
+   *  application, and the function application is specialized - that is, its name
+   *  is "apply$mcVI$sp" and it has a (I)V descriptor, as opposed to one called
+   *  "apply" which accepts an Object. Also that the function comes in under 35 bytes,
+   *  which is the default hotspot threshold for function inlining.
+   *
+   *  Preserving those qualities is why the method assumes non-emptiness and has a
+   *  slightly unconventional structure. The emptiness check is performed once so can
+   *  be lifted outside the method.
+   */
+
+  // public final void foreachConsecutive(int, int, scala.Function1<java.lang.Object, scala.runtime.BoxedUnit>);
+  //   descriptor: (IILscala/Function1;)V
   //        0: iload_1
   //        1: iconst_1
   //        2: isub
