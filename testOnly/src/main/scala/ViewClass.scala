@@ -42,7 +42,7 @@ final case class ScalaViewClass(name: String, xs: scIterable[Int]) extends ViewC
   def dropWhile(p: Predicate[Int])  = xs dropWhile p
   def filter(p: Predicate[Int])     = xs filter p
   def filterNot(p: Predicate[Int])  = xs filterNot p
-  def flatMap(f: Int => Each[Int])  = xs flatMap (x => f(x).toScalaTraversable)
+  def flatMap(f: Int => Each[Int])  = xs flatMap (x => f(x).trav)
   def foreach(f: Int => Unit)       = xs foreach f
   def map(f: Int => Int)            = xs map f
   def slice(range: IndexRange)      = xs slice (range.startInt, range.endInt)

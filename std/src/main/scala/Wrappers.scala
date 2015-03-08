@@ -1,7 +1,7 @@
 package psp
 package std
 
-import api._, StdEq._
+import api._
 
 class FunctionEqualizer[A, B : Eq](f: A => B, g: A => B) extends (A ?=> B) {
   def isDefinedAt(x: A) = f(x) === g(x)
