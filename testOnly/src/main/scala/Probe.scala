@@ -16,7 +16,7 @@ object Probe {
   }
   final case class Linear(range: IntRange, counter: RecorderCounter) extends api.Linear[Int] {
     def head                          = counter record range.head
-    def tail                          = { head ; new Linear(range drop 1, counter) }
+    def tail                          = { head ; new Linear(range.tail, counter) }
     def isEmpty                       = range.isEmpty
     def size                          = if (isEmpty) 0.size else 1.size.atLeast
     def foreach(f: Int => Unit): Unit = if (!isEmpty) { f(head) ; tail foreach f }
@@ -25,7 +25,7 @@ object Probe {
   }
   final case class Sized(range: IntRange, counter: RecorderCounter) extends api.Linear[Int] {
     def head                          = counter record range.head
-    def tail                          = { head ; new Sized(range drop 1, counter) }
+    def tail                          = { head ; new Sized(range.tail, counter) }
     def isEmpty                       = range.isEmpty
     def size                          = range.size
     def foreach(f: Int => Unit): Unit = if (!isEmpty) { f(head) ; tail foreach f }
@@ -35,7 +35,7 @@ object Probe {
     override def newBuilder: scmBuilder[Int, ScalaLinear] = sciVector.newBuilder[Int] mapResult (xs => ScalaLinear(xs.head to xs.last, counter))
     override def isEmpty                                  = range.isEmpty
     override def head: Int                                = counter record range.head
-    override def tail: ScalaLinear                        = { head ; new ScalaLinear(range drop 1, counter) }
+    override def tail: ScalaLinear                        = { head ; new ScalaLinear(range.tail, counter) }
     override def toString                                 = s"$view ($counter)"
   }
   final case class ScalaDirect(range: IntRange, counter: RecorderCounter) extends sci.IndexedSeq[Int] with sc.IndexedSeqLike[Int, ScalaDirect] with sc.IndexedSeqOptimized[Int, ScalaDirect] {

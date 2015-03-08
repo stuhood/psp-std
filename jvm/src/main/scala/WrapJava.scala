@@ -40,7 +40,7 @@ final class jParameterizedTypeOps(val tp: jParameterizedType) extends AnyVal {
 final class jTypeOps(val declaration: jType) extends AnyVal with jTypeAndClassOps {
   def typeParams: Direct[jTypeVar] = declaration match {
     case x: jGenericDeclaration => x.getTypeParameters.toDirect
-    case _                      => Nil
+    case _                      => emptyValue
   }
 }
 

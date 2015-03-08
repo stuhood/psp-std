@@ -77,9 +77,9 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
   final def sm(args: Any*): String = {
     def isLineBreak(c: Char) = c == '\n' || c == '\f' // compatible with StringLike#isLineBreak
     def stripTrailingPart(s: String) = {
-      val index: Int   = (s indexWhere isLineBreak).getInt
-      val pre: String  = s take index force
-      val post: String = s drop index force;
+      val index        = s indexWhere isLineBreak
+      val pre: String  = s take index.sizeExcluding force
+      val post: String = s drop index.sizeExcluding force;
       pre ~ post.stripMargin
     }
     val stripped: sciList[String] = stringContext.parts.toList match {
@@ -101,8 +101,8 @@ object ShowCollections {
   implicit object DefaultShowCollections extends DefaultShowCollections
 
   class DefaultShowCollections extends ShowCollections {
-    def maxElements: Precise = 10
-    def minElements: Precise = 3
+    def maxElements = Precise(10)
+    def minElements = Precise(3)
 
     private def internalEach[A: Show](xs: Each[A]): String = Each.show[A](xs, minElements, maxElements)
 

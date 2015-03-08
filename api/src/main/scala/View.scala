@@ -10,21 +10,43 @@ trait AnyView[+A] extends Any with Each[A] {
 trait SetView[A] extends Any with AnyView[A] with ExSet[A] {
 }
 
-trait View[+A] extends Any with AnyView[A] {
-  type MapTo[+X] <: View[X]
+/** Contiguous operations share the property that the result is always
+ *  a (possibly empty) uninterrupted subsequence of the elements of the
+ *  target collection.
+ */
+trait ContiguousViewOps[+A] extends Any with AnyView[A] {
+  type Contiguous[+X] <: View[X]
 
+  // TODO:
+  //
+  // def init: Contiguous[A]
+  // def tail: Contiguous[A]
+  // def span(p: Predicate[A]): ContiguousSplit[A]
+  // def splitAt(index: Index): ContiguousSplit[A]
+  def drop(n: Precise): Contiguous[A]
+  def dropRight(n: Precise): Contiguous[A]
+  def dropWhile(p: Predicate[A]): Contiguous[A]
+  def take(n: Precise): Contiguous[A]
+  def takeRight(n: Precise): Contiguous[A]
+  def takeWhile(p: Predicate[A]): Contiguous[A]
+}
+
+trait NonContiguousViewOps[+A] extends Any with AnyView[A] {
   def ++[A1 >: A](that: View[A1]): View[A1]
   def collect[B](pf: A ?=> B): MapTo[B]
-  def drop(n: Precise): MapTo[A]
-  def dropRight(n: Precise): MapTo[A]
-  def dropWhile(p: Predicate[A]): MapTo[A]
-  def flatMap[B](f: A => Each[B]): MapTo[B]
   def map[B](f: A => B): MapTo[B]
-  def take(n: Precise): MapTo[A]
-  def takeRight(n: Precise): MapTo[A]
-  def takeWhile(p: Predicate[A]): MapTo[A]
-  def viewOps: Direct[String]
+  def flatMap[B](f: A => Each[B]): MapTo[B]
   def withFilter(p: Predicate[A]): MapTo[A]
+}
+
+trait View[+A] extends Any with ContiguousViewOps[A] with NonContiguousViewOps[A] {
+  type MapTo[+X] <: View[X]
+
+  def viewOps: Direct[String]
+}
+
+trait ContiguousView[+A] extends Any with View[A] {
+  type Contiguous[+X] <: ContiguousView[X]
 }
 
 trait InvariantView[A] extends Any with View[A] {

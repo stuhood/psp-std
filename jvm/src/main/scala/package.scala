@@ -70,7 +70,7 @@ package object jvm extends psp.std.jvm.StdClasses {
   implicit def jTypeShow: Show[jType]                   = Show(_.scalaString)
   implicit def jMethodShow: Show[jMethod]               = Show(_.scalaString)
 
-  implicit def methodTreeShow: Show[com.sun.source.tree.MethodTree] = Show(t => ("" + t).replaceAll("\\s+", " ").truncateTo(80))
+  implicit def methodTreeShow: Show[com.sun.source.tree.MethodTree] = Show(t => ("" + t).replaceAll("\\s+", " ").truncateTo(80.size))
 
   // implicit def ShowJvmDescriptor[A <: Descriptor]: Show[A] = Show[A] {
   //   case MethodDescriptor(params, restpe) => (params map (_.doc)).inParens <+> "=>" <+> restpe render
@@ -233,7 +233,7 @@ package object jvm extends psp.std.jvm.StdClasses {
         "%6s = %-18s %-15s%s".format("#" + number, entry.label, entry.content.sanitize, comment)
       }
 
-      (poolEntries drop 1) zip (Indexed from 1) map line mkString "\n"
+      poolEntries.tail zip (Indexed from 1) map line mkString "\n"
     }
 
     // private def group(label: String, xs: scTraversable[(String, String)]) =

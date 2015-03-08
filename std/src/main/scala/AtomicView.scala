@@ -77,7 +77,8 @@ final case class LabeledView[A, Repr](prev: BaseView[A, Repr], val viewOps: Dire
 
 sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[A] {
   type This <: BaseView[A, Repr]
-  type MapTo[+X]   = BaseView[X, Repr]
+  type MapTo[+X]      = BaseView[X, Repr]
+  type Contiguous[+X] = MapTo[X]
 
   def xs: this.type = this
 

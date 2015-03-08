@@ -39,7 +39,6 @@ object BiIterator {
     def hasNext = enum.hasMoreElements
     def next()  = enum.nextElement()
   }
-
   private object Empty extends BiIterator[Nothing] {
     def hasNext         = false
     def next(): Nothing = illegalArgumentException("next on empty iterator")

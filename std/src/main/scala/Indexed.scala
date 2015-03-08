@@ -36,7 +36,7 @@ object Indexed {
     private[this] val handoff = new LinkedBlockingQueue[A](1)
 
     private[this] lazy val thread: Unit = spawn({ xs foreach handoff.put ; doneProducing = true })
-    private[this] def seen: Precise = memo.length
+    private[this] def seen = Precise(memo.length)
     private[this] def next(): A = handoff.poll match {
       case null => nullAs[A]
       case elem => elem doto (x => memo = memo :+ x)
