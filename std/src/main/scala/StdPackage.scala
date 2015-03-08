@@ -49,9 +49,6 @@ abstract class StdPackage
     def direct: Suspended[Elem] => To                  = mf => z build Each(mf)
     def scalaBuilder: scmBuilder[Elem, To]             = sciVector.newBuilder[Elem] mapResult (xs => z build xs)
   }
-  implicit class JavaEnumerationOps[A](it: jEnumeration[A]) {
-    def toIterator = BiIterator enumeration it
-  }
   implicit class TupleViewOps[A, B](val xs: View[(A, B)]) {
     def filterLeft(p: Predicate[A])  = xs withFilter (x => p(x._1))
     def filterRight(p: Predicate[B]) = xs withFilter (x => p(x._2))
@@ -82,8 +79,9 @@ abstract class StdPackage
     def mmap[B](f: A => B): View[View[B]] = xss map (_ map f)
   }
 
-  implicit def wrapClass(x: jClass): JavaClass                   = new JavaClassImpl(x)
-  implicit def wrapClassLoader(x: jClassLoader): JavaClassLoader = new JavaClassLoaderImpl(x)
+  implicit def wrapClass(x: jClass): JavaClass                            = new JavaClassImpl(x)
+  implicit def wrapClassLoader(x: jClassLoader): JavaClassLoader          = new JavaClassLoaderImpl(x)
+  implicit def wrapEnumeration[A](x: jEnumeration[A]): JavaEnumeration[A] = new JavaEnumeration(x)
 
   implicit def booleanToPredicate(value: Boolean): Predicate[Any] = if (value) ConstantTrue else ConstantFalse
   implicit def intToPreciseSize(n: Int): IntSize                  = Precise(n)

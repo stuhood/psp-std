@@ -11,6 +11,10 @@ object NullInputStream extends InputStream { def read(): Int = -1 }
 final class JavaClassImpl(val clazz: jClass) extends AnyVal with ForceShowDirect with JavaClass
 final class JavaClassLoaderImpl(val loader: jClassLoader) extends AnyVal with ForceShowDirect with JavaClassLoader
 
+class JavaEnumeration[A](enum: jEnumeration[A]) {
+  def iterator: BiIterator[A] = BiIterator enumeration enum
+}
+
 trait JavaClass extends Any {
   def clazz: jClass
 
