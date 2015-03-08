@@ -65,19 +65,7 @@ abstract class StdPackage
   implicit class SameTuple2Ops[A](val x: (A, A)) {
     def seq: Direct[A] = Direct(x._1, x._2)
   }
-  implicit class IsEmptyOps(val lhs: IsEmpty) {
-    def emptyOrNonEmpty: Size = if (lhs.isEmpty) impl.Size.Empty else impl.Size.NonEmpty
-  }
   implicit class AnyTargetSeqOps[A: HashEq](root: A) {
-    def transitiveDepth(maxDepth: Int, expand: A => Each[A]): Each[A] = {
-      var seen = exSet[A]()
-      def loop(depth: Int, root: A, f: A => Unit): Unit = if (depth < maxDepth && !seen(root)) {
-        seen = seen union exSet(root)
-        f(root)
-        expand(root) |> (xs => if (xs != null) xs foreach (x => loop(depth + 1, x, f)))
-      }
-      Each(f => loop(0, root, f))
-    }
     def transitiveClosure(expand: A => View[A]): View[A] = inView { f =>
       var seen = exSet[A]()
       def loop(root: A, f: A => Unit): Unit = if (!seen(root)) {
@@ -94,8 +82,8 @@ abstract class StdPackage
     def mmap[B](f: A => B): View[View[B]] = xss map (_ map f)
   }
 
-  implicit def wrapClass(x: jClass): JavaClass                   = new JavaClass(x)
-  implicit def wrapClassLoader(x: jClassLoader): JavaClassLoader = new JavaClassLoader(x)
+  implicit def wrapClass(x: jClass): JavaClass                   = new JavaClassImpl(x)
+  implicit def wrapClassLoader(x: jClassLoader): JavaClassLoader = new JavaClassLoaderImpl(x)
 
   implicit def booleanToPredicate(value: Boolean): Predicate[Any] = if (value) ConstantTrue else ConstantFalse
   implicit def intToPreciseSize(n: Int): IntSize                  = Precise(n)

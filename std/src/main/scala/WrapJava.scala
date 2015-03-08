@@ -3,15 +3,18 @@ package std
 
 import api._, StdEq._
 
-/** Wrapping java classes.
+/** Wrapper for java.lang.Class/ClassLoader and other java friends.
  */
 object NullClassLoader extends jClassLoader
 object NullInputStream extends InputStream { def read(): Int = -1 }
 
-/** Wrapper for java.lang.Class/ClassLoader and other java friends.
- */
-final class JavaClass(val clazz: jClass) extends AnyVal with ForceShowDirect {
-  private def toPolicy(x: jClass): JavaClass = new JavaClass(x)
+final class JavaClassImpl(val clazz: jClass) extends AnyVal with ForceShowDirect with JavaClass
+final class JavaClassLoaderImpl(val loader: jClassLoader) extends AnyVal with ForceShowDirect with JavaClassLoader
+
+trait JavaClass extends Any {
+  def clazz: jClass
+
+  private def toPolicy(x: jClass): JavaClass = new JavaClassImpl(x)
   def javaClass: JavaClass = this // implicit creation hook
 
   def isAnnotation     = clazz.isAnnotation
@@ -49,11 +52,7 @@ final class JavaClass(val clazz: jClass) extends AnyVal with ForceShowDirect {
   def unqualifiedName: String               = decodeName(nameSegments.last)
 }
 
-final class JavaClassLoader(val loader: jClassLoader) extends AnyVal with ForceShowDirect with ClassLoaderTrait {
-  def to_s: String = s"$loader"
-}
-
-trait ClassLoaderTrait extends Any {
+trait JavaClassLoader extends Any {
   def loader: jClassLoader
 
   def parentChain: Each[jClassLoader] = {
@@ -67,4 +66,5 @@ trait ClassLoaderTrait extends Any {
     case cl: URLClassLoader => cl.getURLs.toEach map (_.toURI)
     case _                  => Nil
   }
+  def to_s: String = s"$loader"
 }
