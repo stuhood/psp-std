@@ -10,7 +10,7 @@ class CollectionResult(viewOp: ViewClass.Op, testedFn: RecorderCounter => ViewCl
   val counter = new RecorderCounter
   val xs      = testedFn(counter)
   val name    = xs.name
-  val applied = viewOp(xs) take 3
+  val applied = viewOp(xs) take 3.size
   val result  = applied.to_s
   val calls   = counter.distinctCalls
   val hits    = counter.totalCalls
@@ -47,10 +47,10 @@ class OperationCounts extends ScalacheckBundle {
   private def multiply(n: Int) = (_: Int) * n
 
   def viewMethod: Gen[ViewClass.Op] = oneOf(
-    lowHalf     ^^ lop(n => s"drop $n"   -> (_ drop n)),
-    highHalf    ^^ lop(n => s"take $n"   -> (_ take n)),
-    chooseMax   ^^ lop(n => s"dropR $n"  -> (_ dropRight n)),
-    chooseMax   ^^ lop(n => s"takeR $n"  -> (_ takeRight n)),
+    lowHalf     ^^ lop(n => s"drop $n"   -> (_ drop n.size)),
+    highHalf    ^^ lop(n => s"take $n"   -> (_ take n.size)),
+    chooseMax   ^^ lop(n => s"dropR $n"  -> (_ dropRight n.size)),
+    chooseMax   ^^ lop(n => s"takeR $n"  -> (_ takeRight n.size)),
     lowHalf     ^^ lop(n => s"dropW <$n" -> (_ dropWhile less(n))),
     lowHalf     ^^ lop(n => s"takeW <$n" -> (_ takeWhile less(n))),
     chooseSmall ^^ lop(n => s"*$n"       -> (_ map multiply(n))),

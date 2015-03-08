@@ -20,7 +20,7 @@ final class JvmInfoOps(val info: JvmInfo) extends AnyVal {
   )
   def scalaSigBytes: Array[Byte] = {
     val bytes = findBytes | Array[Byte]()
-    bytes take (ByteCodecs decode bytes) force
+    bytes take (ByteCodecs decode bytes).size force
   }
   def carriesScalaSignature = scalaSigBytes.length > 0
   def needsScalaSignature   = attributes contains attr.Scala

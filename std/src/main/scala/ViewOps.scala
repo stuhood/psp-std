@@ -53,11 +53,11 @@ trait ApiViewOps[+A] extends Any {
   def first[B](pf: A ?=> B): Option[B]                   = find(pf.isDefinedAt) map pf
   def forallTrue(implicit ev: A <:< Boolean): Boolean    = forall(x => ev(x))
   def forall(p: Predicate[A]): Boolean                   = foldl[Boolean](true)((res, x) => if (!p(x)) return false else res)
-  def head: A                                            = xs take 1 optionally { case Each(x) => x } orFail "empty.head"
+  def head: A                                            = xs take 1.size optionally { case Each(x) => x } orFail "empty.head"
   def indexWhere(p: Predicate[A]): Index                 = zipIndex findLeft p map snd or NoIndex
   def indicesWhere(p: Predicate[A]): View[Index]         = zipIndex filterLeft p map snd
   def isEmpty: Boolean                                   = xs.size.isZero || directIsEmpty
-  def last: A                                            = xs takeRight 1 optionally { case Each(x) => x } orFail "empty.last"
+  def last: A                                            = xs takeRight 1.size optionally { case Each(x) => x } orFail "empty.last"
   def max(implicit ord: Order[A]): A                     = xs reducel (_ max2 _)
   def min(implicit ord: Order[A]): A                     = xs reducel (_ min2 _)
   def mkString(sep: String): String                      = stringed(sep)(_.any_s)
@@ -73,7 +73,7 @@ trait ApiViewOps[+A] extends Any {
   def gather[B](pf: A ?=> View[B]): View[B]                      = xs flatMap pf.zapply
   def gatherClass[B: CTag] : View[B]                             = xs collect classFilter[B]
   def grep(regex: Regex)(implicit z: Show[A]): View[A]           = xs filter (x => regex isMatch x)
-  def init: View[A]                                              = xs dropRight 1
+  def init: View[A]                                              = xs dropRight 1.size
   def labelOp[B](label: String)(f: View[A] => View[B]): View[B]  = new LabeledView(f(xs), xs.viewOps :+ label)
   def mapApply[B, C](x: B)(implicit ev: A <:< (B => C)): View[C] = xs map (f => ev(f)(x))
   def mapWithIndex[B](f: (A, Index) => B): View[B]               = inView[B](mf => foldWithIndex(())((res, x, i) => mf(f(x, i))))
@@ -82,15 +82,15 @@ trait ApiViewOps[+A] extends Any {
   def sliceWhile(p: Predicate[A], q: Predicate[A]): View[A]      = xs dropWhile p takeWhile q
   def sortDistinct(implicit ord: Order[A]): View[A]              = new DirectApiViewOps(xs.toDirect) sortDistinct
   def sorted(implicit ord: Order[A]): View[A]                    = new DirectApiViewOps(xs.toDirect) sorted
-  def tail: View[A]                                              = xs drop 1
+  def tail: View[A]                                              = xs drop 1.size
   def toRefs: View[Ref[A]]                                       = xs map (_.toRef)
   def withSize(size: Size): View[A]                              = new Each.Impl[A](size, xs foreach _)
   def zip[B](ys: View[B]): ZipView[A, B]                         = new ZipView(xs, ys)
   def zipIndex: ZipView[A, Index]                                = new ZipView(xs, Each.indices)
 
   def ofClass[B: CTag] : View[B]            = xs collect classFilter[B]
-  def takeToFirst(p: Predicate[A]): View[A] = xs span !p mapRight (_ take 1) rejoin
-  def dropIndex(index: Index): View[A]      = xs splitAt index mapRight (_ drop 1) rejoin
+  def takeToFirst(p: Predicate[A]): View[A] = xs span !p mapRight (_ take 1.size) rejoin
+  def dropIndex(index: Index): View[A]      = xs splitAt index mapRight (_ drop 1.size) rejoin
 
   def groupBy[B: HashEq](f: A => B): ExMap[B, View[A]] =
     foldl(bufferMap[B, View[A]]())((buf, x) => andResult(buf, buf(f(x)) :+= x)).toMap.m.toExMap

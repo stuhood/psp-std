@@ -9,7 +9,7 @@ class DelayedLog {
   private[this] var toLog: Each[Message[_]] = Direct()
 
   def timeString(timeStyle: Int = MEDIUM): String = getTimeInstance(timeStyle) format new jDate()
-  def stackString(frames: Int   = 50): String = (new Throwable).getStackTrace drop 3 take frames mkString EOL
+  def stackString(frames: Int   = 50): String = (new Throwable).getStackTrace drop 3.size take frames.size mkString EOL
 
   private class Message[T](bodyFn: => T, pf: T ?=> String) {
     val id    = counter.next()

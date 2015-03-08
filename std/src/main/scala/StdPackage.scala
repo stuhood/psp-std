@@ -83,11 +83,6 @@ abstract class StdPackage
   implicit def wrapClassLoader(x: jClassLoader): JavaClassLoader          = new JavaClassLoaderImpl(x)
   implicit def wrapEnumeration[A](x: jEnumeration[A]): JavaEnumeration[A] = new JavaEnumeration(x)
 
-  implicit def booleanToPredicate(value: Boolean): Predicate[Any] = if (value) ConstantTrue else ConstantFalse
-  implicit def intToPreciseSize(n: Int): IntSize                  = Precise(n)
-  implicit def convertNilSeq[A](x: scala.Nil.type): Direct[A]     = Direct[A]()
-
-  implicit def convertPolicySeq[A, B](xs: Each[A])(implicit conversion: A => B): Each[B] = xs map (x => conversion(x))
-
-  implicit def conforms[A] : (A <:< A) = new conformance[A]
+  implicit def constantPredicate[A](value: Boolean): Predicate[A] = if (value) ConstantTrue else ConstantFalse
+  implicit def conforms[A] : (A <:< A)                            = new conformance[A]
 }

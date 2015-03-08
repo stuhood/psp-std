@@ -16,7 +16,7 @@ object Streams {
   }
   def slurp(in: BufferedInputStream, size: Precise): Array[Byte] = {
     val len = size.getInt
-    val buf = newArray[Byte](len)
+    val buf = newArray[Byte](size)
     def loop(remaining: Int): Array[Byte] = {
       if (remaining == 0) buf
       else in.read(buf, len - remaining, remaining) match {

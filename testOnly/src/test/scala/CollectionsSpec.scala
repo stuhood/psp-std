@@ -27,10 +27,10 @@ class StringExtensions extends ScalacheckBundle {
   def props: Direct[NamedProp] = Direct(
     "stripSuffix" -> newProp2[String](_ stripSuffix _)(_ stripSuffix _),
     "stripPrefix" -> newProp2[String](_ stripPrefix _)(_ stripPrefix _),
-    "take"        -> newProp2[Int](_ take _)(_ take _ build),
-    "drop"        -> newProp2[Int](_ drop _)(_ drop _ build),
-    "takeRight"   -> newProp2[Int](_ takeRight _)(_ takeRight _ build)(mostInts, ?),
-    "dropRight"   -> newProp2[Int](_ dropRight _)(_ dropRight _ build)(mostInts, ?),
+    "take"        -> newProp2[Int](_ take _)(_ take _.size build),
+    "drop"        -> newProp2[Int](_ drop _)(_ drop _.size build),
+    "takeRight"   -> newProp2[Int](_ takeRight _)(_ takeRight _.size build)(mostInts, ?),
+    "dropRight"   -> newProp2[Int](_ dropRight _)(_ dropRight _.size build)(mostInts, ?),
     "toInt"       -> newProp[Int](_.toInt, _.toInt),
     "tail"        -> newProp[String](_.tail, _.tail.force),
     "head"        -> newProp(_.head, _.head),
@@ -43,8 +43,8 @@ class GridSpec extends ScalacheckBundle {
   def bundle = "Policy, Grid Operations"
 
   def primePartition = Indexed from 2 mpartition (xs => _ % xs.head == 0)
-  def primePartitionGrid(n: Int): View2D[Int]   = primePartition take n map (_ take n)
-  def primePartitionGrid_t(n: Int): View2D[Int] = primePartition.transpose take n map (_ take n)
+  def primePartitionGrid(n: Int): View2D[Int]   = primePartition take n.size map (_ take n.size)
+  def primePartitionGrid_t(n: Int): View2D[Int] = primePartition.transpose take n.size map (_ take n.size)
   def showGrid(xss: View2D[Int]): String = {
     val yss = xss mmap (_.to_s)
     val width = yss.flatten.map(_.length).max.size
@@ -68,7 +68,7 @@ class GridSpec extends ScalacheckBundle {
   """
 
   def props = Direct(
-    seqShows("[ 2, 4, 6, ... ], [ 3, 9, 15, ... ], [ 5, 25, 35, ... ]", Indexed from 2 mpartition (xs => _ % xs.head == 0) take 3),
+    seqShows("[ 2, 4, 6, ... ], [ 3, 9, 15, ... ], [ 5, 25, 35, ... ]", Indexed from 2 mpartition (xs => _ % xs.head == 0) take 3.size),
     showsAs(primePartition6, showGrid(primePartitionGrid(6))),
     showsAs(primePartition6_t, showGrid(primePartitionGrid_t(6)))
   )
@@ -99,7 +99,7 @@ class PolicyBasic extends ScalacheckBundle {
     showsAs("1 -> 3, 2 -> 4, 3 -> 3", closureBag.entries mk_s ", "),
     seqShows("1 -> 0, 2 -> 1, 3 -> 2", pvector.m.mapWithIndex(_ -> _)),
     seqShows("11, 22, 33, 44", indexRange(1, 50).toDirect.m grep """(.)\1""".r),
-    seqShows("99, 1010, 1111", xxNumbers drop 8 take 3)
+    seqShows("99, 1010, 1111", xxNumbers slice (8 takeNext 3.size).asIndices)
   )
 }
 
