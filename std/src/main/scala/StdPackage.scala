@@ -49,12 +49,6 @@ abstract class StdPackage
     def direct: Suspended[Elem] => To                  = mf => z build Each(mf)
     def scalaBuilder: scmBuilder[Elem, To]             = sciVector.newBuilder[Elem] mapResult (xs => z build xs)
   }
-  implicit class TupleViewOps[A, B](val xs: View[(A, B)]) {
-    def filterLeft(p: Predicate[A])  = xs withFilter (x => p(x._1))
-    def filterRight(p: Predicate[B]) = xs withFilter (x => p(x._2))
-    def lefts: View[A]               = xs map (_._1)
-    def rights: View[B]              = xs map (_._2)
-  }
   implicit class Tuple2Ops[A, B](val lhs: (A, B)) {
     def fold[C, D](rhs: (A, B))(f: (A, A) => C, g: (B, B) => C)(h: (C, C) => D): D =
       h(f(lhs._1, rhs._1), g(lhs._2, rhs._2))
@@ -83,6 +77,6 @@ abstract class StdPackage
   implicit def wrapClassLoader(x: jClassLoader): JavaClassLoader          = new JavaClassLoaderImpl(x)
   implicit def wrapEnumeration[A](x: jEnumeration[A]): JavaEnumeration[A] = new JavaEnumeration(x)
 
-  implicit def constantPredicate[A](value: Boolean): Predicate[A] = if (value) ConstantTrue else ConstantFalse
-  implicit def conforms[A] : (A <:< A)                            = new conformance[A]
+  implicit def constantPredicate[A](value: Boolean): ToBool[A] = if (value) ConstantTrue else ConstantFalse
+  implicit def conforms[A] : (A <:< A)                         = new conformance[A]
 }

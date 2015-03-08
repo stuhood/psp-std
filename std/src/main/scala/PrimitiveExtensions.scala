@@ -27,10 +27,10 @@ final class AnyOps[A](val x: A) extends AnyVal {
   def reflect[B](m: jMethod)(args: Any*): B = m.invoke(x, args.map(_.castTo[AnyRef]): _*).castTo[B]
 
   // The famed forward pipe.
-  @inline def doto(f: A => Unit): A               = sideEffect(f(x))
-  @inline def isOr(p: Predicate[A])(alt: => A): A = if (p(x)) x else alt
-  @inline def sideEffect(body: Unit): A           = x
-  @inline def |>[B](f: A => B): B                 = f(x)
+  @inline def doto(f: A => Unit): A            = sideEffect(f(x))
+  @inline def isOr(p: ToBool[A])(alt: => A): A = if (p(x)) x else alt
+  @inline def sideEffect(body: Unit): A        = x
+  @inline def |>[B](f: A => B): B              = f(x)
 
   // Calling eq on Anys.
   def id_==(y: Any): Boolean = (toRef: AnyRef) eq y.toRef
@@ -40,7 +40,7 @@ final class AnyOps[A](val x: A) extends AnyVal {
   def same: FixType[A, A]   = new FixType[A, A](x)
 
   def optionally[B](pf: A ?=> B): Option[B] = if (pf isDefinedAt x) Some(pf(x)) else None
-  def requiring(p: Predicate[A]): Option[A] = if (p(x)) Some(x) else None
+  def requiring(p: ToBool[A]): Option[A] = if (p(x)) Some(x) else None
   def matchOr[B](alt: => B)(pf: A ?=> B): B = if (pf isDefinedAt x) pf(x) else alt
   def try_s(implicit z: Show[A] = null): String = if (!z.isNull) z show x else x match {
     case x: ShowDirect => x.to_s

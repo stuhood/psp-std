@@ -14,7 +14,7 @@ final class ToScala[K, +V](override val keys: sciVector[K], override val values:
   self =>
 
   private[this] type Pair = ((K, V))
-  private[this] type Us = ToScala[K, V]
+  private[this] type Us   = ToScala[K, V]
 
   implicit def ordering: Ordering[K] = orderBy[K](keyIndex).toScalaOrdering
   override def empty: Us             = ToScala.empty[K, V]
@@ -23,7 +23,7 @@ final class ToScala[K, +V](override val keys: sciVector[K], override val values:
 
   private def keyIndex(key: K)          = keys indexOf key
   private def pairs                     = keys zip values
-  private def optIndex(p: Predicate[K]) = keys indexWhere p requiring (_ >= 0)
+  private def optIndex(p: ToBool[K]) = keys indexWhere p requiring (_ >= 0)
   private def indicesFrom(start: K): scIterator[Int] = keyIndex(start) match {
     case n if n < 0 => scIterator.empty
     case n          => scIterator.range(n, keys.length)
@@ -52,17 +52,17 @@ final class ToScala[K, +V](override val keys: sciVector[K], override val values:
       case _                     => this
     }
 
-  override def drop(n: Int): Us                  = this drop n.size
-  override def take(n: Int): Us                  = this take n.size
-  override def dropRight(n: Int): Us             = this dropRight n.size
-  override def takeRight(n: Int): Us             = this takeRight n.size
-  override def takeWhile(p: Predicate[Pair]): Us = (pairs indexWhere !p requiring (_ >= 0)).fold(this)(take)
-  override def dropWhile(p: Predicate[Pair]): Us = (pairs indexWhere !p requiring (_ >= 0)).fold(empty)(drop)
+  override def drop(n: Int): Us               = this drop n.size
+  override def take(n: Int): Us               = this take n.size
+  override def dropRight(n: Int): Us          = this dropRight n.size
+  override def takeRight(n: Int): Us          = this takeRight n.size
+  override def takeWhile(p: ToBool[Pair]): Us = (pairs indexWhere !p requiring (_ >= 0)).fold(this)(take)
+  override def dropWhile(p: ToBool[Pair]): Us = (pairs indexWhere !p requiring (_ >= 0)).fold(empty)(drop)
 }
 
 object ToScala {
-  def newBuilder[K, V] : scmBuilder[(K, V), ToScala[K, V]] = sciVector.newBuilder[(K, V)] mapResult apply
-  def apply[K, V](pairs: sciVector[(K, V)]): ToScala[K, V] = new ToScala[K, V](pairs map fst, pairs map snd)
+  def newBuilder[K, V] : scmBuilder[K -> V, ToScala[K, V]] = sciVector.newBuilder[K -> V] mapResult apply
+  def apply[K, V](pairs: sciVector[K -> V]): ToScala[K, V] = new ToScala[K, V](pairs map fst, pairs map snd)
   def empty[K, V] : ToScala[K, V]                          = apply(sciVector())
 
   implicit def showToScala[K: Show, V: Show] = Show[ToScala[K, V]] { map =>

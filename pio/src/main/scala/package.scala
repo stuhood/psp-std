@@ -11,14 +11,14 @@ package object pio {
   type jDirStreamFilter[A] = DirectoryStreamFilter[A]
   type jDirStream[A]       = DirectoryStream[A]
 
-  implicit def opsFilesStatics(path: Path): JnfFilesStatics                        = new JnfFilesStatics(path)
-  implicit def opsJarEntry(entry: JarEntry): JioJarEntryOps                        = new JioJarEntryOps(entry)
-  implicit def opsManifestMap(m: jManifest): ManifestMap                           = ManifestMap(m)
-  implicit def opsSeqString(xs: scSeq[String]): JioSeqStringOps                    = new JioSeqStringOps(xs)
-  implicit def opsUri(uri: jUri): JioUriOps                                        = new JioUriOps(uri)
-  implicit def opsFile(file: jFile): PioPathOps[Path]                              = opsPath(file.toURI.fs)
-  implicit def opsPath[A <: Path](path: A): PioPathOps[A]                          = new PioPathOps[A](path)
-  implicit def predicateToDirectoryFilter[A](p: Predicate[A]): jDirStreamFilter[A] = new jDirStreamFilter[A] { def accept(entry: A) = p(entry) }
+  implicit def opsFilesStatics(path: Path): JnfFilesStatics                     = new JnfFilesStatics(path)
+  implicit def opsJarEntry(entry: JarEntry): JioJarEntryOps                     = new JioJarEntryOps(entry)
+  implicit def opsManifestMap(m: jManifest): ManifestMap                        = ManifestMap(m)
+  implicit def opsSeqString(xs: scSeq[String]): JioSeqStringOps                 = new JioSeqStringOps(xs)
+  implicit def opsUri(uri: jUri): JioUriOps                                     = new JioUriOps(uri)
+  implicit def opsFile(file: jFile): PioPathOps[Path]                           = opsPath(file.toURI.fs)
+  implicit def opsPath[A <: Path](path: A): PioPathOps[A]                       = new PioPathOps[A](path)
+  implicit def predicateToDirectoryFilter[A](p: ToBool[A]): jDirStreamFilter[A] = new jDirStreamFilter[A] { def accept(entry: A) = p(entry) }
 
   def ivyJars         = ivyHome.deepJars
   def mavenJars       = m2Home.deepJars

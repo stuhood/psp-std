@@ -21,8 +21,8 @@ object CreateBy extends CreateBy
 
 final class OrderingImpl[A](cmp: (A, A) => Cmp)                    extends Ordering[A]         { def compare(x: A, y: A): Int = cmp(x, y).intValue }
 final class ComparatorImpl[A](f: (A, A) => Int)                    extends Comparator[A]       { def compare(x: A, y: A): Int = f(x, y)            }
-final class ShowImpl[-A](val f: A => String)                       extends AnyVal with Show[A] { def show(x: A) = f(x)                             }
-final class HashImpl[-A](val f: A => Int)                          extends AnyVal with Hash[A] { def hash(x: A): Int = f(x)                        }
+final class ShowImpl[-A](val f: ToString[A])                       extends AnyVal with Show[A] { def show(x: A) = f(x)                             }
+final class HashImpl[-A](val f: ToInt[A])                          extends AnyVal with Hash[A] { def hash(x: A): Int = f(x)                        }
 final class EqImpl[-A](val f: Relation[A])                         extends AnyVal with Eq[A]   { def equiv(x: A, y: A) = f(x, y)                   }
 final class HashEqImpl[-A](isEquiv: Relation[A], hashFn: A => Int) extends HashEq[A]           {
   def equiv(x: A, y: A) = isEquiv(x, y)

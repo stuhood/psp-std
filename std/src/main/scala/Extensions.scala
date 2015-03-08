@@ -30,7 +30,7 @@ final class Function1Ops[T, R](val f: T => R) extends AnyVal {
   def partial: T ?=> R                                   = new FunctionAsPartial(f)
   def map[S](g: R => S): T => S                          = new MapFunction1(f, g)
   def comap[S](g: S => T): S => R                        = new MapFunction1(g, f)
-  def sameAt(g: T => R)(implicit z: Eq[R]): Predicate[T] = x => f(x) === g(x)
+  def sameAt(g: T => R)(implicit z: Eq[R]): ToBool[T] = x => f(x) === g(x)
   def on[S](g: (R, R) => S): (T, T) => S                 = (x, y) => g(f(x), f(y))
 }
 final class Function2Ops[T1, T2, R](val f: (T1, T2) => R) extends AnyVal {
@@ -40,10 +40,7 @@ final class Function2Ops[T1, T2, R](val f: (T1, T2) => R) extends AnyVal {
   def comap1[P](g: P => T1): (P, T2) => R  = (x, y) => f(g(x), y)
   def comap2[P](g: P => T2): (T1, P) => R  = (x, y) => f(x, g(y))
 }
-final class BiFunctionOps[T, R](val f: (T, T) => R) extends AnyVal {
-  // def on[S](g: S => T): (S, S) => R = (x, y) => f(g(x), g(y))
-}
-final class PredicateOps[A](val p: Predicate[A]) extends AnyVal {
+final class PredicateOps[A](val p: ToBool[A]) extends AnyVal {
   def inSet: InSet[A] = InSet(p)
 }
 final class PartialFunctionOps[A, B](val pf: A ?=> B) extends AnyVal {

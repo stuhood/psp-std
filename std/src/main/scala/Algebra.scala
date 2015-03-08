@@ -32,12 +32,12 @@ object Algebras {
     def one                            = Label.One
   }
 
-  final case class PredicateComplement[A](f: psp.std.Predicate[A]) extends psp.std.Predicate[A] with ForceShowDirect {
+  final case class PredicateComplement[A](f: psp.std.ToBool[A]) extends psp.std.ToBool[A] with ForceShowDirect {
     def apply(x: A): Boolean = !f(x)
     def to_s = "!" + f
   }
-  final class Predicate[A] extends BooleanAlgebra[psp.std.Predicate[A]] {
-    private type R = psp.std.Predicate[A]
+  final class ToBool[A] extends BooleanAlgebra[psp.std.ToBool[A]] {
+    private type R = psp.std.ToBool[A]
 
     /** TODO - one of of the benefits of having constant true and false is an
      *  opportunity to optimize expressions away entirely with no evaluation,

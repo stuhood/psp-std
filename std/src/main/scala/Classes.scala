@@ -7,7 +7,7 @@ import api._
  */
 object Pair {
   def apply[R, A, B](x: A, y: B)(implicit z: PairUp[R, A, B]): R          = z.create(x, y)
-  def unapply[R, A, B](x: R)(implicit z: PairDown[R, A, B]): Some[(A, B)] = Some((z left x, z right x))
+  def unapply[R, A, B](x: R)(implicit z: PairDown[R, A, B]): Some[A -> B] = Some((z left x, z right x))
 }
 object +: {
   def unapply[A](xs: Array[A])       = if (xs.length == 0) None else Some(xs.head -> xs.tail)
@@ -45,12 +45,36 @@ class FunctionEqualizer[A, B : Eq](f: A => B, g: A => B) extends (A ?=> B) {
 
 final class LabeledFunction[-T, +R](f: T => R, val to_s: String) extends (T ?=> R) with ForceShowDirect {
   def isDefinedAt(x: T) = f match {
-    case f: PartialFunction[_, _] => f isDefinedAt x
-    case _                        => true
+    case f: ?=>[_,_] => f isDefinedAt x
+    case _           => true
   }
   def apply(x: T): R = f(x)
 }
 trait LowPriorityUnsafe {
   // We may as well derive some convenience from the absence of parametricity.
   implicit def universalOrder[A] : Order[A] = orderBy[A]("" + _) | (_.##)
+}
+
+final case class Split[A](left: View[A], right: View[A]) extends api.SplitView[A] {
+  def mapLeft(f: View[A] => View[A]): Split[A]  = Split(f(left), right)
+  def mapRight(f: View[A] => View[A]): Split[A] = Split(left, f(right))
+  def rejoin: View[A]                           = left ++ right
+}
+
+/** Zipped0 means we're using a PairDown to interpret a collection holding As.
+ *  Zipped1 means there's only one underlying View[A1->A2].
+ *  Zipped2 means there are two collections, a View[A1] and a View[A2].
+ *  This is plus or minus only a performance-related implementation detail.
+ */
+final case class Zipped0[A, A1, A2](xs: View[A])(implicit z: PairDown[A, A1, A2]) extends ZipView[A1, A2] {
+  def lefts  = xs map z.left
+  def rights = xs map z.right
+  def pairs  = xs map z.pair
+}
+final case class Zipped1[A1, A2](pairs: View[A1 -> A2]) extends ZipView[A1, A2] {
+  def lefts  = pairs map fst
+  def rights = pairs map snd
+}
+final case class Zipped2[A1, A2](lefts: View[A1], rights: View[A2]) extends ZipView[A1, A2] {
+  def pairs: View[A1 -> A2] = inView(mf => this.foreach((x, y) => mf(x -> y)))
 }

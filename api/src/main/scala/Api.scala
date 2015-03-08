@@ -7,6 +7,7 @@ import scala.Unit
 import scala.Int
 import scala.Long
 import java.lang.String
+import scala.{ Product2 => -> }
 
 /** The classic type classes for encoding value equivalence and hash codes.
  */
@@ -67,17 +68,7 @@ trait InMap[-K, +V]       extends Any with Intensional[K, V]       { def domain:
 
 trait Extensional[+A]     extends Any with Each[A]
 trait ExSet[A]            extends Any with Extensional[A] with InSet[A]         { def hashEq: HashEq[A] }
-trait ExMap[K, +V]        extends Any with Extensional[(K, V)] with InMap[K, V] { def domain: ExSet[K]  }
-
-/** Enhanced value representations.
- */
-trait PairDown[-R, +A, +B] {
-  def left(x: R): A
-  def right(x: R): B
-}
-trait PairUp[+R, -A, -B] {
-  def create(x: A, y: B): R
-}
+trait ExMap[K, +V]        extends Any with Extensional[K -> V] with InMap[K, V] { def domain: ExSet[K]  }
 
 /** Generalized type constraint.
  */

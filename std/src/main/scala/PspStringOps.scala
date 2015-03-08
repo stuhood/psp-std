@@ -30,7 +30,7 @@ final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
   def remove(literal: String): String    = remove(Regex quote literal)
   def removeAll(literal: String): String = removeAll(Regex quote literal)
 
-  def replaceChar(pair: PairOf[Char]): String = self.replace(pair._1, pair._2)
+  def replaceChar(pair: Char -> Char): String = self.replace(pair._1, pair._2)
   def replaceLiteral(sub: LiteralReplacement): String =
     (Regex quote sub.from) matcher self replaceAll (Matcher quoteReplacement sub.to)
 
@@ -79,11 +79,11 @@ final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
   def splitRegex(r: Regex): Direct[String] = r.pattern split self toDirect
   def words: Direct[String]                = splitRegex(whitespace)
 
-  def mapChars(pf: Char ?=> Char): String          = self map (c => if (pf isDefinedAt c) pf(c) else c) build
-  def mapLines(f: Unary[String]): String           = mapSplit('\n')(f)
-  def mapNonEmpty(f: Unary[String]): String        = if (isEmpty) "" else f(self)
-  def mapSplit(ch: Char)(f: Unary[String]): String = splitChar(ch) map f mkString ch.toString
-  def stripMargin(marginChar: Char): String        = mapLines(_ remove ("""^\s*[""" + marginChar + "]").r)
+  def mapChars(pf: Char ?=> Char): String           = self map (c => if (pf isDefinedAt c) pf(c) else c) build
+  def mapLines(f: ToSelf[String]): String           = mapSplit('\n')(f)
+  def mapNonEmpty(f: ToSelf[String]): String        = if (isEmpty) "" else f(self)
+  def mapSplit(ch: Char)(f: ToSelf[String]): String = splitChar(ch) map f mkString ch.toString
+  def stripMargin(marginChar: Char): String         = mapLines(_ remove ("""^\s*[""" + marginChar + "]").r)
 
   private def dropSuffix(s: String, drop: String) = s remove drop.r.characterClass.ends
 

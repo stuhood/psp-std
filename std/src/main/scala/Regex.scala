@@ -36,7 +36,7 @@ final class Regex(val pattern: Pattern) extends AnyVal {
   def ~(that: Regex): Regex = mapRegex(_ + that.pattern)
 
   def setFlag(flag: Int): Regex             = Regex(to_s, flags | flag)
-  def mapRegex(f: Unary[String]): Regex     = Regex(f(to_s), flags)
+  def mapRegex(f: ToSelf[String]): Regex     = Regex(f(to_s), flags)
   def surround(s: String, e: String): Regex = mapRegex(s + _ + e)
   def append(e: String)                     = mapRegex(_ + e)
 
@@ -56,7 +56,7 @@ object Regex extends (String => Regex) {
   def newlines   = apply("""[\n]+""")
   def ansiCodes  = apply("""\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]""")
 
-  implicit def regexPredicate(r: Regex): Predicate[String] = r.hasMatch
+  implicit def regexPredicate(r: Regex): ToBool[String] = r.hasMatch
 
   def maybe(s: String): Option[Regex]     = try Some(apply(s)) catch { case _: PatternSyntaxException => None }
   def quote(s: String): Regex             = apply(Pattern quote s)

@@ -5,7 +5,7 @@ import api._, std._
 
 trait AlgebraInstances {
   implicit def identityAlgebra : BooleanAlgebra[Boolean]           = Algebras.Identity
-  implicit def predicateAlgebra[A] : BooleanAlgebra[Predicate[A]]  = new Algebras.Predicate[A]
+  implicit def predicateAlgebra[A] : BooleanAlgebra[ToBool[A]]  = new Algebras.ToBool[A]
   implicit def intensionalSetAlgebra[A] : BooleanAlgebra[InSet[A]] = new Algebras.InSetAlgebra[A]
 }
 
@@ -83,11 +83,10 @@ trait EqInstances {
   implicit def shortEq: HashEq[Short]     = natural()
   implicit def unitHash: HashEq[Unit]     = natural()
 
-  implicit def indexEq: HashEq[Index]             = natural()
-  implicit def jTypeEq: HashEq[jType]             = natural()
-  // implicit def nthEq: HashEq[Nth]                 = natural()
-  implicit def offsetEq: HashEq[Offset]           = natural()
-  implicit def stringEq: HashEq[String]           = natural()
+  implicit def indexEq: HashEq[Index]           = natural()
+  implicit def jTypeEq: HashEq[jType]           = natural()
+  implicit def offsetEq: HashEq[Offset]         = natural()
+  implicit def stringEq: HashEq[String]         = natural()
   implicit def policyClassEq: HashEq[JavaClass] = natural()
 
   implicit def sizeEq: HashEq[Size] = HashEq(Size.equiv, Size.hash)

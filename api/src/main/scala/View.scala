@@ -21,14 +21,14 @@ trait ContiguousViewOps[+A] extends Any with AnyView[A] {
   //
   // def init: Contiguous[A]
   // def tail: Contiguous[A]
-  // def span(p: Predicate[A]): ContiguousSplit[A]
+  // def span(p: ToBool[A]): ContiguousSplit[A]
   // def splitAt(index: Index): ContiguousSplit[A]
   def drop(n: Precise): Contiguous[A]
   def dropRight(n: Precise): Contiguous[A]
-  def dropWhile(p: Predicate[A]): Contiguous[A]
+  def dropWhile(p: ToBool[A]): Contiguous[A]
   def take(n: Precise): Contiguous[A]
   def takeRight(n: Precise): Contiguous[A]
-  def takeWhile(p: Predicate[A]): Contiguous[A]
+  def takeWhile(p: ToBool[A]): Contiguous[A]
 }
 
 trait NonContiguousViewOps[+A] extends Any with AnyView[A] {
@@ -36,7 +36,7 @@ trait NonContiguousViewOps[+A] extends Any with AnyView[A] {
   def collect[B](pf: A ?=> B): MapTo[B]
   def map[B](f: A => B): MapTo[B]
   def flatMap[B](f: A => Each[B]): MapTo[B]
-  def withFilter(p: Predicate[A]): MapTo[A]
+  def withFilter(p: ToBool[A]): MapTo[A]
 }
 
 trait View[+A] extends Any with ContiguousViewOps[A] with NonContiguousViewOps[A] {
@@ -51,9 +51,9 @@ trait ContiguousView[+A] extends Any with View[A] {
 
 trait InvariantView[A] extends Any with View[A] {
   def join(that: InvariantView[A]): InvariantView[A]
-  def partition(p: Predicate[A]): Split[A]
-  def span(p: Predicate[A]): Split[A]
-  def splitAt(index: Index): Split[A]
+  def partition(p: ToBool[A]): SplitView[A]
+  def span(p: ToBool[A]): SplitView[A]
+  def splitAt(index: Index): SplitView[A]
 }
 
 trait InMapView[-K, +V] extends Any with AnyView[V] with InMap[K, V] {
@@ -61,12 +61,6 @@ trait InMapView[-K, +V] extends Any with AnyView[V] with InMap[K, V] {
   type MapTo[+X] <: InMapView[K, X]
 
   def comap[K1](f: K1 => K): CoMapTo[K1]
-  def filter(p: Predicate[V]): MapTo[V]
+  def filter(p: ToBool[V]): MapTo[V]
   def map[V1](f: V => V1): MapTo[V1]
-}
-
-final case class Split[A](left: View[A], right: View[A]) {
-  def mapLeft(f: View[A] => View[A]): Split[A]  = Split(f(left), right)
-  def mapRight(f: View[A] => View[A]): Split[A] = Split(left, f(right))
-  def rejoin: View[A]                           = left ++ right
 }

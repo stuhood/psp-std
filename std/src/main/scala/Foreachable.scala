@@ -51,7 +51,7 @@ object ForeachableLinear extends ForeachableCompanion[ForeachableLinear] {
   }
   implicit def PolicyLinearIs[A, CC[X] <: Linear[X]] : Coll[A, CC[A]]             = apply[A, CC[A]](xs => xs)
   implicit def ScalaSeqIs[A, CC[X] <: scSeq[X]] : Coll[A, CC[A]]                  = apply[A, CC[A]](Linear fromScala _)
-  implicit def ScalaMapIs[K, V, CC[X, Y] <: scMap[X, Y]] : Coll[(K, V), CC[K, V]] = apply[(K, V), CC[K, V]](Each fromScala _)
+  implicit def ScalaMapIs[K, V, CC[X, Y] <: scMap[X, Y]] : Coll[K -> V, CC[K, V]] = apply[K -> V, CC[K, V]](Each fromScala _)
 
 }
 object ForeachableIndexed extends ForeachableCompanion[ForeachableIndexed] {

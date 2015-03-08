@@ -17,6 +17,10 @@ trait StdGateways extends Any
 
   self =>
 
+  /** Scala map builders require Tuple2s, even though Product2 should suffice.
+   */
+  implicit def implicitBuildsFromMapCBF[K, V, That](implicit z: CanBuild[(K, V), That]): Builds[K -> V, That] = Builds wrapMap z
+
   implicit def opsDirect[A](xs: Direct[A]): ops.DirectOps[A]   = new ops.DirectOps(xs)
   implicit def opsLinear[A](xs: Linear[A]): ops.LinearOps[A]   = new ops.LinearOps(xs)
 
@@ -33,8 +37,8 @@ trait StdGateways extends Any
 // Returns a Vector[String].
 trait StdBuilds0 extends Any                 { implicit def implicitBuildsFromCBF[A, That](implicit z: CanBuild[A, That]): Builds[A, That] = Builds wrap z          }
 trait StdBuilds1 extends Any with StdBuilds0 { implicit def implicitBuildsArray[A: CTag] : Builds[A, Array[A]]                             = Direct.arrayBuilder[A] }
-trait StdBuilds2 extends Any with StdBuilds1 { implicit def implicitBuildsList[A] : Builds[A, Linear[A]]                                   = Linear.builder[A]  }
-trait StdBuilds3 extends Any with StdBuilds2 { implicit def implicitBuildsSet[A: HashEq] : Builds[A, ExSet[A]]                             = ExSet.builder[A]   }
+trait StdBuilds2 extends Any with StdBuilds1 { implicit def implicitBuildsList[A] : Builds[A, Linear[A]]                                   = Linear.builder[A]      }
+trait StdBuilds3 extends Any with StdBuilds2 { implicit def implicitBuildsSet[A: HashEq] : Builds[A, ExSet[A]]                             = ExSet.builder[A]       }
 trait StdBuilds4 extends Any with StdBuilds3 { implicit def implicitBuildsDirect[A] : Builds[A, Direct[A]]                                 = Direct.builder[A]      }
 trait StdBuilds  extends Any with StdBuilds4 { implicit def implicitBuildsString: Builds[Char, String]                                     = Direct.stringBuilder() }
 
@@ -47,9 +51,9 @@ trait GlobalShow extends GlobalShow0 {
 }
 
 trait StdTypeclasses {
-  implicit def tupleTwoPairUp[A, B] : PairUp[(A, B), A, B]                     = PairUp(_ -> _)
-  implicit def productTwoPairDown[A, B] : PairDown[scala.Product2[A, B], A, B] = PairDown(fst, snd)
-  implicit def linearSeqPairDown[A] : PairDown[Linear[A], A, Linear[A]]        = PairDown(_.head, _.tail)
+  implicit def tupleTwoPairUp[A, B] : PairUp[A -> B, A, B]              = PairUp(_ -> _)
+  implicit def productTwoPairDown[A, B] : PairDown[A -> B, A, B]        = PairDown(fst, snd)
+  implicit def linearSeqPairDown[A] : PairDown[Linear[A], A, Linear[A]] = PairDown(_.head, _.tail)
 }
 
 trait SetAndMapOps1 extends Any {
@@ -111,39 +115,38 @@ trait StdOps3 extends Any with StdOps2 {
   implicit def infixOpsEq[A: Eq](x: A): infix.EqOps[A]                               = new infix.EqOps[A](x)
   implicit def infixOpsHash[A: Hash](x: A): infix.HashOps[A]                         = new infix.HashOps[A](x)
 
-  implicit def opsDirectView[A, Repr](x: DirectView[A, Repr]): ops.DirectApiViewOps[A, Repr]             = new ops.DirectApiViewOps(x)
-  implicit def opsPairView[R, A, B](x: View[R])(implicit z: PairDown[R, A, B]): ops.PairViewOps[R, A, B] = new ops.PairViewOps(x)
-  implicit def opsBiFunction[T, R](f: (T, T) => R): ops.BiFunctionOps[T, R]                              = new ops.BiFunctionOps(f)
-  implicit def opsBoolean(x: Boolean): ops.BooleanOps                                                    = new ops.BooleanOps(x)
-  implicit def opsBooleanAlgebra[A](x: BooleanAlgebra[A]): ops.BooleanAlgebraOps[A]                      = new ops.BooleanAlgebraOps[A](x)
-  implicit def opsChar(x: Char): ops.CharOps                                                             = new ops.CharOps(x)
-  implicit def opsFileTime(x: jFileTime): ops.FileTimeOps                                                = new ops.FileTimeOps(x)
-  implicit def opsFunction1[T, R](f: T => R): ops.Function1Ops[T, R]                                     = new ops.Function1Ops(f)
-  implicit def opsFunction2[T1, T2, R](f: (T1, T2) => R): ops.Function2Ops[T1, T2, R]                    = new ops.Function2Ops(f)
-  implicit def opsHasPreciseSize(x: HasPreciseSize): ops.HasPreciseSizeOps                               = new ops.HasPreciseSizeOps(x)
-  implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A]                               = new ops.JavaIteratorOps[A](x)
-  implicit def opsInputStream(x: InputStream): ops.InputStreamOps                                        = new ops.InputStreamOps(x)
-  implicit def opsInt(x: Int): ops.IntOps                                                                = new ops.IntOps(x)
-  implicit def opsLong(x: Long): ops.LongOps                                                             = new ops.LongOps(x)
-  implicit def opsOption[A](x: Option[A]): ops.OptionOps[A]                                              = new ops.OptionOps[A](x)
-  implicit def opsPartialFunction[A, B](pf: A ?=> B): ops.PartialFunctionOps[A, B]                       = new ops.PartialFunctionOps(pf)
-  implicit def opsPrecise(x: Precise): ops.PreciseOps                                                    = new ops.PreciseOps(x)
-  implicit def opsPredicate[A](p: Predicate[A]): ops.PredicateOps[A]                                     = new ops.PredicateOps(p)
-  implicit def opsShowableSeq[A: Show](x: Each[A]): ops.ShowableSeqOps[A]                                = new ops.ShowableSeqOps(x)
-  implicit def opsSize(x: Size): ops.SizeOps                                                             = new ops.SizeOps(x)
-  implicit def opsStdOpt[A](x: Opt[A]): ops.StdOptOps[A]                                                 = new ops.StdOptOps[A](x)
-  implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                                                       = new ops.TryOps[A](x)
-  implicit def opsUnit(x: Unit): ops.UnitOps.type                                                        = ops.UnitOps
+  implicit def opsDirectView[A, Repr](x: DirectView[A, Repr]): ops.DirectApiViewOps[A, Repr] = new ops.DirectApiViewOps(x)
+  implicit def opsBoolean(x: Boolean): ops.BooleanOps                                        = new ops.BooleanOps(x)
+  implicit def opsBooleanAlgebra[A](x: BooleanAlgebra[A]): ops.BooleanAlgebraOps[A]          = new ops.BooleanAlgebraOps[A](x)
+  implicit def opsChar(x: Char): ops.CharOps                                                 = new ops.CharOps(x)
+  implicit def opsFileTime(x: jFileTime): ops.FileTimeOps                                    = new ops.FileTimeOps(x)
+  implicit def opsFunction1[T, R](f: T => R): ops.Function1Ops[T, R]                         = new ops.Function1Ops(f)
+  implicit def opsFunction2[T1, T2, R](f: (T1, T2) => R): ops.Function2Ops[T1, T2, R]        = new ops.Function2Ops(f)
+  implicit def opsHasPreciseSize(x: HasPreciseSize): ops.HasPreciseSizeOps                   = new ops.HasPreciseSizeOps(x)
+  implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A]                   = new ops.JavaIteratorOps[A](x)
+  implicit def opsInputStream(x: InputStream): ops.InputStreamOps                            = new ops.InputStreamOps(x)
+  implicit def opsInt(x: Int): ops.IntOps                                                    = new ops.IntOps(x)
+  implicit def opsLong(x: Long): ops.LongOps                                                 = new ops.LongOps(x)
+  implicit def opsOption[A](x: Option[A]): ops.OptionOps[A]                                  = new ops.OptionOps[A](x)
+  implicit def opsPartialFunction[A, B](pf: A ?=> B): ops.PartialFunctionOps[A, B]           = new ops.PartialFunctionOps(pf)
+  implicit def opsPrecise(x: Precise): ops.PreciseOps                                        = new ops.PreciseOps(x)
+  implicit def opsPredicate[A](p: ToBool[A]): ops.PredicateOps[A]                            = new ops.PredicateOps(p)
+  implicit def opsShowableSeq[A: Show](x: Each[A]): ops.ShowableSeqOps[A]                    = new ops.ShowableSeqOps(x)
+  implicit def opsSize(x: Size): ops.SizeOps                                                 = new ops.SizeOps(x)
+  implicit def opsStdOpt[A](x: Opt[A]): ops.StdOptOps[A]                                     = new ops.StdOptOps[A](x)
+  implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                                           = new ops.TryOps[A](x)
+  implicit def opsZipView[A, B](xs: ZipView[A, B]): ops.ZipViewOps[A, B]                     = new ops.ZipViewOps(xs)
+  implicit def opsUnit(x: Unit): ops.UnitOps.type                                            = ops.UnitOps
 
   implicit def apiInSetPromote[A](x: InSet[A]): InSet.Impl[A]          = InSet impl x
   implicit def apiInMapPromote[K, V](x: InMap[K, V]): InMap.Impl[K, V] = InMap impl x
 }
 
 trait StdOps extends Any with StdOps3 {
-  implicit def opsApiShowInterpolator(sc: StringContext): ShowInterpolator              = new ShowInterpolator(sc)
-  implicit def predicateToDirectoryFilter[A](p: Predicate[A]): DirectoryStreamFilter[A] = new DirectoryStreamFilter[A] { def accept(entry: A) = p(entry) }
-  implicit def predicateToPartialFunction[A](p: Predicate[A]): A ?=> A                  = { case x if p(x) => x }
-  implicit def directoryStreamView[A](stream: DirectoryStream[A]): View[A]              = inView(BiIterable(stream) foreach _)
+  implicit def opsApiShowInterpolator(sc: StringContext): ShowInterpolator           = new ShowInterpolator(sc)
+  implicit def predicateToDirectoryFilter[A](p: ToBool[A]): DirectoryStreamFilter[A] = new DirectoryStreamFilter[A] { def accept(entry: A) = p(entry) }
+  implicit def predicateToPartialFunction[A](p: ToBool[A]): A ?=> A                  = { case x if p(x) => x }
+  implicit def directoryStreamView[A](stream: DirectoryStream[A]): View[A]           = inView(BiIterable(stream) foreach _)
 
   // Promotion of the api type (which has as few methods as possible) to the
   // concrete type which has all the other ones.

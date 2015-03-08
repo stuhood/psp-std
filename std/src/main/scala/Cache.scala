@@ -53,7 +53,7 @@ package object cache {
   type Builder[K, V]      = guava.CacheBuilder[K, V]
   type GuavaCache[K, V]   = guava.LoadingCache[K, V]
   type RemovalFun[K, V]   = Removal ?=> ((K, V) => Unit)
-  type BuilderFun[K, V]   = Unary[Builder[K, V]]
+  type BuilderFun[K, V]   = ToSelf[Builder[K, V]]
 
   def newBuilder[K, V](): Builder[K, V]                  = guava.CacheBuilder.newBuilder().castTo
   def newBuilder[K, V](spec: BuilderSpec): Builder[K, V] = guava.CacheBuilder from spec castTo

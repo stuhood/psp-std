@@ -20,7 +20,7 @@ object ExSet {
     case _           => apply[A](xs)(xs.hashEq)
   }
 
-  sealed trait ExSetImpl[A] extends ExSet[A] with Predicate[A] {
+  sealed trait ExSetImpl[A] extends ExSet[A] with ToBool[A] {
     def hash(x: A): Int             = hashEq hash x
     def equiv(x: A, y: A): Boolean  = hashEq.equiv(x, y)
   }
@@ -42,7 +42,7 @@ object ExSet {
     protected def underlying: ExSet[A]
     def hashEq = underlying.hashEq
   }
-  final case class Filtered[A](lhs: ExSet[A], p: Predicate[A]) extends Derived[A] {
+  final case class Filtered[A](lhs: ExSet[A], p: ToBool[A]) extends Derived[A] {
     protected def underlying                = lhs
     def apply(elem: A)                      = lhs(elem) && p(elem)
     @inline def foreach(f: A => Unit): Unit = lhs foreach (x => if (p(x)) f(x))
@@ -91,7 +91,7 @@ object InSet {
     case xs: Impl[A] => xs
     case _           => apply[A](xs)
   }
-  def apply[A](p: Predicate[A]): InSet[A] = p match {
+  def apply[A](p: ToBool[A]): InSet[A] = p match {
     case ConstantFalse => Zero
     case ConstantTrue  => One
     case _             => Pure[A](p)
@@ -107,12 +107,12 @@ object InSet {
     case _                   => "{ ... }"
   }
 
-  abstract class Impl[A](p: Predicate[A])                     extends InSet[A] with Predicate[A] { def apply(x: A) = p(x) ; override def toString = show(this) }
+  abstract class Impl[A](p: ToBool[A])                     extends InSet[A] with ToBool[A] { def apply(x: A) = p(x) ; override def toString = show(this) }
   final case class Complement[A](lhs: InSet[A])               extends Impl[A](x => !lhs(x))
   final case class Intersect[A](lhs: InSet[A], rhs: InSet[A]) extends Impl[A](x => lhs(x) && rhs(x))
   final case class Union[A](lhs: InSet[A], rhs: InSet[A])     extends Impl[A](x => lhs(x) || rhs(x))
   final case class Diff[A](lhs: InSet[A], rhs: InSet[A])      extends Impl[A](x => lhs(x) && !rhs(x))
-  final case class Pure[A](p: Predicate[A])                   extends Impl[A](p)
+  final case class Pure[A](p: ToBool[A])                   extends Impl[A](p)
 
   private def shower[A]: Show[InSet[A]] = Show(show[A])
 }

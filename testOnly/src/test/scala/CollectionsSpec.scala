@@ -74,8 +74,8 @@ class GridSpec extends ScalacheckBundle {
   )
 }
 
-class PolicyBasic extends ScalacheckBundle {
-  def bundle = "Policy, Basic Collections Operations"
+class ViewBasic extends ScalacheckBundle {
+  def bundle = "Views, Basic"
 
   def plist   = Linear(1, 2, 3)
   def pvector = Direct(1, 2, 3)
@@ -100,6 +100,32 @@ class PolicyBasic extends ScalacheckBundle {
     seqShows("1 -> 0, 2 -> 1, 3 -> 2", pvector.m.mapWithIndex(_ -> _)),
     seqShows("11, 22, 33, 44", indexRange(1, 50).toDirect.m grep """(.)\1""".r),
     seqShows("99, 1010, 1111", xxNumbers slice (8 takeNext 3.size).asIndices)
+  )
+}
+
+class ViewSplitZip extends ScalacheckBundle {
+  def bundle = "Views, Split/Zip"
+
+  def pdirect = 1 to 6 toDirect
+  def span    = pdirect span (_ <= 3)
+  def mod     = pdirect partition (_ % 2 == 0)
+  def zipped  = mod.left zip mod.right
+  def sums    = zipped map (_ + _)
+
+  def props: Direct[NamedProp] = Direct(
+    showsAs("[ 1, 2, 3 ]", span.left),
+    showsAs("[ 4, 5, 6 ]", span.right),
+    showsAs("[ 2, 4, 6 ]", mod.left),
+    showsAs("[ 1, 3, 5 ]", mod.right),
+    showsAs("[ 2, 4, 6 ]", zipped.lefts),
+    showsAs("[ 1, 3, 5 ]", zipped.rights),
+    showsAs("[ 2 -> 1, 4 -> 3, 6 -> 5 ]", zipped),
+    showsAs("[ 20 -> 1, 40 -> 3, 60 -> 5 ]", zipped mapLeft (_ * 10)),
+    showsAs("[ 3, 7, 11 ]", sums),
+    showsAs("[ 3 ]", zipped filterLeft (_ == 4) rights),
+    showsAs("[ 2, 4, 6, 1, 3, 5 ]", mod.rejoin),
+    showsAs("6 -> 5", zipped findLeft (_ == 6)),
+    showsAs("-", zipped findLeft (_ == 8))
   )
 }
 

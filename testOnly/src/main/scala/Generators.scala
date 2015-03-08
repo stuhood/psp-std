@@ -12,7 +12,7 @@ package gen {
     def atom: Gen[Regex]              = oneOf(literal, range, quantified)
     def concatenate: Gen[Regex]       = simple * (1 upTo 3) ^^ (_ reducel Regex.alt)
     def group: Gen[Regex]             = atom ^^ (_.capturingGroup)
-    def letterPair: Gen[PairOf[Char]] = (letter, letter) filter (_ <= _)
+    def letterPair: Gen[Char -> Char] = (letter, letter) filter (_ <= _)
     def literal: Gen[Regex]           = letter * (0 upTo 5) ^^ (_ mk_s "" r)
     def quantified: Gen[Regex]        = (literal zip oneOf("+?*".seq))(_ append _.to_s)
     def range: Gen[Regex]             = (oneOf("", "^"), letterPair) map { case (neg, (s, e)) => s"[$neg$s-$e]".r }

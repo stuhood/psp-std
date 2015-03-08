@@ -16,7 +16,7 @@ package object tests {
 
   type Arb[A]             = Arbitrary[A]
   val Arb                 = Arbitrary
-  type Forall1[-A]        = Predicate[A]
+  type Forall1[-A]        = ToBool[A]
   type Forall2[-A]        = Relation[A]
   type Forall3[-A]        = (A, A, A) => Boolean
   type Prop               = org.scalacheck.Prop
@@ -39,8 +39,8 @@ package object tests {
   }
 
   implicit class ArbitraryOps[A](x: Arb[A]) {
-    def map[B](f: A => B): Arb[B]       = Arb(x.arbitrary map f)
-    def filter(p: Predicate[A]): Arb[A] = Arb(x.arbitrary filter p)
+    def map[B](f: A => B): Arb[B]    = Arb(x.arbitrary map f)
+    def filter(p: ToBool[A]): Arb[A] = Arb(x.arbitrary filter p)
   }
 
   implicit def arbWord: Arb[String]                             = Arb(gen.text.word)
@@ -97,7 +97,7 @@ package object tests {
     new Buildable[A, CC] { def builder: scmBuilder[A, CC[A]] = z.scalaBuilder }
 
   implicit class PropOps(p: Prop) {
-    def mapParams(f: Unary[TestParams]): Prop = new NamedProp.MapParams(p, f)
+    def mapParams(f: ToSelf[TestParams]): Prop = new NamedProp.MapParams(p, f)
     def minSuccessful(size: Precise): Prop    = mapParams(_ withMinSuccessfulTests size.getInt)
     def unary_! : Prop                        = p map (r => !r)
   }

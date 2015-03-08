@@ -7,7 +7,7 @@ import StdShow._
 
 package jvm {
   object opcodes {
-    private def codes(p: Predicate[Opcode]): Direct[Opcode] = Opcode.values filter p toDirect
+    private def codes(p: ToBool[Opcode]): Direct[Opcode] = Opcode.values filter p toDirect
 
     def all        = Opcode.values.toDirect
     def constant   = codes(_.isConstant)
@@ -34,7 +34,7 @@ package jvm {
     def staticMethodsOf[A: CTag](): Direct[jMethod]      = publicMethodsOf[A] filter (_.isStatic)
     def instanceMethodsOf[A: CTag](): Direct[jMethod]    = publicMethodsOf[A] filterNot (_.isStatic)
 
-    lazy val objectMethods: Predicate[jMethod] = classOf[Object].getMethods.byEquals.contains
+    lazy val objectMethods: ToBool[jMethod] = classOf[Object].getMethods.byEquals.contains
 
     def contextLoader(): ClassLoader      = noNull(currentThread.getContextClassLoader, nullLoader)
     def contextLoaderUris: Each[jUri]     = contextLoaders flatMap (_.uris)

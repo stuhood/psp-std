@@ -26,23 +26,23 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
     lowlevel.foreachConsecutive(0, hops, i => h(lastInt - i))
   }
 
-  def asIndices: IndexRange                      = Consecutive.to(startInt, lastInt) map (i => Index(i))
-  def tail: Consecutive[A]                       = drop(1.size)
-  def init: Consecutive[A]                       = dropRight(1.size)
-  def drop(n: Precise): Consecutive[A]           = create(startInt + n.getInt, size - n)
-  def dropRight(n: Precise): Consecutive[A]      = create(startInt, size - n)
-  def take(n: Precise): Consecutive[A]           = create(startInt, size min n)
-  def takeRight(n: Precise): Consecutive[A]      = (size min n) |> (s => create(endInt - s.getInt, s))
-  def slice(s: Int, e: Int): Consecutive[A]      = if (e <= 0 || e <= s) empty else this drop s.size take (e - s).size
-  def slice(r: IndexRange): Consecutive[A]       = slice(r.startInt, r.endInt)
-  def dropWhile(p: Predicate[A]): Consecutive[A] = prefixLength(p) |> (len => create(startInt + len, size - len))
-  def takeWhile(p: Predicate[A]): Consecutive[A] = create(startInt, Precise(prefixLength(p)))
-  def >> (n: Int): Consecutive[A]                = create(startInt + n, size)
-  def << (n: Int): Consecutive[A]                = create(startInt - n, size)
+  def asIndices: IndexRange                   = Consecutive.to(startInt, lastInt) map (i => Index(i))
+  def tail: Consecutive[A]                    = drop(1.size)
+  def init: Consecutive[A]                    = dropRight(1.size)
+  def drop(n: Precise): Consecutive[A]        = create(startInt + n.getInt, size - n)
+  def dropRight(n: Precise): Consecutive[A]   = create(startInt, size - n)
+  def take(n: Precise): Consecutive[A]        = create(startInt, size min n)
+  def takeRight(n: Precise): Consecutive[A]   = (size min n) |> (s => create(endInt - s.getInt, s))
+  def slice(s: Int, e: Int): Consecutive[A]   = if (e <= 0 || e <= s) empty else this drop s.size take (e - s).size
+  def slice(r: IndexRange): Consecutive[A]    = slice(r.startInt, r.endInt)
+  def dropWhile(p: ToBool[A]): Consecutive[A] = prefixLength(p) |> (len => create(startInt + len, size - len))
+  def takeWhile(p: ToBool[A]): Consecutive[A] = create(startInt, Precise(prefixLength(p)))
+  def >> (n: Int): Consecutive[A]             = create(startInt + n, size)
+  def << (n: Int): Consecutive[A]             = create(startInt - n, size)
 
   def toDrop: Precise = Precise(startInt)
   def toTake: Precise = size
-  def prefixLength(p: Predicate[A]): Int = {
+  def prefixLength(p: ToBool[A]): Int = {
     var count = 0
     while (count < size.getInt) {
       if (!p(f(startInt + count))) return count

@@ -15,7 +15,8 @@ abstract class TestRunnerCommon {
   def commonBundles = Direct[Bundle](
     new StringExtensions,
     new GridSpec,
-    new PolicyBasic,
+    new ViewBasic,
+    new ViewSplitZip,
     new SizeSpec,
     new InferenceSpec,
     new CollectionsSpec,

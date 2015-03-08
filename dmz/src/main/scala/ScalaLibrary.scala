@@ -72,19 +72,9 @@ trait ScalaLibrary extends Any {
   type sucControlThrowable    = scala.util.control.ControlThrowable
 
   // original convenience aliases.
-  type Array2[A]                 = Array[Array[A]]
-  type Array3[A]                 = Array[Array[Array[A]]]
-  type Array4[A]                 = Array[Array[Array[Array[A]]]]
-  type Array5[A]                 = Array[Array[Array[Array[Array[A]]]]]
-  type Bytes                     = Array[Byte]
   type CanBuildSelf[-Elem, Self] = scg.CanBuildFrom[Self, Elem, Self]
   type CanBuild[-Elem, +To]      = scg.CanBuildFrom[_, Elem, To]
-  type Chars                     = Array[Char]
   type GTOnce[+A]                = sc.GenTraversableOnce[A]
   type PathDirStream             = jnf.DirectoryStream[jnf.Path]
   type PathPredicate             = jnf.Path => Boolean
-  type Predicate2[-A1, -A2]      = (A1, A2) => Boolean
-  type Ref[+A]                   = A with AnyRef
-  type UShort                    = Char
-  type BinOp[A]                  = (A, A) => A
 }

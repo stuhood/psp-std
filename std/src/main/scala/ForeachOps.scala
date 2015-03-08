@@ -7,7 +7,7 @@ import api._
 final class ArrayInPlaceOps[A](val xs: Array[A]) extends AnyVal with HasPreciseSizeMethods {
   private def andThis(op: Unit): Array[A]  = xs
   def size: IntSize                        = Precise(xs.length)
-  def map(f: A => A): Array[A]             = andThis(foreachIntIndex(i => xs(i) = f(xs(i))))
+  def map(f: ToSelf[A]): Array[A]          = andThis(foreachIntIndex(i => xs(i) = f(xs(i))))
   def sort(implicit z: Order[A]): Array[A] = andThis(
     (xs: Array[_]) match {
       case _: Array[AnyRef] => java.util.Arrays.sort[A](xs.castTo[Array[A with AnyRef]], z.toComparator)

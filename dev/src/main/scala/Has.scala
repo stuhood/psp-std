@@ -15,7 +15,7 @@ object Has {
   trait Size[-R]     extends Any with ElemType    { def hasSize(xs: R): psp.api.Size                        }
   trait Contains[-R] extends Any with ElemType    { def hasContains(xs: R)(x: Elem): Boolean                }
   trait Each[-R]     extends Any with ElemType    { def hasForeach(xs: R)(f: Elem => Unit): Unit            }
-  trait Filter[R]    extends Any with ElemType    { def hasFilter(xs: R)(p: Predicate[Elem]): R             }
+  trait Filter[R]    extends Any with ElemType    { def hasFilter(xs: R)(p: ToBool[Elem]): R                }
   trait Index[-R]    extends Any with ElemType    { def hasIndex(xs: R)(index: psp.api.Index): Elem         }
   trait View[R]      extends Any with ElemType    { def hasView(xs: R): View[Elem]                          }
   trait Apply[-R]    extends Any with ApplyType   { def hasApply(xs: R)(in: In): Out                        }

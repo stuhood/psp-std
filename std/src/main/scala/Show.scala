@@ -91,6 +91,8 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
 }
 
 trait ShowCollections {
+  def showZipped[A1: Show, A2: Show](xs: ZipView[A1, A2]): String
+  def showPair[A1: Show, A2: Show](x: A1 -> A2): String
   def showEach[A: Show](xs: Each[A]): String
   def showMap[K: Show, V: Show](xs: InMap[K, V]): String
   def showSet[A: Show](xs: InSet[A]): String
@@ -106,6 +108,10 @@ object ShowCollections {
 
     private def internalEach[A: Show](xs: Each[A]): String = Each.show[A](xs, minElements, maxElements)
 
+    def showZipped[A1: Show, A2: Show](xs: ZipView[A1, A2]): String =
+      showEach[String](xs.pairs map showPair[A1, A2])(Show.natural())
+
+    def showPair[A1: Show, A2: Show](x: A1 -> A2): String = fst(x).to_s + " -> " + snd(x).to_s
     def showEach[A: Show](xs: Each[A]): String = xs match {
       case xs: InSet[_] => showSet(xs.castTo[InSet[A]]) // not matching on InSet[A] due to lame patmat warning
       case _            => "[ " ~ internalEach[A](xs) ~ " ]"
@@ -124,8 +130,8 @@ object ShowCollections {
 }
 
 object Show {
-  def apply[A](f: Shower[A]): Show[A] = new impl.ShowImpl[A](f)
-  def natural[A](): Show[A]           = ToString
+  def apply[A](f: ToString[A]): Show[A] = new impl.ShowImpl[A](f)
+  def natural[A](): Show[A]             = ToString
 
   /** This of course is not implicit as that would defeat the purpose of the endeavor.
    */
@@ -157,7 +163,7 @@ trait ShowInstances extends ShowEach {
   implicit def showScalaNumber: Show[ScalaNumber]             = Show.natural()
   implicit def showStackTraceElement: Show[StackTraceElement] = Show("\tat" + _ + "\n")
   implicit def showString: Show[String]                       = Show.natural()
-  implicit def showTuple2[A: Show, B: Show] : Show[(A, B)]    = Show { case (x, y) => show"$x -> $y" }
+  implicit def showPair[A: Show, B: Show] : Show[A -> B]      = Show(x => x._1 ~ " -> " ~ x._2 to_s)
 
   implicit def showKeyword: Show[Keyword] = Show[Keyword] {
     case Keyword.Empty            => ""
@@ -183,6 +189,7 @@ trait ShowEach0 {
   implicit def showEach[A: Show, CC[X] <: Each[X]](implicit z: ShowCollections): Show[CC[A]] = Show(z.showEach[A])
 }
 trait ShowEach1 extends ShowEach0 {
+  implicit def showZipped[A1: Show, A2: Show](implicit z: ShowCollections): Show[ZipView[A1, A2]]              = Show(z.showZipped[A1, A2])
   implicit def showMap[K: Show, V: Show, CC[X, Y] <: InMap[X, Y]](implicit z: ShowCollections): Show[CC[K, V]] = Show(z.showMap[K, V])
   implicit def showSet[A: Show, CC[X] <: InSet[X]](implicit z: ShowCollections): Show[CC[A]]                   = Show(z.showSet[A])
   implicit def showJava [A: Show, CC[X] <: jIterable[X]](implicit z: ShowCollections): Show[CC[A]]             = Show(z.showJava[A])
