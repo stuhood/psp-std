@@ -1,6 +1,7 @@
 package psp
-package std
+package dev
 
+import std._
 import java.lang.Integer.parseInt
 import java.lang.{ Character => C }, C.UnicodeBlock
 
