@@ -17,8 +17,14 @@ trait StdGateways extends Any
 
   self =>
 
-  implicit def opsDirect[A](xs: Direct[A]): ops.DirectOps[A] = new ops.DirectOps(xs)
-  implicit def opsLinear[A](xs: Linear[A]): ops.LinearOps[A] = new ops.LinearOps(xs)
+  implicit def opsDirect[A](xs: Direct[A]): ops.DirectOps[A]   = new ops.DirectOps(xs)
+  implicit def opsLinear[A](xs: Linear[A]): ops.LinearOps[A]   = new ops.LinearOps(xs)
+
+  implicit def conversionsForEach[A](xs: Each[A]): Conversions[A]         = new Conversions[A](xs)
+  implicit def conversionsForJava[A](xs: jCollection[A]): Conversions[A]  = new Conversions[A](Each fromJava xs)
+  implicit def conversionsForScala[A](xs: sCollection[A]): Conversions[A] = new Conversions[A](Each fromScala xs)
+  implicit def conversionsForArray[A](xs: Array[A]): Conversions[A]       = new Conversions[A](Direct fromArray xs)
+  implicit def conversionsForString[A](s: String): Conversions[Char]      = new Conversions[Char](Direct fromString s)
 }
 
 // Adapt CanBuildFrom to Builds, since there are zillions of implicit CanBuildFroms already lying around.

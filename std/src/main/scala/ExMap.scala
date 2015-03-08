@@ -8,7 +8,7 @@ object ExMap {
 
   def builder[K : HashEq, V] : BuildsMap[K, V]              = Direct.builder[(K, V)] map (kvs => new Impl(kvs.m.lefts.toExSet, Lookup(kvs.toPartial)))
   def apply[K, V](keys: ExSet[K], pf: K ?=> V): ExMap[K, V] = new Impl(keys, Lookup(pf))
-  def unapplySeq[K, V](map: ExMap[K, V]): Some[sciSeq[K]]   = Some(map.keyVector.seq)
+  def unapplySeq[K, V](map: ExMap[K, V]): Some[sciSeq[K]]   = Some(map.keyVector.toScalaSeq)
   def impl[K, V](xs: ExMap[K, V]): Impl[K, V] = xs match {
     case xs: Impl[K, V] => xs
     case _              => new Impl(xs.domain, Lookup(xs))
