@@ -72,7 +72,7 @@ final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
   def dollarSegments: Direct[String] = splitChar('$')
   def dottedSegments: Direct[String] = splitChar('.')
 
-  def containsChar(ch: Char): Boolean      = chars contains ch
+  def containsChar(ch: Char): Boolean      = chars.m contains ch
   def splitChar(ch: Char): Direct[String]  = splitRegex(Regex quote ch.toString)
   def splitRegex(r: Regex): Direct[String] = r.pattern split self toDirect
   def words: Direct[String]                = splitRegex(whitespace)

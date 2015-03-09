@@ -159,6 +159,7 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   def jSet[A](xs: A*): jSet[A]                                  = new jHashSet[A] doto (b => xs foreach b.add)
   def jUri(x: String): jUri                                     = java.net.URI create x
   def jUrl(x: String): jUrl                                     = jUri(x).toURL
+  def jIdMap[K, V](xs: (K -> V)*): jIdMap[K, V]                 = new jIdMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
 
   def fst[A, B](x: A -> B): A = x._1
   def snd[A, B](x: A -> B): B = x._2

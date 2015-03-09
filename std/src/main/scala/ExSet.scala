@@ -107,12 +107,12 @@ object InSet {
     case _                   => "{ ... }"
   }
 
-  abstract class Impl[A](p: ToBool[A])                     extends InSet[A] with ToBool[A] { def apply(x: A) = p(x) ; override def toString = show(this) }
+  abstract class Impl[A](p: ToBool[A])                        extends InSet[A] with ToBool[A] { def apply(x: A) = p(x) ; override def toString = show(this) }
   final case class Complement[A](lhs: InSet[A])               extends Impl[A](x => !lhs(x))
   final case class Intersect[A](lhs: InSet[A], rhs: InSet[A]) extends Impl[A](x => lhs(x) && rhs(x))
   final case class Union[A](lhs: InSet[A], rhs: InSet[A])     extends Impl[A](x => lhs(x) || rhs(x))
   final case class Diff[A](lhs: InSet[A], rhs: InSet[A])      extends Impl[A](x => lhs(x) && !rhs(x))
-  final case class Pure[A](p: ToBool[A])                   extends Impl[A](p)
+  final case class Pure[A](p: ToBool[A])                      extends Impl[A](p)
 
   private def shower[A]: Show[InSet[A]] = Show(show[A])
 }
