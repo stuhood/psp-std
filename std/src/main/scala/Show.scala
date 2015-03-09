@@ -186,7 +186,8 @@ trait ShowInstances extends ShowEach {
 }
 
 trait ShowEach0 {
-  implicit def showEach[A: Show, CC[X] <: Each[X]](implicit z: ShowCollections): Show[CC[A]] = Show(z.showEach[A])
+  implicit def showView[A: Show](implicit z: ShowCollections): Show[View[A]] = Show(xs => z showEach xs.toEach)
+  implicit def showEach[A: Show](implicit z: ShowCollections): Show[Each[A]] = Show(xs => z showEach xs)
 }
 trait ShowEach1 extends ShowEach0 {
   implicit def showZipped[A1: Show, A2: Show](implicit z: ShowCollections): Show[ZipView[A1, A2]]              = Show(z.showZipped[A1, A2])

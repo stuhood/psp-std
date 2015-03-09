@@ -16,11 +16,11 @@ trait JavaPathMethods extends Any {
 
   /** The recommended way to obtain these things.
    */
-  def bytes(): Bytes   = PathBytes(path)
-  def chars(): Chars   = PathChars(path)
-  def lines(): Strings = PathLines(path)
-  def slurp(): String  = PathSlurp(path)
-  def toPioJar(): Jar  = PathJars(path)
+  def bytes(): Array[Byte] = PathBytes(path)
+  def chars(): Array[Char] = PathChars(path)
+  def lines(): Strings     = PathLines(path)
+  def slurp(): String      = PathSlurp(path)
+  def toPioJar(): Jar      = PathJars(path)
 
   def foreach(f: Path => Unit): Unit = walk(PathVisitor(f))
   def map[A](f: Path => A): View[A]  = inView(foreach) map f

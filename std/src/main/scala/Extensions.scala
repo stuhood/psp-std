@@ -25,7 +25,7 @@ final class Function1Ops[T, R](val f: T => R) extends AnyVal {
   def |:(label: String): LabeledFunction[T, R] = new LabeledFunction(f, label)
   def :|(label: String): LabeledFunction[T, R] = new LabeledFunction(f, label)
 
-  def untupled[A, B](implicit z: PairUp[T, A, B]): (A, B) => R = (x, y) => f(z.create(x, y))
+  def untupled[A, B](implicit z: Pair.Join[T, A, B]): (A, B) => R = (x, y) => f(z.join(x, y))
 
   def partial: T ?=> R                                   = new FunctionAsPartial(f)
   def map[S](g: R => S): T => S                          = new MapFunction1(f, g)

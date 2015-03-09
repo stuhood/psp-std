@@ -51,19 +51,11 @@ object Size {
     }
   }
 
-  // no, infinity doesn't really equal infinity, but it can for our
-  // purposes as long as <inf> - <inf> is ill-defined.
-  def partialCompare(lhs: Size, rhs: Size): PCmp = (lhs, rhs) match {
-    case (Infinite, Infinite)             => PCmp.EQ
-    case (Precise(_), Infinite)           => PCmp.LT
-    case (Infinite, Precise(_))           => PCmp.GT
-    case (Precise(x), Precise(y))         => if (x < y) PCmp.LT else if (y < x) PCmp.GT else PCmp.EQ
-    case (Infinite, Bounded(_, Infinite)) => PCmp.NA
-    case (Infinite, _)                    => PCmp.GT
-    case (Bounded(_, Infinite), Infinite) => PCmp.NA
-    case (_, Infinite)                    => PCmp.LT
-    case (GenBounded(lo1, h1), GenBounded(lo2, h2)) =>
-      if (h1 p_< lo2) PCmp.LT else if (h2 p_< lo1) PCmp.GT else PCmp.NA
+  def areComparable(lhs: Size, rhs: Size): Boolean = (lhs, rhs) match {
+    case (Finite(_), Finite(_))                                     => true
+    case (GenBounded(_, hi: Precise), GenBounded(lo, _)) if hi < lo => true
+    case (GenBounded(lo, _), GenBounded(_, hi: Precise)) if hi < lo => true
+    case _                                                          => false
   }
 
   def bounded(lo: Size, hi: Size): Size = (lo, hi) match {

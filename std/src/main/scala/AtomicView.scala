@@ -5,7 +5,7 @@ import impl.Size._, api._
 import lowlevel.CircularBuffer
 import StdShow._
 
-sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] with ops.InvariantViewOps[A] {
+sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] with ops.ByOps[A] {
   type This <: AtomicView[A, Repr]
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange
 }
@@ -76,6 +76,9 @@ final case class LabeledView[A, Repr](prev: BaseView[A, Repr], val viewOps: Dire
 }
 
 sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[A] {
+  def foreach(f: A => Unit): Unit
+  def toEach: Each[A] = Each(foreach)
+
   type This <: BaseView[A, Repr]
   type MapTo[+X]      = BaseView[X, Repr]
   type Contiguous[+X] = MapTo[X]
@@ -193,13 +196,12 @@ sealed abstract class CompositeView[A, B, Repr](val description: String, val siz
   private def foreachSlice[A](xs: View[A], range: IndexRange, f: A => Unit): Unit = xs match {
     case xs: AtomicView[_, _]                                       => xs.foreachSlice(range)(f)
     case Mapped(prev, g)                                            => foreachSlice(prev, range, g andThen f)
-    case xs: Direct[_]                                              => directlySlice(xs, range, f)
+    case xs: Direct[A @unchecked]                                   => directlySlice(xs, range, f)
     case Joined(HasSize(PreciseInt(n)), ys) if n < range.startInt   => ys slice (range << n) foreach f
     case Joined(ys @ HasSize(PreciseInt(n)), _) if range.endInt < n => ys slice range foreach f
     case Joined(ys1, ys2)                                           => linearlySlice(ys1, range, f) |> (remainingRange => linearlySlice(ys2, remainingRange, f))
     case _                                                          => linearlySlice(xs, range, f)
   }
-
 }
 
 final case class Joined [A, B >: A, Repr](prev: BaseView[A, Repr], ys: View[B])     extends CompositeView[A, B, Repr](pp"++ $ys",      _ + ys.size)

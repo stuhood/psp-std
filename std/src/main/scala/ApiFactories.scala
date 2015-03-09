@@ -3,13 +3,6 @@ package std
 
 import api._
 
-object PartialOrder {
-  final class Impl[-A](val f: (A, A) => PCmp) extends AnyVal with PartialOrder[A] {
-    def partialCompare(x: A, y: A) = f(x, y)
-  }
-  def apply[A](f: (A, A) => PCmp): PartialOrder[A] = new Impl[A](f)
-}
-
 object Order {
   import Cmp._
 

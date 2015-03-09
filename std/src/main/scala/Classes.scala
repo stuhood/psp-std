@@ -5,9 +5,8 @@ import api._
 
 /** Motley objects for which a file of residence is not obvious.
  */
-object Pair {
-  def apply[R, A, B](x: A, y: B)(implicit z: PairUp[R, A, B]): R          = z.create(x, y)
-  def unapply[R, A, B](x: R)(implicit z: PairDown[R, A, B]): Some[A -> B] = Some((z left x, z right x))
+object HasSize {
+  def unapply(x: HasSize): Some[Size] = some(x.size)
 }
 object +: {
   def unapply[A](xs: Array[A])       = if (xs.length == 0) None else Some(xs.head -> xs.tail)
@@ -34,8 +33,8 @@ final case class Version(value: String) extends AnyVal   { override def toString
 trait AndThis { def andThis(x: Unit, xs: Unit*): this.type = this }
 
 final class Utf8(val bytes: Array[Byte]) extends AnyVal with ForceShowDirect {
-  def chars: Chars = scala.io.Codec fromUTF8 bytes
-  def to_s: String = new String(chars)
+  def chars: Array[Char] = scala.io.Codec fromUTF8 bytes
+  def to_s: String       = new String(chars)
 }
 class FunctionEqualizer[A, B : Eq](f: A => B, g: A => B) extends (A ?=> B) {
   def isDefinedAt(x: A) = f(x) === g(x)
@@ -61,12 +60,12 @@ final case class Split[A](left: View[A], right: View[A]) extends api.SplitView[A
   def rejoin: View[A]                           = left ++ right
 }
 
-/** Zipped0 means we're using a PairDown to interpret a collection holding As.
+/** Zipped0 means we're using a Pair.Split to interpret a collection holding As.
  *  Zipped1 means there's only one underlying View[A1->A2].
  *  Zipped2 means there are two collections, a View[A1] and a View[A2].
  *  This is plus or minus only a performance-related implementation detail.
  */
-final case class Zipped0[A, A1, A2](xs: View[A])(implicit z: PairDown[A, A1, A2]) extends ZipView[A1, A2] {
+final case class Zipped0[A, A1, A2](xs: View[A])(implicit z: Pair.Split[A, A1, A2]) extends ZipView[A1, A2] {
   def lefts  = xs map z.left
   def rights = xs map z.right
   def pairs  = xs map z.pair

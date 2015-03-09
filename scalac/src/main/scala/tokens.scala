@@ -4,7 +4,7 @@ package scalac
 
 import std._, api._, StdEq._
 
-class TokenAnalysis(val global: Global, val content: Chars) {
+class TokenAnalysis(val global: Global, val content: Array[Char]) {
   import global._
 
   val newlines: Each[Index] = content indicesOf '\n'
@@ -48,6 +48,7 @@ class TokenAnalysis(val global: Global, val content: Chars) {
       case x                             => syntaxAnalyzer token2string x stripPrefix "'" stripSuffix "'"
     }
     def next(): Token = andResult(currentToken(), in.nextToken())
+
     Each continually next() takeToFirst (_.isEOF)
   }
 }

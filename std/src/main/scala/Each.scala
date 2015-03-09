@@ -86,8 +86,10 @@ object Each {
   def fromJava[A](xs: jIterable[A]): Each[A]                 = WrapJava(xs)
   def fromScala[A](xs: sCollection[A]): Each[A]              = WrapScala(xs)
   def join[A](xs: Each[A], ys: Each[A]): Each[A]             = Joined[A](xs, ys)
-  def unapplySeq[A](xs: Each[A]): Some[scSeq[A]]             = Some(xs.seq)
   def unfold[A](start: A)(next: ToSelf[A]): Unfold[A]        = Unfold[A](start)(next)
+
+  def unapplySeq[A](xs: Each[A]): Some[scSeq[A]] = Some(xs.seq)
+  def unapplySeq[A](xs: View[A]): Some[scSeq[A]] = Some(xs.seq)
 
   def show[A: Show](xs: Each[A], minElements: Precise, maxElements: Precise): String = xs splitAt maxElements.lastIndex match {
     case Split(xs, ys) if ys.isEmpty => xs mk_s ", "

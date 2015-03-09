@@ -5,7 +5,7 @@ import api._, std._
 
 trait AlgebraInstances {
   implicit def identityAlgebra : BooleanAlgebra[Boolean]           = Algebras.Identity
-  implicit def predicateAlgebra[A] : BooleanAlgebra[ToBool[A]]  = new Algebras.ToBool[A]
+  implicit def predicateAlgebra[A] : BooleanAlgebra[ToBool[A]]     = new Algebras.ToBool[A]
   implicit def intensionalSetAlgebra[A] : BooleanAlgebra[InSet[A]] = new Algebras.InSetAlgebra[A]
 }
 
@@ -40,7 +40,6 @@ trait OrderInstances extends OrderInstancesLow {
 
   implicit def tuple2Order[A: Order, B: Order] : Order[(A, B)]              = orderBy[(A, B)](fst) | snd
   implicit def tuple3Order[A: Order, B: Order, C: Order] : Order[(A, B, C)] = orderBy[(A, B, C)](_._1) | (_._2) | (_._3)
-  implicit def sizePartialOrder: PartialOrder[Size]                         = PartialOrder(Size.partialCompare)
 }
 
 trait EmptyInstances0 {

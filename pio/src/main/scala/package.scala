@@ -10,6 +10,8 @@ import scala.sys.process.{ Process, ProcessBuilder }
 package object pio {
   type jDirStreamFilter[A] = DirectoryStreamFilter[A]
   type jDirStream[A]       = DirectoryStream[A]
+  type Bytes               = Array[Byte]
+  // type Chars               = Array[Char]
 
   implicit def opsFilesStatics(path: Path): JnfFilesStatics                     = new JnfFilesStatics(path)
   implicit def opsJarEntry(entry: JarEntry): JioJarEntryOps                     = new JioJarEntryOps(entry)

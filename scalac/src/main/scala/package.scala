@@ -17,10 +17,10 @@ package object scalac {
 
   lazy val tokenGlobal = newGlobal("-Yrangepos")
 
-  def tokenAnalysis(content: String): TokenAnalysis = tokenAnalysis(content.toCharArray)
-  def tokenAnalysis(content: Chars): TokenAnalysis  = new TokenAnalysis(tokenGlobal, content)
-  def source(code: String): Source                  = new Source(code.toCharArray, tokenAnalysis(code.toCharArray))
-  def source(path: Path): Source                    = PathSource(path)
+  def tokenAnalysis(content: String): TokenAnalysis      = tokenAnalysis(content.toCharArray)
+  def tokenAnalysis(content: Array[Char]): TokenAnalysis = new TokenAnalysis(tokenGlobal, content)
+  def source(code: String): Source                       = new Source(code.toCharArray, tokenAnalysis(code.toCharArray))
+  def source(path: Path): Source                         = PathSource(path)
 
   implicit def emptyToken: Empty[Token] = Empty(NoToken)
 

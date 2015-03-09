@@ -1,8 +1,8 @@
 package psp
-package std
+package dev
 package extract
 
-import api._
+import api._, std._
 
 /** Name-based extraction only exists in 2.11.
  */
@@ -20,7 +20,7 @@ final class Cursor[A](val offset: Long) extends AnyVal {
   def next    = new Cursor[A](offset + 1)
 }
 final case class Opt[A](get: A) extends AnyVal {
-  def isEmpty = get == null
+  def isEmpty: Boolean          = get == null
   def map[B](f: A => B): Opt[B] = if (isEmpty) this.asInstanceOf[Opt[B]] else new Opt[B](f(get))
 }
 

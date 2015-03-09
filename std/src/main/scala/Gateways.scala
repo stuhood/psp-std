@@ -24,6 +24,10 @@ trait StdGateways extends Any
   implicit def opsDirect[A](xs: Direct[A]): ops.DirectOps[A]   = new ops.DirectOps(xs)
   implicit def opsLinear[A](xs: Linear[A]): ops.LinearOps[A]   = new ops.LinearOps(xs)
 
+  implicit def viewToEach[A](xs: View[A]): Each[A]                          = Each(xs foreach _)
+  implicit def splitViewOps[A](xs: SplitView[A]): Split[A]                  = Split(xs.left, xs.right)
+  implicit def viewOpsForArray[A](xs: Array[A]): ops.InvariantApiViewOps[A] = new ops.InvariantApiViewOps[A](xs.toDirect) // XXX - needed atm for e.g. xs contains foo
+
   implicit def conversionsForEach[A](xs: Each[A]): Conversions[A]         = new Conversions[A](xs)
   implicit def conversionsForJava[A](xs: jCollection[A]): Conversions[A]  = new Conversions[A](Each fromJava xs)
   implicit def conversionsForScala[A](xs: sCollection[A]): Conversions[A] = new Conversions[A](Each fromScala xs)
@@ -51,9 +55,9 @@ trait GlobalShow extends GlobalShow0 {
 }
 
 trait StdTypeclasses {
-  implicit def tupleTwoPairUp[A, B] : PairUp[A -> B, A, B]              = PairUp(_ -> _)
-  implicit def productTwoPairDown[A, B] : PairDown[A -> B, A, B]        = PairDown(fst, snd)
-  implicit def linearSeqPairDown[A] : PairDown[Linear[A], A, Linear[A]] = PairDown(_.head, _.tail)
+  implicit def tupleTwoPairUp[A, B] : Pair.Join[A -> B, A, B]             = Pair.Join(_ -> _)
+  implicit def productTwoPairDown[A, B] : Pair.Split[A -> B, A, B]        = Pair.Split(fst, snd)
+  implicit def linearSeqPairDown[A] : Pair.Split[Linear[A], A, Linear[A]] = Pair.Split(_.head, _.tail)
 }
 
 trait SetAndMapOps1 extends Any {
@@ -75,8 +79,6 @@ trait StdOps0 extends Any {
 trait StdOps1 extends Any with StdOps0 {
   implicit def unViewify0[A, CC[A]](xs: View[A])(implicit z: Builds[A, CC[A]]): CC[A] = z build xs
 
-  implicit def viewHasEq[A: Eq](xs: View[A]): ops.HasEq[A] = new ops.HasEq[A](xs)
-
   implicit class ForeachableSetOps[A, Repr](repr: Repr)(implicit z: ForeachableSet.Coll[A, Repr]) {
     def m: ExSetView[A, Repr] = z wrap repr
   }
@@ -96,17 +98,14 @@ trait StdOps2 extends Any with StdOps1 {
   implicit def jIterableIs[A, CC[X] <: jIterable[X]](xs: CC[A]): LinearView[A, CC[A]]     = View linear (Linear fromJava xs)
   implicit def atomicForeachIs[A, CC[X] <: Each[X]](xs: CC[A]): AtomicView[A, CC[A]]      = View each xs
   implicit def opsEachView[A](x: View[A]): ops.EachApiViewOps[A]                          = new ops.EachApiViewOps(x)
-
-  implicit def viewHasOrder[A: Order](xs: View[A]): ops.HasOrder[A] = new ops.HasOrder[A](xs)
+  implicit def opsInvariantView[A](x: InvariantView[A]): ops.InvariantApiViewOps[A]       = new ops.InvariantApiViewOps(x)
+  // implicit def viewHasOrder[A: Order](xs: View[A]): ops.HasOrder[A]                       = new ops.HasOrder[A](xs)
 }
 
 trait StdOps3 extends Any with StdOps2 {
   implicit class ForeachableIndexedOps[A, Repr](repr: Repr)(implicit z: ForeachableIndexed.Coll[A, Repr]) {
     def m: DirectView[A, Repr] = z wrap repr
   }
-
-  implicit def viewHasHashEq[A: HashEq](xs: View[A]): ops.HasHashEq[A] = new ops.HasHashEq[A](xs)
-
   implicit def directIndexedIs[A, CC[X] <: Direct[X]](xs: CC[A]): DirectView[A, CC[A]]             = View direct xs
   implicit def directScalaIndexedIs[A, CC[X] <: sciIndexedSeq[X]](xs: CC[A]): DirectView[A, CC[A]] = View direct (Direct fromScala xs)
   implicit def directArrayIs[A](xs: Array[A]): DirectView[A, Array[A]]                             = View direct (Direct fromArray xs)
@@ -115,11 +114,10 @@ trait StdOps3 extends Any with StdOps2 {
   // We're (sickly) using the context bound to reduce the applicability of the implicit,
   // but then discarding it. The only way these can be value classes is if the type class
   // arrives with the method call.
-  implicit def infixOpsPartialOrder[A: PartialOrder](x: A): infix.PartialOrderOps[A] = new infix.PartialOrderOps[A](x)
-  implicit def infixOpsOrder[A: Order](x: A): infix.OrderOps[A]                      = new infix.OrderOps[A](x)
-  implicit def infixOpsAlgebra[A: BooleanAlgebra](x: A): infix.AlgebraOps[A]         = new infix.AlgebraOps[A](x)
-  implicit def infixOpsEq[A: Eq](x: A): infix.EqOps[A]                               = new infix.EqOps[A](x)
-  implicit def infixOpsHash[A: Hash](x: A): infix.HashOps[A]                         = new infix.HashOps[A](x)
+  implicit def infixOpsOrder[A: Order](x: A): infix.OrderOps[A]              = new infix.OrderOps[A](x)
+  implicit def infixOpsAlgebra[A: BooleanAlgebra](x: A): infix.AlgebraOps[A] = new infix.AlgebraOps[A](x)
+  implicit def infixOpsEq[A: Eq](x: A): infix.EqOps[A]                       = new infix.EqOps[A](x)
+  implicit def infixOpsHash[A: Hash](x: A): infix.HashOps[A]                 = new infix.HashOps[A](x)
 
   implicit def opsBoolean(x: Boolean): ops.BooleanOps                                 = new ops.BooleanOps(x)
   implicit def opsBooleanAlgebra[A](x: BooleanAlgebra[A]): ops.BooleanAlgebraOps[A]   = new ops.BooleanAlgebraOps[A](x)
@@ -137,6 +135,7 @@ trait StdOps3 extends Any with StdOps2 {
   implicit def opsPrecise(x: Precise): ops.PreciseOps                                 = new ops.PreciseOps(x)
   implicit def opsPredicate[A](p: ToBool[A]): ops.PredicateOps[A]                     = new ops.PredicateOps(p)
   implicit def opsShowableSeq[A: Show](x: Each[A]): ops.ShowableSeqOps[A]             = new ops.ShowableSeqOps(x)
+  implicit def opsShowableSeq2[A: Show](x: View[A]): ops.ShowableSeqOps[A]             = opsShowableSeq(x.toEach)
   implicit def opsSize(x: Size): ops.SizeOps                                          = new ops.SizeOps(x)
   implicit def opsStdOpt[A](x: Opt[A]): ops.StdOptOps[A]                              = new ops.StdOptOps[A](x)
   implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                                    = new ops.TryOps[A](x)
@@ -159,18 +158,17 @@ trait StdOps extends Any with StdOps3 {
   implicit def apiOrderPromote[A](ord: Order[A]): impl.OrderImpl[A]    = Order(ord.compare)
   implicit def apiExSetPromote[A](x: ExSet[A]): ExSet.Impl[A]          = ExSet impl x
   implicit def apiExMapPromote[K, V](x: ExMap[K, V]): ExMap.Impl[K, V] = ExMap impl x
+
+  implicit def conversionsForView[A](xs: View[A]): Conversions[A] = new Conversions[A](Each(xs foreach _))
+  implicit def upcastForView[A](xs: View[A]): BaseView[A, _] = xs match {
+    case xs: BaseView[A, _] => xs
+  }
+  implicit def upcastForInvView[A](xs: InvariantView[A]): BaseView[A, _] = xs match {
+    case xs: BaseView[A, _] => xs
+  }
+
 }
 
 // Prefer opsAnyRef.
 trait StdUniversal0 extends Any                   { implicit def opsAny[A](x: A): ops.AnyOps[A]                 = new ops.AnyOps[A](x)    }
 trait StdUniversal extends Any with StdUniversal0 { implicit def opsAnyRef[A <: AnyRef](x: A): ops.AnyRefOps[A] = new ops.AnyRefOps[A](x) }
-
-// This doesn't work if the return type is declared as tc.VC[Repr], or if it is inferred.
-// def m[CC[X] <: Walkable[X]](implicit tc: CC[Repr]): tc.VC[Repr] = tc wrap repr
-//
-// [error] /mirror/r/psp/std/testOnly/src/test/scala/OperationCounts.scala:56: polymorphic expression cannot be instantiated to expected type;
-// [error]  found   : [CC[X] <: psp.std.Walkable[X]]tc.VC[psp.std.PolicyList[psp.std.Int]]
-// [error]  required: psp.std.View[psp.std.Int]
-// [error]     intRange(1, max / 2).m ++ nthRange(max / 2, max).toLinear.m
-// [error]                                                               ^
-// [error] one error found

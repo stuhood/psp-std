@@ -50,7 +50,6 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   final val Option          = scala.Option
   final val Ordering        = scala.math.Ordering
   final val Some            = scala.Some
-  final val StringContext   = scala.StringContext
   final val scIterator      = sc.Iterator
   final val scSeq           = sc.Seq
   final val sciBitSet       = sci.BitSet
@@ -163,12 +162,6 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
 
   def fst[A, B](x: A -> B): A = x._1
   def snd[A, B](x: A -> B): B = x._2
-  def PairDown[R, A, B](l: R => A, r: R => B): PairDown[R, A, B] = new PairDown[R, A, B] {
-    def left(x: R)  = l(x)
-    def right(x: R) = r(x)
-    def pair(x: R)  = l(x) -> r(x)
-  }
-  def PairUp[R, A, B](f: (A, B) => R): PairUp[R, A, B] = new PairUp[R, A, B] { def create(x: A, y: B) = f(x, y) }
 
   def exMap[K: HashEq, V](xs: (K -> V)*): ExMap[K, V]   = xs.m.toExMap
   def exSeq[A](xs: A*): Each[A]                         = xs.m.toEach
