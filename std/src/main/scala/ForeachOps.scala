@@ -5,23 +5,40 @@ package ops
 import api._
 
 final class ArrayInPlaceOps[A](val xs: Array[A]) extends AnyVal with HasPreciseSizeMethods {
-  private def andThis(op: Unit): Array[A]  = xs
-  def size: IntSize                        = Precise(xs.length)
+  private def sortRef(cmp: Comparator[A]) = java.util.Arrays.sort[A](xs.castTo[Array[A with AnyRef]], cmp)
+  private def isReference = (xs: Any) match {
+    case _: Array[AnyRef] => true
+    case _                => false
+  }
+  private def midpoint: Int  = xs.length / 2
+  private def swap(i1: Int, i2: Int) {
+    val tmp = xs(i1)
+    xs(i1) = xs(i2)
+    xs(i2) = tmp
+  }
+  private def andThis(op: Unit): Array[A] = xs
+
+  def size                                 = Precise(xs.length)
   def map(f: ToSelf[A]): Array[A]          = andThis(foreachIntIndex(i => xs(i) = f(xs(i))))
-  def sort(implicit z: Order[A]): Array[A] = andThis(
-    (xs: Array[_]) match {
-      case _: Array[AnyRef] => java.util.Arrays.sort[A](xs.castTo[Array[A with AnyRef]], z.toComparator)
-      case _                => Array sortInPlace xs
-    }
-  )
-  def reverse(): Array[A] = andThis(
-    0 until xs.length / 2 foreach { i =>
-      val j = xs.length - 1 - i
-      val tmp = xs(j)
-      xs(j) = xs(i)
-      xs(i) = tmp
-    }
-  )
+  def sort(implicit z: Order[A]): Array[A] = andThis(if (isReference) sortRef(z.toComparator) else Array sortInPlace xs)
+  def reverse(): Array[A]                  = andThis(0 until midpoint foreach (i => swap(i, lastIntIndex - i)))
+  def shuffle(): Array[A]                  = andThis(0 until lastIntIndex foreach (i => swap(i, i + randomNat(lastIntIndex - i))))
+
+  //   val buf = xs.indices.toArray
+  //   def swap(i1: Int, i2: Int) {
+  //     val tmp = buf(i1)
+  //     buf(i1) = buf(i2)
+  //     buf(i2) = tmp
+  //   }
+  //   var n = buf.length
+  //   while (n > 1) {
+  //     val k = randomNat(n)
+  //     swap(n - 1, k)
+  //     n -= 1
+  //   }
+  //   buf map (n => xs(n))
+  // }
+
 }
 
 final class ArraySpecificOps[A](val xs: Array[A]) extends AnyVal with HasPreciseSizeMethods {
