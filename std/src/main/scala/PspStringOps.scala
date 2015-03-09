@@ -62,19 +62,17 @@ final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
 
   def ~ (that: String): String    = self + that
   def * (n: Int): String          = this * n.size
-  def * (n: Precise): String  = n timesConst self mkString ""
+  def * (n: Precise): String      = n timesConst self mkString ""
   def format(args : Any*): String = java.lang.String.format(self, args map unwrapArg: _*)
   def length                      = self.length
 
   def bytes: Array[Byte]             = self.getBytes
   def chars: Array[Char]             = self.toCharArray
-  def wordSet: ExSet[String]         = words.byEquals.toSet
   def lineVector: Direct[String]     = splitChar('\n')
   def dollarSegments: Direct[String] = splitChar('$')
   def dottedSegments: Direct[String] = splitChar('.')
-  def slashSegments: Direct[String]  = splitChar('/')
 
-  def containsChar(ch: Char): Boolean      = chars.m contains ch
+  def containsChar(ch: Char): Boolean      = chars contains ch
   def splitChar(ch: Char): Direct[String]  = splitRegex(Regex quote ch.toString)
   def splitRegex(r: Regex): Direct[String] = r.pattern split self toDirect
   def words: Direct[String]                = splitRegex(whitespace)
@@ -103,10 +101,7 @@ final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
   def stripPrefix(prefix: String): String                             = foldPrefix(prefix)(self, s => s)
   def stripSuffix(suffix: String): String                             = foldSuffix(suffix)(self, s => s)
 
-  def trimLines: String    = mapLines(_.trim).trim
-  def trimTrailing: String = mapLines(_ remove whitespace.ends)
-  def trimLeading: String  = mapLines(_ remove whitespace.starts)
-
+  def trimLines: String   = mapLines(_.trim).trim
   def stripAnsi: String   = removeAll(ansiCodes)
   def stripMargin: String = stripMargin('|')
   def sanitize: String    = mapChars { case x if x.isControl => '?' }

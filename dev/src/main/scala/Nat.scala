@@ -5,7 +5,8 @@ package api {
   trait Nat extends scala.Any
 }
 
-package std {
+package dev {
+  import std._
   sealed trait Nat extends psp.api.Nat {
     type This <: Nat
     type Prev <: Nat { type Succ <: This }

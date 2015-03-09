@@ -1,7 +1,7 @@
 package psp
 package tests
 
-import psp.std._, api._, StdEq._
+import psp._, std._, api._, dev._, StdEq._
 
 class TokenSpec extends ScalacheckBundle {
   def bundle = "Scalac Tokens"

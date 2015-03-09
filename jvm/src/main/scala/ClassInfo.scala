@@ -3,7 +3,7 @@ package std
 package jvm
 
 import scala.tools.nsc.io.{ Directory, Jar }
-import psp.std.scalac.token.Keyword
+import psp.std.token.Keyword
 
 sealed trait HasAttributes                                  { def attributes: Array[AttributeInfo]     }
 sealed trait HasJvmFlags                                    { def flags: Flags                         }

@@ -1,7 +1,7 @@
 package psp
-package std
+package dev
 
-import Nat._, api._
+import std._, Nat._, api._
 
 trait LowPriorityNatList {
   self: NatList.type =>

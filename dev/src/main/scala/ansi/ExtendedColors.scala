@@ -1,8 +1,8 @@
 package psp
-package std
+package dev
 package ansi
 
-// import scala.Any
+import std._
 
 trait BasicAtoms[Rep] extends scala.Any with BasicColors[Rep] with BasicAttributes[Rep] {
   protected def newRep(atom: Atom): Rep
