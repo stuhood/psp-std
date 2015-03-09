@@ -3,7 +3,7 @@ package std
 
 import api._
 import StdEq.stringEq
-import psp.std.scalac.token.Keyword
+import psp.std.token.Keyword
 
 final class Label(val label: String) extends AnyVal {
   def matches(r: Regex)   = r isMatch label

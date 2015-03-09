@@ -1,7 +1,7 @@
 package psp
-package std
+package dev
 
-import Nat._
+import std._, Nat._
 
 /** We'd like to be able to work with short fixed-length lists without
  *  a bunch of unnecessary complexity and absent type/arity safety.

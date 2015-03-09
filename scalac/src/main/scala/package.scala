@@ -1,7 +1,7 @@
 package psp
-package std
+package dev
 
-import api._, pio._
+import std._, api._, pio._
 
 package scalac {
   object PathTokens extends PathCache(p => new TokenAnalysis(tokenGlobal, p.chars))

@@ -1,8 +1,8 @@
 package psp
-package std
+package dev
 package scalac
 
-import api._
+import std._, api._
 import scala.tools.nsc.ast.parser.Tokens._
 
 final case class ScalacToken(value: Int) extends AnyVal

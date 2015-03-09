@@ -1,7 +1,7 @@
 package psp
-package std
+package dev
 
-import api._
+import std._, api._
 
 package object ansi extends BasicAtoms[Ansi] {
   protected def newRep(atom: Atom): Ansi = Ansi(atom)

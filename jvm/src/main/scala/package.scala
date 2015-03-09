@@ -99,7 +99,6 @@ package object jvm extends psp.std.jvm.StdClasses {
     def isInfo    = !isError && !isWarning
   }
 
-  // type Keyword = psp.std.scalac.token.Keyword
   type LazyPairs = Array[Lazy[ElementValuePair]]
   def lazyBytes(elem: ElementValue): LazyPairs = Array(Lazy(ElementValuePair("bytes", elem)))
 

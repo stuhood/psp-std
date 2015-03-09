@@ -1,8 +1,8 @@
 package psp
-package std
+package dev
 package compat
 
-import api._, StdShow._
+import std._, api._, StdShow._
 
 /** An immutable scala Map with keys and values in parallel vectors.
  *  It is a "sorted" map in the sense that whatever order the keys are in, that's the sort.

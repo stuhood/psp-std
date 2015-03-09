@@ -2,7 +2,7 @@ package psp
 package std
 package jvm
 
-import psp.std.scalac.token.Keyword
+import psp.std.token.Keyword
 
 final case class Flags(value: UShort) extends AnyVal
 

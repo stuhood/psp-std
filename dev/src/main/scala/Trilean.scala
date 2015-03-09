@@ -1,7 +1,7 @@
 package psp
-package std
+package dev
 
-import Trilean._
+import std._, Trilean._
 
 /** True, False, and Unknown. Used in defining partial orders.
  */

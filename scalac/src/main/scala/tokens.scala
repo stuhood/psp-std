@@ -1,8 +1,8 @@
 package psp
-package std
+package dev
 package scalac
 
-import api._, StdEq._
+import std._, api._, StdEq._
 
 class TokenAnalysis(val global: Global, val content: Chars) {
   import global._

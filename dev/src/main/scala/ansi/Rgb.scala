@@ -1,8 +1,8 @@
 package psp
-package std
+package dev
 package ansi
 
-import api._
+import std._, api._
 import RGB._
 import StdShow._
 import StdEq._

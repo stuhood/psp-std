@@ -1,8 +1,6 @@
 package psp
 package std
 
-import java.{ lang => jl }
-import scala.{ collection => sc }
 import api._
 import psp.dmz.PolicyDmz
 

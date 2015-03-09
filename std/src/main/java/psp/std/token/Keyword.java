@@ -1,4 +1,4 @@
-package psp.std.scalac.token;
+package psp.std.token;
 
 public enum Keyword {
   Def, Type, Val, Var, Class, Trait, Object, Package,

@@ -4,7 +4,7 @@ package std
 import api._
 
 object Direct {
-  final val Empty: Direct[Nothing] = WrapVector(sciVector())
+  final val Empty: Direct[Nothing] = Pure(Precise(0), _ => sys error "<empty>")
 
   final case class WrapVector[A](xs: sciVector[A]) extends AnyVal with DirectImpl[A] {
     def +:(x: A): WrapVector[A]             = WrapVector(x +: xs)
