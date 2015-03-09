@@ -32,7 +32,7 @@ final case class FileJar(path: Path) extends Jar  {
   def manifestMap                                             = onFile(in => ManifestMap(in.getManifest))
 
   private def entryStream(jar: JarFile): scIterator[JarEntry] = jar.entries().iterator filter (_.isClassFile)
-  private def onFile[A](f: JarFile => A): A                   = new JarFile(path.toFile) |> (jar => try f(jar) finally jar.close())
+  private def onFile[A](f: JarFile => A): A                   = andClose(new JarFile(path.toFile))(f)
 }
 
 final case class StreamJar(instream: () => InputStream) extends Jar {
@@ -51,7 +51,7 @@ final case class StreamJar(instream: () => InputStream) extends Jar {
     loop(0)
   }
   private def entryStream(in: JarInputStream)        = Each.continuallyWhile[JarEntry](_ ne null)(in.getNextJarEntry())
-  private def onStream[A](f: JarInputStream => A): A = new JarInputStream(instream()) |> (in => try f(in) finally in.close())
+  private def onStream[A](f: JarInputStream => A): A = andClose(new JarInputStream(instream()))(f)
 }
 final case object NoJar extends Jar {
   def foreachEntry(f: JarEntry => Unit): Unit                 = ()

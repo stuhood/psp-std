@@ -143,6 +143,8 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   def partial[A, B](f: A ?=> B): A ?=> B           = f
   def regex(re: String): Regex                     = Regex(re)
 
+  def andClose[A <: Closeable, B](x: A)(f: A => B): B = try f(x) finally x.close()
+
   def spawn[A](body: => A): Unit = {
     val t = new Thread() { override def run(): Unit = body }
     t setDaemon true

@@ -109,7 +109,7 @@ trait JavaPathMethods extends Any {
         loop()
       }
     }
-    try loop() finally in.close()
+    andClose(in)(_ => loop())
   }
 
   private def fsOptions(kvs: (String, Any)*): jMap[String, _]                     = kvs.toMap.asJava

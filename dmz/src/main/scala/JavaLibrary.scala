@@ -69,6 +69,7 @@ trait JavaLibrary extends Any {
   type Charset                 = java.nio.charset.Charset
   type ClassLoader             = java.lang.ClassLoader
   type Class[A]                = java.lang.Class[A]
+  type Closeable               = java.io.Closeable
   type Comparable[A]           = java.lang.Comparable[A]
   type Comparator[-A]          = java.util.Comparator[A @uV]
   type DataInput               = java.io.DataInput
