@@ -85,17 +85,17 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
   def |:(label: String): MapTo[A] = new LabeledView(this, viewOps.init :+ label)
   def :|(label: String): MapTo[A] = new LabeledView(this, viewOps.init :+ label)
 
-  final def ++[A1 >: A](that: View[A1]): View[A1]   = Joined(this, that)
-  final def collect[B](pf: A ?=> B): MapTo[B]       = Collected(this, pf)
-  final def drop(n: Precise): MapTo[A]              = Dropped(this, n)
-  final def dropRight(n: Precise): MapTo[A]         = DroppedR(this, n)
-  final def dropWhile(p: Predicate[A]): MapTo[A]    = DropWhile(this, p)
-  final def flatMap[B](f: A => Each[B]): MapTo[B]   = FlatMapped(this, f)
-  final def map[B](f: A => B): MapTo[B]             = Mapped(this, f)
-  final def take(n: Precise): MapTo[A]              = Taken(this, n)
-  final def takeRight(n: Precise): MapTo[A]         = TakenR(this, n)
-  final def takeWhile(p: Predicate[A]): MapTo[A]    = TakenWhile(this, p)
-  final def withFilter(p: Predicate[A]): MapTo[A]   = Filtered(this, p)
+  final def ++[A1 >: A](that: View[A1]): View[A1] = Joined(this, that)
+  final def collect[B](pf: A ?=> B): MapTo[B]     = Collected(this, pf)
+  final def drop(n: Precise): MapTo[A]            = Dropped(this, n)
+  final def dropRight(n: Precise): MapTo[A]       = DroppedR(this, n)
+  final def dropWhile(p: ToBool[A]): MapTo[A]     = DropWhile(this, p)
+  final def flatMap[B](f: A => Each[B]): MapTo[B] = FlatMapped(this, f)
+  final def map[B](f: A => B): MapTo[B]           = Mapped(this, f)
+  final def take(n: Precise): MapTo[A]            = Taken(this, n)
+  final def takeRight(n: Precise): MapTo[A]       = TakenR(this, n)
+  final def takeWhile(p: ToBool[A]): MapTo[A]     = TakenWhile(this, p)
+  final def withFilter(p: ToBool[A]): MapTo[A]    = Filtered(this, p)
 
   final def force[That](implicit z: Builds[A, That]): That = z build this
   final def build(implicit z: Builds[A, Repr]): Repr       = force[Repr]
@@ -124,18 +124,18 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
 sealed trait InvariantBaseView[A, Repr] extends BaseView[A, Repr] with InvariantView[A] {
   final def join(that: InvariantView[A]): InvariantView[A] = Joined(this, that)
   final def splitAt(index: Index): Split[A]                = Split(take(index.sizeExcluding), drop(index.sizeExcluding))
-  final def span(p: Predicate[A]): Split[A]                = Split(takeWhile(p), dropWhile(p))
-  final def partition(p: Predicate[A]): Split[A]           = Split(withFilter(p), withFilter(!p))
+  final def span(p: ToBool[A]): Split[A]                   = Split(takeWhile(p), dropWhile(p))
+  final def partition(p: ToBool[A]): Split[A]              = Split(withFilter(p), withFilter(!p))
 }
 
-sealed abstract class CompositeView[A, B, Repr](val description: String, val sizeEffect: Unary[Size]) extends InvariantBaseView[B, Repr] {
+sealed abstract class CompositeView[A, B, Repr](val description: String, val sizeEffect: ToSelf[Size]) extends InvariantBaseView[B, Repr] {
   def prev: View[A]
   def size    = sizeEffect(prev.size)
   def viewOps = prev.viewOps :+ description
 
   final def foreach(f: B => Unit): Unit = {
     def loop[C](xs: View[C])(f: C => Unit): Unit = {
-      type Pred = (Predicate[C] @unchecked) // silencing patmat warnings
+      type Pred = (ToBool[C] @unchecked) // silencing patmat warnings
       xs match {
         case FlattenSlice(xs, range)  => foreachSlice(xs, range, f)
         case LabeledView(xs, _)       => loop[C](xs)(f)
@@ -158,7 +158,7 @@ sealed abstract class CompositeView[A, B, Repr](val description: String, val siz
       loop(this)(f)
   }
 
-  private def foreachTakeWhile[A](xs: Each[A], f: A => Unit, p: Predicate[A]): Int = {
+  private def foreachTakeWhile[A](xs: Each[A], f: A => Unit, p: ToBool[A]): Int = {
     var taken = 0
     xs foreach { x =>
       if (p(x)) f(x) sideEffect (taken += 1)
@@ -166,7 +166,7 @@ sealed abstract class CompositeView[A, B, Repr](val description: String, val siz
     }
     taken
   }
-  private def foreachDropWhile[A](xs: Each[A], f: A => Unit, p: Predicate[A]): Int = {
+  private def foreachDropWhile[A](xs: Each[A], f: A => Unit, p: ToBool[A]): Int = {
     var dropping = true
     var dropped  = 0
     xs foreach { x =>
@@ -202,14 +202,14 @@ sealed abstract class CompositeView[A, B, Repr](val description: String, val siz
 
 }
 
-final case class Joined [A, B >: A, Repr](prev: BaseView[A, Repr], ys: View[B])     extends CompositeView[A, B, Repr](pp"++ $ys", _ + ys.size)
-final case class Filtered    [A   , Repr](prev: BaseView[A, Repr], p: Predicate[A]) extends CompositeView[A, A, Repr](pp"filter $p",    _.atMost)
-final case class Dropped     [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"drop $n",      _ - n)
-final case class DroppedR    [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"dropR $n",     _ - n)
-final case class Taken       [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"take $n",      _ min n)
-final case class TakenR      [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"takeR $n",     _ min n)
-final case class TakenWhile  [A   , Repr](prev: BaseView[A, Repr], p: Predicate[A]) extends CompositeView[A, A, Repr](pp"takeW $p",     _.atMost)
-final case class DropWhile   [A   , Repr](prev: BaseView[A, Repr], p: Predicate[A]) extends CompositeView[A, A, Repr](pp"dropW $p",     _.atMost)
-final case class Mapped      [A, B, Repr](prev: BaseView[A, Repr], f: A => B)       extends CompositeView[A, B, Repr](pp"map $f",       x => x)
-final case class FlatMapped  [A, B, Repr](prev: BaseView[A, Repr], f: A => Each[B]) extends CompositeView[A, B, Repr](pp"flatMap $f",   x => if (x.isZero) x else Unknown)
-final case class Collected   [A, B, Repr](prev: BaseView[A, Repr], pf: A ?=> B)     extends CompositeView[A, B, Repr](pp"collect $pf",  _.atMost)
+final case class Joined [A, B >: A, Repr](prev: BaseView[A, Repr], ys: View[B])     extends CompositeView[A, B, Repr](pp"++ $ys",      _ + ys.size)
+final case class Filtered    [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](pp"filter $p",   _.atMost)
+final case class Dropped     [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"drop $n",     _ - n)
+final case class DroppedR    [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"dropR $n",    _ - n)
+final case class Taken       [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"take $n",     _ min n)
+final case class TakenR      [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"takeR $n",    _ min n)
+final case class TakenWhile  [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](pp"takeW $p",    _.atMost)
+final case class DropWhile   [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](pp"dropW $p",    _.atMost)
+final case class Mapped      [A, B, Repr](prev: BaseView[A, Repr], f: A => B)       extends CompositeView[A, B, Repr](pp"map $f",      x => x)
+final case class FlatMapped  [A, B, Repr](prev: BaseView[A, Repr], f: A => Each[B]) extends CompositeView[A, B, Repr](pp"flatMap $f",  x => if (x.isZero) x else Unknown)
+final case class Collected   [A, B, Repr](prev: BaseView[A, Repr], pf: A ?=> B)     extends CompositeView[A, B, Repr](pp"collect $pf", _.atMost)

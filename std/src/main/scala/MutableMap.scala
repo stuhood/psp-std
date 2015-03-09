@@ -4,7 +4,7 @@ package std
 import api._, Lookup._
 
 trait MutableMap[K, V] extends Intensional[K, V] with AndThis {
-  def +=(kv: (K, V)): this.type
+  def +=(kv: K -> V): this.type
   def -=(key: K): this.type
   def apply(key: K): V
   def clear(): this.type
@@ -12,7 +12,7 @@ trait MutableMap[K, V] extends Intensional[K, V] with AndThis {
   def containsValue(value: V): Boolean
   def domain: ExSet[K]
   def get(key: K): Option[V]
-  def iterator: scIterator[(K, V)]
+  def iterator: scIterator[K -> V]
   def putIfAbsent(k: K, v: V): Option[V]
   def remove(k: K, v: V): Boolean
   def replace(k: K, oldvalue: V, newvalue: V): Boolean
@@ -27,7 +27,7 @@ object MutableMap {
   def apply[K, V](jmap: jConcurrentMap[K, V], default: Default[K, V]): WrapConcurrent[K, V] = new WrapConcurrent(jmap, default)
 
   final class WrapConcurrent[K, V](jmap: jConcurrentMap[K, V], default: Default[K, V]) extends MutableMap[K, V] {
-    def +=(kv: (K, V)): this.type                        = andThis(jmap.put(kv._1, kv._2))
+    def +=(kv: K -> V): this.type                        = andThis(jmap.put(kv._1, kv._2))
     def -=(key: K): this.type                            = andThis(jmap remove key)
     def apply(key: K): V                                 = get(key) | default(key)
     def clear()                                          = andThis(jmap.clear())
@@ -35,7 +35,7 @@ object MutableMap {
     def containsValue(value: V): Boolean                 = jmap containsValue value
     def domain: ExSet[K]                                 = jmap.keySet.byEquals.toSet
     def get(key: K): Option[V]                           = Option(jmap get key)
-    def iterator: scIterator[(K, V)]                     = (domain mapZip apply).iterator
+    def iterator: scIterator[K -> V]                     = (domain mapZip apply).iterator
     def putIfAbsent(k: K, v: V): Option[V]               = Option(jmap.putIfAbsent(k, v))
     def remove(k: K, v: V): Boolean                      = jmap.remove(k, v)
     def replace(k: K, oldvalue: V, newvalue: V): Boolean = jmap.replace(k, oldvalue, newvalue)

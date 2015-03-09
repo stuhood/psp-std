@@ -24,8 +24,9 @@ object Order {
 }
 
 object Builds {
-  def apply[Elem, To](f: Each[Elem] => To): Builds[Elem, To]  = new Impl(f)
-  def wrap[Elem, To](z: CanBuild[Elem, To]): Builds[Elem, To] = new Impl(xs => z() doto (b => xs foreach (b += _)) result)
+  def apply[Elem, To](f: Each[Elem] => To): Builds[Elem, To]         = new Impl(f)
+  def wrap[Elem, To](z: CanBuild[Elem, To]): Builds[Elem, To]        = new Impl(xs => z() doto (b => xs foreach (b += _)) result)
+  def wrapMap[K, V, To](z: CanBuild[(K, V), To]): Builds[K -> V, To] = new Impl(xs => z() doto (b => xs foreach (x => b += (fst(x) -> snd(x)))) result)
 
   final class Impl[Elem, To](val f: Each[Elem] => To) extends AnyVal with Builds[Elem, To] {
     def build(xs: Each[Elem]): To      = f(xs)

@@ -48,7 +48,7 @@ final class NamedProp(val label: String, p: Prop) {
   }
 }
 object NamedProp {
-  final case class MapParams(underlying: Prop, f: Unary[TestParams]) extends Prop {
+  final case class MapParams(underlying: Prop, f: ToSelf[TestParams]) extends Prop {
     def apply(prms: GenParams)                 = underlying(prms)
     override def check(prms: TestParams): Unit = super.check(f(prms))
   }

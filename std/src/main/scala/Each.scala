@@ -68,7 +68,7 @@ object Each {
   final case class Continually[A](fn: () => A) extends AnyVal with InfiniteSize[A] {
     @inline def foreach(f: A => Unit): Unit = while (true) f(fn())
   }
-  final case class Unfold[A](zero: A)(next: A => A) extends InfiniteSize[A] {
+  final case class Unfold[A](zero: A)(next: ToSelf[A]) extends InfiniteSize[A] {
     @inline def foreach(f: A => Unit): Unit = {
       var current = zero
       while (true) { f(current) ; current = next(current) }
@@ -77,17 +77,17 @@ object Each {
 
   def indices: Indexed[Index] = Indexed.indices
 
-  def apply[A](mf: Suspended[A]): Each[A]                       = new Impl[A](impl.Size.Unknown, mf)
-  def const[A](elem: A): Constant[A]                            = Constant[A](elem)
-  def continuallyWhile[A](p: Predicate[A])(expr: => A): Each[A] = continually(expr) takeWhile p
-  def continually[A](elem: => A): Continually[A]                = Continually[A](() => elem)
-  def elems[A](xs: A*): Each[A]                                 = apply[A](xs foreach _)
-  def empty[A] : Each[A]                                        = Direct.Empty
-  def fromJava[A](xs: jIterable[A]): Each[A]                    = WrapJava(xs)
-  def fromScala[A](xs: sCollection[A]): Each[A]                 = WrapScala(xs)
-  def join[A](xs: Each[A], ys: Each[A]): Each[A]                = Joined[A](xs, ys)
-  def unapplySeq[A](xs: Each[A]): Some[scSeq[A]]                = Some(xs.seq)
-  def unfold[A](start: A)(next: A => A): Unfold[A]              = Unfold[A](start)(next)
+  def apply[A](mf: Suspended[A]): Each[A]                    = new Impl[A](impl.Size.Unknown, mf)
+  def const[A](elem: A): Constant[A]                         = Constant[A](elem)
+  def continuallyWhile[A](p: ToBool[A])(expr: => A): Each[A] = continually(expr) takeWhile p
+  def continually[A](elem: => A): Continually[A]             = Continually[A](() => elem)
+  def elems[A](xs: A*): Each[A]                              = apply[A](xs foreach _)
+  def empty[A] : Each[A]                                     = Direct.Empty
+  def fromJava[A](xs: jIterable[A]): Each[A]                 = WrapJava(xs)
+  def fromScala[A](xs: sCollection[A]): Each[A]              = WrapScala(xs)
+  def join[A](xs: Each[A], ys: Each[A]): Each[A]             = Joined[A](xs, ys)
+  def unapplySeq[A](xs: Each[A]): Some[scSeq[A]]             = Some(xs.seq)
+  def unfold[A](start: A)(next: ToSelf[A]): Unfold[A]        = Unfold[A](start)(next)
 
   def show[A: Show](xs: Each[A], minElements: Precise, maxElements: Precise): String = xs splitAt maxElements.lastIndex match {
     case Split(xs, ys) if ys.isEmpty => xs mk_s ", "

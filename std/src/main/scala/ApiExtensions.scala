@@ -35,8 +35,8 @@ final class InSetOps[A](xs: InSet[A]) {
     case _                             => InSet.Complement(xs)
   }
 
-  def filter(p: Predicate[A]): InSet[A]    = this intersect inSet(p)
-  def filterNot(p: Predicate[A]): InSet[A] = this filter !p
+  def filter(p: ToBool[A]): InSet[A]    = this intersect inSet(p)
+  def filterNot(p: ToBool[A]): InSet[A] = this filter !p
 }
 final class ExSetOps[A](xs: ExSet[A]) {
   private implicit def heq: HashEq[A] = xs.hashEq
@@ -48,7 +48,7 @@ final class ExSetOps[A](xs: ExSet[A]) {
   def add(x: A): ExSet[A]                 = if (xs(x)) xs else xs union exSet(x)
   def canonicalize(x: A): A               = xs.findOr(_ === x, x)
   def diff(that: ExSet[A]): ExSet[A]      = ExSet.Diff(xs, that)
-  def filter(p: Predicate[A]): ExSet[A]   = ExSet.Filtered(xs, p)
+  def filter(p: ToBool[A]): ExSet[A]      = ExSet.Filtered(xs, p)
   def intersect(that: ExSet[A]): ExSet[A] = ExSet.Intersect(xs, that)
   def isSubsetOf(ys: InSet[A]): Boolean   = xs forall ys
   def mapOnto[B](f: A => B): ExMap[A, B]  = new ExMap.Impl(xs, Lookup total f)
@@ -57,7 +57,7 @@ final class ExSetOps[A](xs: ExSet[A]) {
   def union(that: ExSet[A]): ExSet[A]     = ExSet.Union(xs, that)
   def without(x: A): ExSet[A]             = xs diff exSet(x)
 
-  def filterNot(p: Predicate[A]): ExSet[A] = this filter !p
+  def filterNot(p: ToBool[A]): ExSet[A] = this filter !p
 }
 
 trait HasPreciseSizeMethods extends Any {

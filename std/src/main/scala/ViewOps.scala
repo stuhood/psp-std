@@ -38,7 +38,7 @@ trait DirectViewOps[A, Repr] extends Any {
 trait ApiViewOps[+A] extends Any {
   def xs: View[A]
 
-  private def stringed(sep: String)(f: Shower[A]): String = xs map f zreduce (_ ~ sep ~ _)
+  private def stringed(sep: String)(f: ToString[A]): String = xs map f zreduce (_ ~ sep ~ _)
   private def directIsEmpty: Boolean = {
     xs foreach (_ => return false)
     true
@@ -47,15 +47,15 @@ trait ApiViewOps[+A] extends Any {
   def foreachWithIndex(f: (A, Index) => Unit): Unit = foldl(0.index)((idx, x) => try idx.next finally f(x, idx))
   def foreachReverse(f: A => Unit): Unit            = xs.toDirect |> (xs => xs.indices foreachReverse (i => f(xs(i))))
 
-  def count(p: Predicate[A]): Int                        = foldl[Int](0)((res, x) => if (p(x)) res + 1 else res)
-  def exists(p: Predicate[A]): Boolean                   = foldl[Boolean](false)((res, x) => if (p(x)) return true else res)
-  def find(p: Predicate[A]): Option[A]                   = foldl[Option[A]](None)((res, x) => if (p(x)) return Some(x) else res)
+  def count(p: ToBool[A]): Int                           = foldl[Int](0)((res, x) => if (p(x)) res + 1 else res)
+  def exists(p: ToBool[A]): Boolean                      = foldl[Boolean](false)((res, x) => if (p(x)) return true else res)
+  def find(p: ToBool[A]): Option[A]                      = foldl[Option[A]](None)((res, x) => if (p(x)) return Some(x) else res)
   def first[B](pf: A ?=> B): Option[B]                   = find(pf.isDefinedAt) map pf
   def forallTrue(implicit ev: A <:< Boolean): Boolean    = forall(x => ev(x))
-  def forall(p: Predicate[A]): Boolean                   = foldl[Boolean](true)((res, x) => if (!p(x)) return false else res)
+  def forall(p: ToBool[A]): Boolean                      = foldl[Boolean](true)((res, x) => if (!p(x)) return false else res)
   def head: A                                            = xs take 1.size optionally { case Each(x) => x } orFail "empty.head"
-  def indexWhere(p: Predicate[A]): Index                 = zipIndex findLeft p map snd or NoIndex
-  def indicesWhere(p: Predicate[A]): View[Index]         = zipIndex filterLeft p map snd
+  def indexWhere(p: ToBool[A]): Index                    = zipIndex findLeft p map snd or NoIndex
+  def indicesWhere(p: ToBool[A]): View[Index]            = zipIndex filterLeft p rights
   def isEmpty: Boolean                                   = xs.size.isZero || directIsEmpty
   def last: A                                            = xs takeRight 1.size optionally { case Each(x) => x } orFail "empty.last"
   def max(implicit ord: Order[A]): A                     = xs reducel (_ max2 _)
@@ -63,13 +63,13 @@ trait ApiViewOps[+A] extends Any {
   def mkString(sep: String): String                      = stringed(sep)(_.any_s)
   def mk_s(sep: String)(implicit z: Show[A]): String     = stringed(sep)(_.to_s)
   def nonEmpty: Boolean                                  = xs.size.isNonZero || !directIsEmpty
-  def tabular(columns: Shower[A]*): String               = if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toDirect, columns.m).render else ""
+  def tabular(columns: ToString[A]*): String             = if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toDirect, columns.m).render else ""
   def zfirst[B](pf: A ?=> B)(implicit z: Empty[B]): B    = find(pf.isDefinedAt).fold(z.empty)(pf)
   def zfoldl[B](f: (B, A) => B)(implicit z: Empty[B]): B = foldl(z.empty)(f)
   def zfoldr[B](f: (A, B) => B)(implicit z: Empty[B]): B = foldr(z.empty)(f)
 
-  def filter(p: Predicate[A]): View[A]                           = xs withFilter p
-  def filterNot(p: Predicate[A]): View[A]                        = xs withFilter !p
+  def filter(p: ToBool[A]): View[A]                              = xs withFilter p
+  def filterNot(p: ToBool[A]): View[A]                           = xs withFilter !p
   def gather[B](pf: A ?=> View[B]): View[B]                      = xs flatMap pf.zapply
   def gatherClass[B: CTag] : View[B]                             = xs collect classFilter[B]
   def grep(regex: Regex)(implicit z: Show[A]): View[A]           = xs filter (x => regex isMatch x)
@@ -77,20 +77,22 @@ trait ApiViewOps[+A] extends Any {
   def labelOp[B](label: String)(f: View[A] => View[B]): View[B]  = new LabeledView(f(xs), xs.viewOps :+ label)
   def mapApply[B, C](x: B)(implicit ev: A <:< (B => C)): View[C] = xs map (f => ev(f)(x))
   def mapWithIndex[B](f: (A, Index) => B): View[B]               = inView[B](mf => foldWithIndex(())((res, x, i) => mf(f(x, i))))
-  def mapZip[B](f: A => B): View[(A, B)]                         = xs map (x => x -> f(x))
+  def mapZip[B](f: A => B): View[A -> B]                         = xs map (x => x -> f(x))
   def slice(range: IndexRange): View[A]                          = labelOp(pp"slice $range")(_ drop range.toDrop take range.toTake)
-  def sliceWhile(p: Predicate[A], q: Predicate[A]): View[A]      = xs dropWhile p takeWhile q
+  def sliceWhile(p: ToBool[A], q: ToBool[A]): View[A]            = xs dropWhile p takeWhile q
   def sortDistinct(implicit ord: Order[A]): View[A]              = new DirectApiViewOps(xs.toDirect) sortDistinct
   def sorted(implicit ord: Order[A]): View[A]                    = new DirectApiViewOps(xs.toDirect) sorted
   def tail: View[A]                                              = xs drop 1.size
   def toRefs: View[Ref[A]]                                       = xs map (_.toRef)
   def withSize(size: Size): View[A]                              = new Each.Impl[A](size, xs foreach _)
-  def zip[B](ys: View[B]): ZipView[A, B]                         = new ZipView(xs, ys)
-  def zipIndex: ZipView[A, Index]                                = new ZipView(xs, Each.indices)
 
-  def ofClass[B: CTag] : View[B]            = xs collect classFilter[B]
-  def takeToFirst(p: Predicate[A]): View[A] = xs span !p mapRight (_ take 1.size) rejoin
-  def dropIndex(index: Index): View[A]      = xs splitAt index mapRight (_ drop 1.size) rejoin
+  def zip[B](ys: View[B]): ZipView[A, B]                                = new Zipped2(xs, ys)
+  def zipIndex: ZipView[A, Index]                                       = new Zipped2(xs, Each.indices)
+  def zipView[A1, A2](implicit z: PairDown[A, A1, A2]): ZipView[A1, A2] = new Zipped0(xs)
+
+  def ofClass[B: CTag] : View[B]         = xs collect classFilter[B]
+  def takeToFirst(p: ToBool[A]): View[A] = xs span !p mapRight (_ take 1.size) rejoin
+  def dropIndex(index: Index): View[A]   = xs splitAt index mapRight (_ drop 1.size) rejoin
 
   def groupBy[B: HashEq](f: A => B): ExMap[B, View[A]] =
     foldl(bufferMap[B, View[A]]())((buf, x) => andResult(buf, buf(f(x)) :+= x)).toMap.m.toExMap
@@ -99,7 +101,7 @@ trait ApiViewOps[+A] extends Any {
   def foldl[B](zero: B)(f: (B, A) => B): B                = foldFrom(zero) left f
   def foldr[B](zero: B)(f: (A, B) => B): B                = foldFrom(zero) right f
   def fold[B](implicit z: Empty[B]): FoldOps[A, B]        = foldFrom(z.empty)
-  def foldFrom[B](zero: B): FoldOps[A, B]                 = FoldOpsClass(xs, zero)
+  def foldFrom[B](zero: B): FoldOps[A, B]                 = new FoldOps(xs, zero)
 }
 
 trait ExtensionalOps[A] extends Any {
@@ -115,7 +117,8 @@ trait ExtensionalOps[A] extends Any {
   def toSet: ExSet[A]                    = xs.toExSet
   def without(x: A): View[A]             = xs without x
 
-  def toMap[K, V](implicit ev: A <:< (K, V)): ExMap[K, V] = xs.toExMap
+  def toMap[K, V](implicit ev: A <:< (K -> V)): ExMap[K, V] = xs.toExMap
+
 }
 final class ByEqualsExtensionalOps[A](val xs: View[A]) extends AnyVal with ExtensionalOps[A] {
   protected def eqs[A]: HashEq[A] = HashEq.natural[A]()
@@ -140,13 +143,13 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
   def without(x: A)(implicit z: Eq[A]): View[A]                 = xs filterNot (_ === x)
   def withoutEmpty(implicit z: Empty[A], eqs: Eq[A]): View[A]   = xs without z.empty
 
-  def findOr(p: Predicate[A], alt: => A): A           = find(p) | alt
-  def reducel(f: BinOp[A]): A                         = tail.foldl(head)(f)
-  def zapply(i: Index)(implicit z: Empty[A]): A       = xs drop i.sizeExcluding zhead
-  def zfind(p: Predicate[A])(implicit z: Empty[A]): A = findOr(p, z.empty)
-  def zhead(implicit z: Empty[A]): A                  = if (isEmpty) z.empty else head
-  def zlast(implicit z: Empty[A]): A                  = if (isEmpty) z.empty else last
-  def zreduce(f: BinOp[A])(implicit z: Empty[A]): A   = if (isEmpty) z.empty else reducel(f)
+  def findOr(p: ToBool[A], alt: => A): A            = find(p) | alt
+  def reducel(f: BinOp[A]): A                       = tail.foldl(head)(f)
+  def zapply(i: Index)(implicit z: Empty[A]): A     = xs drop i.sizeExcluding zhead
+  def zfind(p: ToBool[A])(implicit z: Empty[A]): A  = findOr(p, z.empty)
+  def zhead(implicit z: Empty[A]): A                = if (isEmpty) z.empty else head
+  def zlast(implicit z: Empty[A]): A                = if (isEmpty) z.empty else last
+  def zreduce(f: BinOp[A])(implicit z: Empty[A]): A = if (isEmpty) z.empty else reducel(f)
 
   def zinit: View[A]                    = if (isEmpty) emptyValue[View[A]] else init
   def ztail: View[A]                    = if (isEmpty) emptyValue[View[A]] else tail
@@ -160,7 +163,7 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
     Each.indices map col
   }
 
-  def mpartition(p: View[A] => Predicate[A]): View[View[A]] =
+  def mpartition(p: View[A] => ToBool[A]): View[View[A]] =
     inView[View[A]](mf => xs partition p(xs.memo) match { case Split(xs, ys) => mf(xs) ; ys mpartition p foreach mf })
 
   def distinctBy[B: HashEq](f: A => B): View[A] = inView(mf =>
@@ -194,12 +197,54 @@ final class DirectApiViewOps[A, Repr](val xs: DirectView[A, Repr]) extends AnyVa
 final class EachApiViewOps[A](val xs: View[A]) extends AnyVal with InvariantViewOps[A] { }
 final class InvariantApiViewOps[A](val xs: InvariantView[A]) extends AnyVal with InvariantViewOps[A] { }
 
-final class PairViewOps[R, A, B](val xs: View[R])(implicit paired: PairDown[R, A, B]) {
-  // We should be able to write these method on the normal ViewOps and take the implicit
-  // parameter here, like this:
-  //   def mapPairs[B, C, D](f: (B, C) => D)(implicit z: Paired[A, B, C]): View[D] = xs map (x => f(z left x, z right x))
-  // But scala's type inference sucks so it doesn't work without annotating the parameter types.
-  def mapPairs[C](f: (A, B) => C): View[C]                                  = xs map (x => f(paired left x, paired right x))
-  def mapLeft[R1, A1](f: A => A1)(implicit z: PairUp[R1, A1, B]): View[R1]  = xs map (x => z.create(f(paired left x), paired right x))
-  def mapRight[R1, B1](f: B => B1)(implicit z: PairUp[R1, A, B1]): View[R1] = xs map (x => z.create(paired left x, f(paired right x)))
+/** If we user the initial value as a jumping-off point can we improve the
+ *  interface to folds?
+ */
+final class FoldOps[+A, B](xs: View[A], initial: B) {
+  def indexed(f: (B, A, Index) => B): B = lowlevel.foldLeftIndexed(xs, initial, f)
+  def left(f: (B, A) => B): B           = lowlevel.foldLeft(xs, initial, f)
+  def right(f: (A, B) => B): B          = lowlevel.foldRight(xs, initial, f)
+}
+
+/** A ZipView has similar operations to a View, but with the benefit of
+ *  being aware each element has a left and a right.
+ */
+final case class ZipViewOps[A1, A2](x: ZipView[A1, A2]) extends AnyVal {
+  import x._
+  def zfoldl[B](f: (B, A1, A2) => B)(implicit z: Empty[B]): B = foldl(z.empty)(f)
+  def foldl[B](zero: B)(f: (B, A1, A2) => B): B = {
+    var res = zero
+    foreach ((x, y) => res = f(res, x, y))
+    res
+  }
+  def find(p: (A1, A2) => Boolean): Option[A1 -> A2] = {
+    foreach((x, y) => if (p(x, y)) return Some(x -> y))
+    None
+  }
+  def foreach(f: (A1, A2) => Unit): Unit = (lefts, rights) match {
+    case (xs: Direct[A1], ys: Direct[A2]) => (xs.size min ys.size).indices foreach (i => f(xs(i), ys(i)))
+    case (xs: Direct[A1], ys)             => (ys take xs.size).foreachWithIndex((y, i) => f(xs(i), y))
+    case (xs, ys: Direct[A2])             => (xs take ys.size).foreachWithIndex((x, i) => f(x, ys(i)))
+    case _                                => lefts.iterator |> (it => rights foreach (y => if (it.hasNext) f(it.next, y) else return))
+  }
+
+  def flatMap[B](f: (A1, A2) => View[B]): View[B] = inView(mf => foreach((x, y) => f(x, y) foreach mf))
+  def map[B](f: (A1, A2) => B): View[B]           = inView(mf => foreach((x, y) => mf(f(x, y))))
+  def corresponds(f: (A1, A2) => Boolean)         = this map f forallTrue
+  def drop(n: Precise): ZipView[A1, A2]           = new Zipped2(lefts drop n, rights drop n)
+  def filter(q: Predicate2[A1, A2])               = withFilter(q)
+  def take(n: Precise): ZipView[A1, A2]           = new Zipped2(lefts take n, rights take n)
+  def toMap[A0 >: A1]: sciMap[A0, A2]             = this map (_ -> _) toScalaMap
+  def withFilter(q: Predicate2[A1, A2])           = inView[A1 -> A2](mf => foreach((x, y) => if (q(x, y)) mf(x -> y)))
+
+  def filterLeft(q: ToBool[A1]): ZipView[A1, A2]  = withFilter((x, y) => q(x)).zipView
+  def filterRight(q: ToBool[A2]): ZipView[A1, A2] = withFilter((x, y) => q(y)).zipView
+  def findLeft(p: ToBool[A1]): Option[A1 -> A2]   = find((x, y) => p(x))
+  def findRight(p: ToBool[A2]): Option[A1 -> A2]  = find((x, y) => p(y))
+  def mapLeft[B1](g: A1 => B1): ZipView[B1, A2]   = new Zipped2(lefts map g, rights)
+  def mapRight[B2](g: A2 => B2): ZipView[A1, B2]  = new Zipped2(lefts, rights map g)
+  def takeWhileLeft(q: ToBool[A1])                = pairs takeWhile (xy => q(fst(xy)))
+  def takeWhileRight(q: ToBool[A2])               = pairs takeWhile (xy => q(snd(xy)))
+
+  final def force[That](implicit z: Builds[A1 -> A2, That]): That = z build pairs
 }

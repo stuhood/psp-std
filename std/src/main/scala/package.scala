@@ -20,8 +20,6 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   type IndexRange            = Consecutive[Index]
   type IntRange              = Consecutive[Int]
 
-  def fullIndexRange: IndexRange  = indexRange(0, MaxInt)
-
   // Inlinable.
   final val InputStreamBufferSize = 8192
   final val MaxInt                = scala.Int.MaxValue
@@ -135,6 +133,7 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   def andTrue(x: Unit, xs: Unit*): Boolean         = true
   def direct[A](xs: A*): Direct[A]                 = Direct fromScala xs
   def each[A](xs: sCollection[A]): Each[A]         = Each fromScala xs
+  def fullIndexRange: IndexRange                   = indexRange(0, MaxInt)
   def indexRange(start: Int, end: Int): IndexRange = Consecutive.until(start, end, Index(_))
   def intRange(start: Int, end: Int): IntRange     = Consecutive.until(start, end)
   def nthRange(start: Int, end: Int): IntRange     = Consecutive.to(start, end)
@@ -151,31 +150,32 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   }
 
   // Java.
-  def jConcurrentMap[K, V](xs: (K, V)*): jConcurrentMap[K, V] = new jConcurrentHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
-  def jFile(s: String): jFile                                 = path(s).toFile
-  def jList[A](xs: A*): jList[A]                              = java.util.Arrays.asList(xs: _*)
-  def jMap[K, V](xs: (K, V)*): jMap[K, V]                     = new jHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
-  def jSet[A](xs: A*): jSet[A]                                = new jHashSet[A] doto (b => xs foreach b.add)
-  def jUri(x: String): jUri                                   = java.net.URI create x
-  def jUrl(x: String): jUrl                                   = jUri(x).toURL
+  def jConcurrentMap[K, V](xs: (K -> V)*): jConcurrentMap[K, V] = new jConcurrentHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
+  def jFile(s: String): jFile                                   = path(s).toFile
+  def jList[A](xs: A*): jList[A]                                = java.util.Arrays.asList(xs: _*)
+  def jMap[K, V](xs: (K -> V)*): jMap[K, V]                     = new jHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
+  def jSet[A](xs: A*): jSet[A]                                  = new jHashSet[A] doto (b => xs foreach b.add)
+  def jUri(x: String): jUri                                     = java.net.URI create x
+  def jUrl(x: String): jUrl                                     = jUri(x).toURL
 
-  def fst[A, B](x: scala.Product2[A, B]): A = x._1
-  def snd[A, B](x: scala.Product2[A, B]): B = x._2
-
+  def fst[A, B](x: A -> B): A = x._1
+  def snd[A, B](x: A -> B): B = x._2
   def PairDown[R, A, B](l: R => A, r: R => B): PairDown[R, A, B] = new PairDown[R, A, B] {
     def left(x: R)  = l(x)
     def right(x: R) = r(x)
+    def pair(x: R)  = l(x) -> r(x)
   }
   def PairUp[R, A, B](f: (A, B) => R): PairUp[R, A, B] = new PairUp[R, A, B] { def create(x: A, y: B) = f(x, y) }
 
-  def exMap[K: HashEq, V](xs: (K, V)*): ExMap[K, V]        = xs.m.toExMap
-  def exSeq[A](xs: A*): Each[A]                            = xs.m.toEach
-  def exSet[A: HashEq](xs: A*): ExSet[A]                   = xs.m.toExSet
-  def exView[A](xs: A*): View[A]                           = Direct[A](xs: _*).m
-  def inMap[K, V](p: Predicate[K], f: K => V): InMap[K, V] = InMap(inSet(p), f)
-  def inSet[A](p: Predicate[A]): InSet[A]                  = InSet(p)
-  def inView[A](mf: Suspended[A]): View[A]                 = Each(mf).m
-  def mutableMap[K, V](xs: (K, V)*): MutableMap[K, V]      = MutableMap(jConcurrentMap(xs: _*))
+  def exMap[K: HashEq, V](xs: (K -> V)*): ExMap[K, V]   = xs.m.toExMap
+  def exSeq[A](xs: A*): Each[A]                         = xs.m.toEach
+  def exSet[A: HashEq](xs: A*): ExSet[A]                = xs.m.toExSet
+  def exView[A](xs: A*): View[A]                        = Direct[A](xs: _*).m
+  def inMap[K, V](p: ToBool[K], f: K => V): InMap[K, V] = InMap(inSet(p), f)
+  def inSet[A](p: ToBool[A]): InSet[A]                  = InSet(p)
+  def inView[A](mf: Suspended[A]): View[A]              = Each(mf).m
+  def mutableMap[K, V](xs: (K -> V)*): MutableMap[K, V] = MutableMap(jConcurrentMap(xs: _*))
+  def zipView[A, B](xs: (A, B)*): ZipView[A, B]         = Zipped1(xs.seq)
 
   def randomNat(max: Int): Int                              = scala.util.Random.nextInt(max)
   def bufferMap[A, B: Empty](): scmMap[A, B]                = scmMap[A, B]() withDefaultValue emptyValue[B]

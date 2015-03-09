@@ -3,14 +3,13 @@ package api
 
 // This mostly consists of "magic" types which cannot be avoided due to language privilege.
 trait ApiAliases extends scala.Any {
-  type Array[A]                = scala.Array[A]
-  type CTag[A]                 = scala.reflect.ClassTag[A]
-  type Dynamic                 = scala.Dynamic
-  type PartialFunction[-A, +B] = scala.PartialFunction[A, B]
-  type Product                 = scala.Product
-  type ScalaNumber             = scala.math.ScalaNumber
-  type String                  = java.lang.String
-  type StringContext           = scala.StringContext
+  type Array[A]      = scala.Array[A]
+  type CTag[A]       = scala.reflect.ClassTag[A]
+  type Dynamic       = scala.Dynamic
+  type Product       = scala.Product
+  type ScalaNumber   = scala.math.ScalaNumber
+  type String        = java.lang.String
+  type StringContext = scala.StringContext
 
   // The top types.
   type Any    = scala.Any
@@ -32,16 +31,28 @@ trait ApiAliases extends scala.Any {
   type Short   = scala.Short
   type Unit    = scala.Unit
 
-  // policy-original type aliases which appear in api signatures or
-  // which landed here to be near their buddy.
-  type ?=>[-A, +B]   = PartialFunction[A, B]
-  type Predicate[-A] = A => Boolean
-  type Relation[-A]  = (A, A) => Boolean
-  type PairOf[+A]    = (A, A)
-  type Shower[-A]    = A => String
-  type Suspended[+A] = (A => Unit) => Unit
-  type Unary[A]      = A => A
-  type Bag[A]        = ExMap[A, Precise]
+  // Original type aliases.
+  type ->[+A, +B]           = scala.Product2[A, B]
+  type ?=>[-A, +B]          = scala.PartialFunction[A, B]
+  type Array2[A]            = Array[Array[A]]
+  type Array3[A]            = Array[Array[Array[A]]]
+  type Array4[A]            = Array[Array[Array[Array[A]]]]
+  type Array5[A]            = Array[Array[Array[Array[Array[A]]]]]
+  type Bag[A]               = ExMap[A, Precise]
+  type BinOp[A]             = (A, A) => A // binary operation
+  type Bool                 = scala.Boolean
+  type Bytes                = Array[Byte]
+  type Chars                = Array[Char]
+  type Predicate2[-A1, -A2] = (A1, A2) => Boolean
+  type Ref[+A]              = A with AnyRef
+  type Relation[-A]         = (A, A) => Bool
+  type Suspended[+A]        = ToUnit[ToUnit[A]]
+  type ToBool[-A]           = A => Bool
+  type ToInt[-A]            = A => Int
+  type ToSelf[A]            = A => A
+  type ToString[-A]         = A => String
+  type ToUnit[-A]           = A => Unit
+  type UShort               = Char // unsigned short
 }
 
 // Necessary to use those aliases within the api package.

@@ -1,6 +1,8 @@
 package psp
 package std
 
+import api._
+
 package object lowlevel {
   /** Can't refer directly to fields because scala bloats all the bytecode
    *  going through getters. This way the parameters are locals.
@@ -53,4 +55,20 @@ package object lowlevel {
   //       21: iload_2
   //       22: if_icmpne     5
   //       25: return
+
+  final def foldLeft[A, B](xs: Each[A], initial: B, f: (B, A) => B): B = {
+    var res = initial
+    xs foreach (x => res = f(res, x))
+    res
+  }
+  final def foldLeftIndexed[A, B](xs: Each[A], initial: B, f: (B, A, Index) => B): B = {
+    var res = initial
+    xs.zipIndex foreach ((x, i) => res = f(res, x, i))
+    res
+  }
+  final def foldRight[A, B](xs: Each[A], initial: B, f: (A, B) => B): B = {
+    var res = initial
+    xs foreachReverse (x => res = f(x, res))
+    res
+  }
 }
