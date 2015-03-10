@@ -46,7 +46,7 @@ final class ExSetOps[A](xs: ExSet[A]) {
    */
 
   def add(x: A): ExSet[A]                 = if (xs(x)) xs else xs union exSet(x)
-  def canonicalize(x: A): A               = xs.findOr(_ === x, x)
+  def canonicalize(x: A): A               = xs.m.findOr(_ === x, x)
   def diff(that: ExSet[A]): ExSet[A]      = ExSet.Diff(xs, that)
   def filter(p: ToBool[A]): ExSet[A]      = ExSet.Filtered(xs, p)
   def intersect(that: ExSet[A]): ExSet[A] = ExSet.Intersect(xs, that)
@@ -73,7 +73,7 @@ trait HasPreciseSizeMethods extends Any {
   def lastIndex: Index     = Index(longSize - 1)  // effectively maps both undefined and zero to no index.
   def lastNth: Nth         = lastIndex.toNth
 
-  def containsIndex(index: Index): Boolean = indices contains index
+  def containsIndex(index: Index): Boolean = indices.m contains index
 
   @inline def foreachIndex(f: Index => Unit): Unit     = if (isPositive) lowlevel.foreachConsecutive(0, lastIntIndex, i => f(Index(i)))
   @inline def foreachIntIndex(f: Int => Unit): Unit    = if (isPositive) lowlevel.foreachConsecutive(0, lastIntIndex, f)

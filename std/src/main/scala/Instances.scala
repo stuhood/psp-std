@@ -2,10 +2,30 @@ package psp
 package impl
 
 import api._, std._
+import HashEq.natural
+
+trait PrimitiveInstances {
+  implicit def boolEq: HashEq[Bool]     = natural()
+  implicit def byteEq: HashEq[Byte]     = natural()
+  implicit def charEq: HashEq[Char]     = natural()
+  implicit def doubleEq: HashEq[Double] = natural()
+  implicit def floatEq: HashEq[Float]   = natural()
+  implicit def intEq: HashEq[Int]       = natural()
+  implicit def longEq: HashEq[Long]     = natural()
+  implicit def shortEq: HashEq[Short]   = natural()
+  implicit def unitEq: HashEq[Unit]     = natural()
+
+  implicit def boolOrder: Order[Bool]   = orderBy[Bool](x => if (x) 1 else 0)
+  implicit def byteOrder: Order[Byte]   = Order.fromInt(_ - _)
+  implicit def charOrder: Order[Char]   = Order.fromInt[Char](_ - _)
+  implicit def intOrder: Order[Int]     = Order.fromInt[Int](_ - _)
+  implicit def longOrder: Order[Long]   = Order.fromLong[Long](_ - _)
+  implicit def shortOrder: Order[Short] = Order.fromInt[Short](_ - _)
+}
 
 trait AlgebraInstances {
   implicit def identityAlgebra : BooleanAlgebra[Boolean]           = Algebras.Identity
-  implicit def predicateAlgebra[A] : BooleanAlgebra[ToBool[A]]  = new Algebras.ToBool[A]
+  implicit def predicateAlgebra[A] : BooleanAlgebra[ToBool[A]]     = new Algebras.ToBool[A]
   implicit def intensionalSetAlgebra[A] : BooleanAlgebra[InSet[A]] = new Algebras.InSetAlgebra[A]
 }
 
@@ -20,27 +40,18 @@ trait OrderInstancesLow {
 }
 
 trait OrderInstances extends OrderInstancesLow {
-  implicit def booleanOrder: Order[Boolean] = orderBy[Boolean](x => if (x) 1 else 0)
-  implicit def byteOrder: Order[Byte]       = Order.fromInt(_ - _)
-  implicit def charOrder: Order[Char]       = Order.fromInt[Char](_ - _)
-  implicit def intOrder: Order[Int]         = Order.fromInt[Int](_ - _)
-  implicit def longOrder: Order[Long]       = Order.fromLong[Long](_ - _)
-  implicit def shortOrder: Order[Short]     = Order.fromInt[Short](_ - _)
-  implicit def stringOrder: Order[String]   = Order.fromLong[String](_ compareTo _)
-
   // Some unfortunate rocket dentistry necessary here.
   // This doesn't work because scala comes up with "Any" due to the fbound.
   // implicit def enumOrder[A <: jEnum[A]]: Order[A] = Order.fromInt[A](_.ordinal - _.ordinal)
   //
   // This one doesn't work if it's A <:< jEnum[A], but jEnum[_] is just enough to get what we need.
-  implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A] = Order.fromInt[A](_.ordinal - _.ordinal)
+  implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A] = orderBy[A](_.ordinal) // Order.fromInt[A](_.ordinal - _.ordinal)
 
-  implicit def indexOrder: Order[Index]              = orderBy[Index](_.get)
-  implicit def preciseOrder[A <: Precise] : Order[A] = orderBy[A](_.value)
-
+  implicit def indexOrder: Order[Index]                                     = orderBy[Index](_.get)
+  implicit def preciseOrder[A <: Precise] : Order[A]                        = orderBy[A](_.value)
+  implicit def stringOrder: Order[String]                                   = Order.fromLong[String](_ compareTo _)
   implicit def tuple2Order[A: Order, B: Order] : Order[(A, B)]              = orderBy[(A, B)](fst) | snd
   implicit def tuple3Order[A: Order, B: Order, C: Order] : Order[(A, B, C)] = orderBy[(A, B, C)](_._1) | (_._2) | (_._3)
-  implicit def sizePartialOrder: PartialOrder[Size]                         = PartialOrder(Size.partialCompare)
 }
 
 trait EmptyInstances0 {
@@ -71,26 +82,13 @@ trait EmptyInstances extends EmptyInstances0 {
 }
 
 trait EqInstances {
-  import HashEq.natural
-
-  implicit def booleanEq: HashEq[Boolean] = natural()
-  implicit def byteEq: HashEq[Byte]       = natural()
-  implicit def charEq: HashEq[Char]       = natural()
-  implicit def doubleEq: HashEq[Double]   = natural()
-  implicit def floatEq: HashEq[Float]     = natural()
-  implicit def intEq: HashEq[Int]         = natural()
-  implicit def longEq: HashEq[Long]       = natural()
-  implicit def shortEq: HashEq[Short]     = natural()
-  implicit def unitHash: HashEq[Unit]     = natural()
-
   implicit def indexEq: HashEq[Index]           = natural()
   implicit def jTypeEq: HashEq[jType]           = natural()
   implicit def offsetEq: HashEq[Offset]         = natural()
-  implicit def stringEq: HashEq[String]         = natural()
+  implicit def pathEq: HashEq[Path]             = hashEqBy[Path](_.toString)
   implicit def policyClassEq: HashEq[JavaClass] = natural()
-
-  implicit def sizeEq: HashEq[Size] = HashEq(Size.equiv, Size.hash)
-  implicit def pathEq: HashEq[Path] = hashEqBy[Path](_.toString)
+  implicit def sizeEq: HashEq[Size]             = HashEq(Size.equiv, Size.hash)
+  implicit def stringEq: HashEq[String]         = natural()
 
   /** The throwableEq defined above conveniently conflicts with the actual
    *  implicit parameter to the method. W... T... F. On top of this the error

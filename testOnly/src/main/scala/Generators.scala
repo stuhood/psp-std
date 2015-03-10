@@ -10,7 +10,7 @@ package gen {
     def anchor(c: Char): Gen[String]  = frequency(3 -> "", 1 -> c.toString)
     def apply(): Gen[Regex]           = (concatenate, anchor('^'), anchor('$')) map ((re, s, e) => re.surround(s, e))
     def atom: Gen[Regex]              = oneOf(literal, range, quantified)
-    def concatenate: Gen[Regex]       = simple * (1 upTo 3) ^^ (_ reducel Regex.alt)
+    def concatenate: Gen[Regex]       = simple * (1 upTo 3) ^^ (_.m reducel Regex.alt)
     def group: Gen[Regex]             = atom ^^ (_.capturingGroup)
     def letterPair: Gen[Char -> Char] = (letter, letter) filter (_ <= _)
     def literal: Gen[Regex]           = letter * (0 upTo 5) ^^ (_ mk_s "" r)
@@ -52,4 +52,9 @@ package object gen {
   def letterFrom(s: String): Gen[Char]                      = oneOf(s.seq)
   def indexFrom(r: IndexRange): Gen[Index]                  = Gen.choose(r.head, r.last)
   def indexRangeFrom(sMax: Int, eMax: Int): Gen[IndexRange] = (0 upTo sMax, 0 upTo eMax) ^^ indexRange
+
+  def precise: Gen[Precise] = chooseNum(1, MaxInt / 2) map (_.size)
+  def atomic: Gen[Atomic]   = frequency(10 -> precise, 1 -> 0.size, 1 -> Infinite)
+  def bounded: Gen[Bounded] = precise flatMap (lo => atomic map (hi => api.Size(lo, hi))) collect classFilter[Bounded]
+  def size: Gen[Size]       = oneOf(atomic, bounded)
 }

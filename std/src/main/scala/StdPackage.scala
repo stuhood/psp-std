@@ -16,14 +16,14 @@ import psp.dmz.PolicyDmz
 abstract class StdPackage
       extends impl.OrderInstances
          with impl.EmptyInstances
+         with impl.PrimitiveInstances
          with StdTypeclasses
          with StdProperties
          with impl.AlgebraInstances
          with GlobalShow
          with StdGateways
          with lowlevel.StdArrowAssoc
-         with ApiAliases
-         with ApiMethods
+         with api.Aliases
          with SpireIntegration
          with PolicyDmz {
 
@@ -69,9 +69,9 @@ abstract class StdPackage
     }
   }
 
-  implicit class Each2DOps[A](val xss: Each[Each[A]]) {
-    def flatten: View[A]                  = xss flatMap identity
-    def mmap[B](f: A => B): View[View[B]] = xss map (_ map f)
+  implicit class View2DOps[A](val xss: View2D[A]) {
+    def flatten: View[A]              = xss flatMap (_.toEach)
+    def mmap[B](f: A => B): View2D[B] = xss map (_ map f)
   }
 
   implicit def wrapClass(x: jClass): JavaClass                            = new JavaClassImpl(x)

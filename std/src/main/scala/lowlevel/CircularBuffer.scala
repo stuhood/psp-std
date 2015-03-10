@@ -7,8 +7,8 @@ import api._
 final class CircularBuffer[A](capacity: Precise) extends Direct.DirectImpl[A] with AndThis {
   assert(!capacity.isZero, "CircularBuffer capacity cannot be 0")
 
-  private[this] def cap                 = capacity.intSize
-  private[this] val buffer              = newArray[Any](capacity)
+  private[this] def cap: Int            = capacity.intValue
+  private[this] val buffer              = newArray[Any](cap)
   private[this] var seen                = 0L
   private[this] def writePointer: Int   = (seen % cap).safeInt
   private[this] def readPointer         = if (isFull) writePointer else 0

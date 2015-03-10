@@ -4,6 +4,11 @@ package pio
 
 import api._
 
+/** Memoization for the results of Path => A functions, where
+ *  it's assumed the path translates into an actual file. The file
+ *  modification time determines whether the cached value needs
+ *  to be recalculated.
+ */
 class PathCache[A](f: Path => A) extends (Path => A) {
   private[this] val timestamps = mutableMap[Path, FileTime]() withDefaultValue FileTime.empty
   private[this] val content    = mutableMap[Path, A]()
@@ -22,8 +27,10 @@ class PathCache[A](f: Path => A) extends (Path => A) {
   }
 }
 
-object PathBytes extends PathCache[Bytes](Files readAllBytes _)
-object PathChars extends PathCache[Chars](path => utf8(PathBytes(path)).chars)
+/** Standard memoizing objects for the given types.
+ */
+object PathBytes extends PathCache[Array[Byte]](Files readAllBytes _)
+object PathChars extends PathCache[Array[Char]](path => utf8(PathBytes(path)).chars)
 object PathLines extends PathCache[View[String]](Files readAllLines _ m)
 object PathSlurp extends PathCache[String](path => utf8(PathBytes(path)).to_s)
 object PathJars  extends PathCache[Jar](path => Jar(path))

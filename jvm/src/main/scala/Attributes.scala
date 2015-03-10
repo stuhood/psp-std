@@ -2,7 +2,7 @@ package psp
 package std
 package jvm
 
-import api._
+import api._, pio._
 import scala.io.Codec.toUTF8
 
 // field_info attributes: ConstantValue Synthetic Signature Deprecated RuntimeVisibleAnnotations RuntimeInvisibleAnnotations

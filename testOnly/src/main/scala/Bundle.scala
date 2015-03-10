@@ -54,8 +54,8 @@ object NamedProp {
   }
 
   def apply(label: String, p: Prop): NamedProp                 = new NamedProp(label, p)
-  implicit def liftSeqPair(x: (String, Each[Prop])): NamedProp = NamedProp(x._1, x._2 reducel (_ && _))
-  implicit def liftPair(x: (String, Prop)): NamedProp          = NamedProp(x._1, x._2)
+  implicit def liftSeqPair(x: String -> View[Prop]): NamedProp = NamedProp(x._1, x._2 reducel (_ && _))
+  implicit def liftPair(x: String -> Prop): NamedProp          = NamedProp(x._1, x._2)
 }
 
 trait ScalacheckBundle extends Bundle {

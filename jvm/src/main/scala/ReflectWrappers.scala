@@ -3,7 +3,6 @@ package std
 package jvm
 
 import attr._
-// import javax.tools._
 import scala.reflect.internal.pickling.ByteCodecs
 
 object PathClassInfo extends pio.PathCache(ClassInfo.fromPath)
@@ -14,7 +13,7 @@ final class JvmInfoOps(val info: JvmInfo) extends AnyVal {
   def decodedName = name.decoded
   def packageName = name.packageName
   def simpleName  = name.simpleName
-  def findBytes: Option[Bytes] = (
+  def findBytes: Option[Array[Byte]] = (
            (info.attributes first { case x: ScalaSignature => x.bytes })
     orElse (info.annotations first { case Lazy(x: ScalaSigJvmAnnotation) => x.bytes })
   )

@@ -12,7 +12,7 @@ class SliceSpec extends ScalacheckBundle {
 
   def props = Direct(
     checkSlice('a' to 'g', 2, 5, 'c' to 'e')
-  ).flatten
+  ).flatMap(x => x) // XXX should be .flatten
 }
 
 class InferenceSpec extends ScalacheckBundle {

@@ -6,6 +6,18 @@ import psp.std._, api._
 import Prop.forAll
 import StdEq._, StdShow._
 
+class SizeSpec extends ScalacheckBundle {
+  def bundle = "Size laws"
+
+  def props = Direct[NamedProp](
+    "+ is commutative"   -> commutative[Size](_ + _),
+    "max is associative" -> associative[Size](_ max _),
+    "max is commutative" -> commutative[Size](_ max _),
+    "min is associative" -> associative[Size](_ min _),
+    "min is commutative" -> commutative[Size](_ min _)
+  )
+}
+
 class StringExtensions extends ScalacheckBundle {
   def bundle = "String Extensions"
 
@@ -42,7 +54,7 @@ class StringExtensions extends ScalacheckBundle {
 class GridSpec extends ScalacheckBundle {
   def bundle = "Policy, Grid Operations"
 
-  def primePartition = Indexed from 2 mpartition (xs => _ % xs.head == 0)
+  def primePartition = (Indexed from 2).m mpartition (xs => _ % xs.head == 0)
   def primePartitionGrid(n: Int): View2D[Int]   = primePartition take n.size map (_ take n.size)
   def primePartitionGrid_t(n: Int): View2D[Int] = primePartition.transpose take n.size map (_ take n.size)
   def showGrid(xss: View2D[Int]): String = {
@@ -68,7 +80,7 @@ class GridSpec extends ScalacheckBundle {
   """
 
   def props = Direct(
-    seqShows("[ 2, 4, 6, ... ], [ 3, 9, 15, ... ], [ 5, 25, 35, ... ]", Indexed from 2 mpartition (xs => _ % xs.head == 0) take 3.size),
+    seqShows("[ 2, 4, 6, ... ], [ 3, 9, 15, ... ], [ 5, 25, 35, ... ]", primePartition take 3.size),
     showsAs(primePartition6, showGrid(primePartitionGrid(6))),
     showsAs(primePartition6_t, showGrid(primePartitionGrid_t(6)))
   )

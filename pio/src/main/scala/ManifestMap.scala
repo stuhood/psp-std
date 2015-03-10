@@ -12,7 +12,7 @@ object ManifestMap {
     Name.MANIFEST_VERSION -> "1.0",
     ScalaCompilerVersion  -> versionNumberString
   )
-  def apply(mainAttrs: (Name, String)*): ManifestMap = apply(new jManifest) ++= mainAttrs.toSeq
+  def apply(mainAttrs: (Name, String)*): ManifestMap = apply(new jManifest) ++= mainAttrs.toEach
   def apply(manifest: jManifest): ManifestMap        = new ManifestMap(manifest) ++= initialMainAttrs
 }
 
@@ -22,6 +22,6 @@ class ManifestMap private (val manifest: jManifest) extends AndThis {
 
   def underlying                              = manifest
   def javaAttrs: jMap[jAttributeName, String] = manifest.getMainAttributes().castTo
-  def attrs: ExMap[Name, String]              = javaAttrs.keySet mapOnto javaAttrs.get
+  def attrs: ExMap[Name, String]              = javaAttrs.keySet.toExSet mapOnto javaAttrs.get
   def apply(name: Name)                       = if (manifest eq null) null else attrs(name)
 }

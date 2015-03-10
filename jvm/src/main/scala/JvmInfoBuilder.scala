@@ -17,7 +17,7 @@ class Builder(protected[this] val in: DataInput) extends ScalacClassfileModel {
   def readRef()                = JvmRef(thisClass, stringAt(u2), readDescriptor())
   def readStringElementValue() = StringConstValue(stringAt(u2))
 
-  def readByteArray(len: Int) = new Bytes(len) doto in.readFully
+  def readByteArray(len: Int) = newArray[Byte](len) doto in.readFully
   def readConstantPoolEntry(): Entry = (u1: @switch) match {
     case CONSTANT_NoEntry            => NoEntry
     case CONSTANT_Utf8               => Utf8_info(in.readUTF)

@@ -18,24 +18,6 @@ final class OrderOps[A](val lhs: A) extends AnyVal {
   def min2(rhs: A)(implicit ord: Order[A]): A = if (this < rhs) lhs else rhs
   def max2(rhs: A)(implicit ord: Order[A]): A = if (this > rhs) lhs else rhs
 }
-final class PartialOrderOps[A](val lhs: A) extends AnyVal {
-  def partialCompare(rhs: A)(implicit ord: PartialOrder[A]): PCmp    = ord.partialCompare(lhs, rhs)
-  def tryCompare(rhs: A)(implicit ord: PartialOrder[A]): Option[Cmp] = partialCompare(rhs) match {
-    case PCmp.LT => Some(Cmp.LT)
-    case PCmp.GT => Some(Cmp.GT)
-    case PCmp.EQ => Some(Cmp.EQ)
-    case _       => None
-  }
-
-  def p_==(rhs: A)(implicit ord: PartialOrder[A]): Boolean = partialCompare(rhs) eq PCmp.EQ
-  def p_< (rhs: A)(implicit ord: PartialOrder[A]): Boolean = partialCompare(rhs) eq PCmp.LT
-  def p_<=(rhs: A)(implicit ord: PartialOrder[A]): Boolean = tryCompare(rhs) exists (_ ne Cmp.GT)
-  def p_> (rhs: A)(implicit ord: PartialOrder[A]): Boolean = partialCompare(rhs) eq PCmp.GT
-  def p_>=(rhs: A)(implicit ord: PartialOrder[A]): Boolean = tryCompare(rhs) exists (_ ne Cmp.LT)
-
-  def pmin(rhs: A)(implicit ord: PartialOrder[A]): Option[A] = tryCompare(rhs) map { case Cmp.GT => rhs ; case _ => lhs }
-  def pmax(rhs: A)(implicit ord: PartialOrder[A]): Option[A] = tryCompare(rhs) map { case Cmp.LT => rhs ; case _ => lhs }
-}
 final class AlgebraOps[A](val lhs: A) extends AnyVal {
   def ^(rhs: A)(implicit z: BooleanAlgebra[A]): A       = (lhs || rhs) && !(lhs && rhs) // xor
   def implies(rhs: A)(implicit z: BooleanAlgebra[A]): A = !lhs || rhs

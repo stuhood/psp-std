@@ -38,7 +38,7 @@ final case class NumberedLine(line: Nth, offset: Offset, lineText: String, token
     case "." | "," | ":" | "]" | ")" => true
     case _                           => sciList("[", "(", ".") exists x.raw.endsWith
   }
-  def tokenString: ColorString = tokens mapNow shownType zreduce ((x, y) => if (noSpace(x, y)) x <> y else x <+> y)
+  def tokenString: ColorString = tokens map shownType zreduce ((x, y) => if (noSpace(x, y)) x <> y else x <+> y)
   def leadingSpace             = lineText takeWhile (_.isWhitespace) build
   def anonymous_s              = "%4s  %6s  %s%s".format(line.nth, offset.offsetValue, leadingSpace, tokenString.colorized)
   def numbered_s               = "%4s  %6s  %s".format(line.nth, offset.offsetValue, lineText)

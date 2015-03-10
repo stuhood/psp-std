@@ -75,7 +75,7 @@ class OperationCounts extends ScalacheckBundle {
     lazy val results: Direct[String]            = outcomes mapNow (_.result)
 
     lazy val failed = (
-         results.distinct.size != 1.size
+         results.m.distinct.size != 1.size
       || usLinear.calls > themLinear.calls
       || usDirect.calls > themDirect.calls
     )
@@ -97,7 +97,7 @@ class OperationCounts extends ScalacheckBundle {
     def description       = if (passed) passString else failString
     def passString        = show"| $ops_s  $counts  // ${results.head}"
     def failString        = show"Inconsistent results for $ops_s:\n  ${outcomes mk_s "\n  "}" mapLines ("| " + _)
-    def distinctCounts    = outcomes.map(_.calls).distinct.toDirect
+    def distinctCounts    = outcomes.map(_.calls).byEquals.distinct.toDirect
     override def toString = description
   }
 

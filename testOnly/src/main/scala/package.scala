@@ -1,9 +1,10 @@
 package psp
 
-import org.scalacheck._, Prop._, Gen.Choose
+import org.scalacheck._, Prop._, Gen._
 import org.scalacheck.util.Pretty
 import psp.std._, api._
 import StdShow._
+import StdEq._
 import scala.Console.{ println => _, _ }
 
 package object tests {
@@ -30,6 +31,9 @@ package object tests {
 
   def arb[A](implicit z: Arb[A]): Arb[A] = z
 
+  def commutative[T: Arb : Eq](op: BinOp[T]): Prop = forAll((p1: T, p2: T) => printResultIf(false, s"op($p1, $p2)")(sameBehavior(op(p1, p2), op(p2, p1))))
+  def associative[T: Arb : Eq](op: BinOp[T]): Prop = forAll((p1: T, p2: T, p3: T) => printResultIf(false, s"op($p1, $p2, $p3)")(sameBehavior(op(op(p1, p2), p3), op(p1, op(p2, p3)))))
+
   // When testing e.g. associativity and the sum overflows, we
   // need to do more than compare values for equality.
   def sameBehavior[T: Eq](p1: => T, p2: => T): Boolean = {
@@ -43,6 +47,7 @@ package object tests {
     def filter(p: ToBool[A]): Arb[A] = Arb(x.arbitrary filter p)
   }
 
+  implicit def arbSize: Arb[Size]                               = Arb(gen.size)
   implicit def arbWord: Arb[String]                             = Arb(gen.text.word)
   implicit def arbitraryInSet[A : Arb : HashEq] : Arb[InSet[A]] = arb[sciSet[A]] map (_.m.toExSet)
   implicit def arbitraryPint: Arb[Pint]                         = Arb(Gen.choose(MinInt, MaxInt) map (x => Pint(x)))
