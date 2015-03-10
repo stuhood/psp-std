@@ -20,6 +20,8 @@ trait StdGateways extends Any
   /** Scala map builders require Tuple2s, even though Product2 should suffice.
    */
   implicit def implicitBuildsFromMapCBF[K, V, That](implicit z: CanBuild[(K, V), That]): Builds[K -> V, That] = Builds wrapMap z
+  implicit def cleaveTuple[A, B] : Pair.Cleave[A -> B, A, B]                                                  = Pair.Cleave[A -> B, A, B](_ -> _, fst, snd)
+  implicit def splitLinearSeq[A] : Pair.Split[Linear[A], A, Linear[A]]                                        = Pair.Split(_.head, _.tail)
 
   implicit def opsDirect[A](xs: Direct[A]): ops.DirectOps[A]   = new ops.DirectOps(xs)
   implicit def opsLinear[A](xs: Linear[A]): ops.LinearOps[A]   = new ops.LinearOps(xs)
@@ -52,12 +54,6 @@ trait GlobalShow0 {
 }
 trait GlobalShow extends GlobalShow0 {
   implicit def showableToShown[A](x: A)(implicit z: Show[A]): Shown   = Shown(z show x)
-}
-
-trait StdTypeclasses {
-  implicit def tupleTwoPairUp[A, B] : Pair.Join[A -> B, A, B]             = Pair.Join(_ -> _)
-  implicit def productTwoPairDown[A, B] : Pair.Split[A -> B, A, B]        = Pair.Split(fst, snd)
-  implicit def linearSeqPairDown[A] : Pair.Split[Linear[A], A, Linear[A]] = Pair.Split(_.head, _.tail)
 }
 
 trait SetAndMapOps1 extends Any {
@@ -135,7 +131,7 @@ trait StdOps3 extends Any with StdOps2 {
   implicit def opsPrecise(x: Precise): ops.PreciseOps                                 = new ops.PreciseOps(x)
   implicit def opsPredicate[A](p: ToBool[A]): ops.PredicateOps[A]                     = new ops.PredicateOps(p)
   implicit def opsShowableSeq[A: Show](x: Each[A]): ops.ShowableSeqOps[A]             = new ops.ShowableSeqOps(x)
-  implicit def opsShowableSeq2[A: Show](x: View[A]): ops.ShowableSeqOps[A]             = opsShowableSeq(x.toEach)
+  implicit def opsShowableSeq2[A: Show](x: View[A]): ops.ShowableSeqOps[A]            = opsShowableSeq(x.toEach)
   implicit def opsSize(x: Size): ops.SizeOps                                          = new ops.SizeOps(x)
   implicit def opsStdOpt[A](x: Opt[A]): ops.StdOptOps[A]                              = new ops.StdOptOps[A](x)
   implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                                    = new ops.TryOps[A](x)

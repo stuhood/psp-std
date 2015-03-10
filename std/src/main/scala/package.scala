@@ -78,6 +78,7 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   final val NoUri: jUri   = jUri("")
   final val NoIndex       = Index.undefined
   final val NoNth         = Nth.undefined
+  final val ->            = psp.api.Pair
 
   // Methods similar to the more useful ones in scala's Predef.
   def ??? : Nothing                                                                        = throw new scala.NotImplementedError
@@ -124,8 +125,7 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   def abortTrace(msg: String): Nothing     = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
   def abort(msg: String): Nothing          = runtimeException(msg)
   def noNull[A](value: A, orElse: => A): A = if (value == null) orElse else value
-  def nullAs[A] : A                        = asExpected[A](null)
-  def asExpected[A](body: Any): A          = body.castTo[A]
+  def nullAs[A] : A                        = null.asInstanceOf[A]
 
   def andFalse(x: Unit, xs: Unit*): Boolean        = false
   def andResult[A](x: A, xs: Unit*): A             = x

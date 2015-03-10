@@ -21,7 +21,7 @@ final class Cursor[A](val offset: Long) extends AnyVal {
 }
 final case class Opt[A](get: A) extends AnyVal {
   def isEmpty: Boolean          = get == null
-  def map[B](f: A => B): Opt[B] = if (isEmpty) this.asInstanceOf[Opt[B]] else new Opt[B](f(get))
+  def map[B](f: A => B): Opt[B] = if (isEmpty) this.castTo[Opt[B]] else new Opt[B](f(get))
 }
 
 final class CursorExtractor[A](xs: Direct[A]) {

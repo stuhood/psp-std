@@ -2,18 +2,34 @@ package psp
 package api
 
 /** API level type classes and interfaces for views and collections.
+ *
+ *  An intensional collection is one which can tell us things about
+ *  instances of a particular type, but cannot produce any of that type.
+ *  An extensional collection is the dual: it can produce instances of
+ *  a particular type, but can tell us nothing about them.
+ *
+ *  Alert readers will notice we are describing contravariance and
+ *  covariance, and indeed those properties accompany those traits.
+ *
+ *  An intensional set (InSet) is little more than a function A => Bool
+ *  plus some structure. An ExSet is little more than a generator of As.
  */
 import Api._
 
 trait HasSize        extends Any                           { def size: Size     }
 trait HasAtomicSize  extends Any with HasSize with IsEmpty { def size: Atomic   }
 trait HasPreciseSize extends Any with HasAtomicSize        { def size: Precise  }
-trait HasIntSize     extends Any with HasPreciseSize       { def size: IntSize  }
 
-trait Each[+A] extends Any with HasSize                          { def foreach(f: A => Unit): Unit   }
-trait Indexed[+A] extends Any with Each[A]                       { def elemAt(i: Index): A           }
-trait Direct[+A] extends Any with Indexed[A] with HasPreciseSize
-trait Linear[+A] extends Any with Each[A] with IsEmpty           { def head: A ; def tail: Linear[A] }
+/** Name-based extractor methods. These interfaces aren't necessary
+ *  for it (thus "name-based") but provide helpful structure when used.
+ */
+trait IsEmpty extends Any              { def isEmpty: Boolean }
+trait Opt[+A] extends Any with IsEmpty { def get: A           }
+
+trait Each[+A]    extends Any with HasSize                            { def foreach(f: A => Unit): Unit }
+trait Indexed[+A] extends Any with Each[A]                            { def elemAt(i: Index): A         }
+trait Direct[+A]  extends Any with Indexed[A] with HasPreciseSize
+trait Linear[+A]  extends Any with Each[A]    with IsEmpty            { def head: A ; def tail: Linear[A] }
 
 trait Intensional[-K, +V] extends Any                              { def apply(x: K): V       }
 trait InSet[-A]           extends Any with Intensional[A, Boolean] { def apply(x: A): Boolean }
@@ -22,6 +38,11 @@ trait InMap[-K, +V]       extends Any with Intensional[K, V]       { def domain:
 trait Extensional[+A]     extends Any with Each[A]
 trait ExSet[A]            extends Any with Extensional[A] with InSet[A]         { def hashEq: HashEq[A] }
 trait ExMap[K, +V]        extends Any with Extensional[K -> V] with InMap[K, V] { def domain: ExSet[K]  }
+
+// TODO - maybe.
+// final case class LongIndex(x: Long) extends AnyVal with Index { def isEmpty = x < 0 ; def get: Long = x }
+// final case class IntIndex(x: Int) extends AnyVal with Index   { def isEmpty = x < 0 ; def get: Long = x }
+trait Index extends Any with Opt[Long]
 
 trait AnyView[+A] extends Any with HasSize {
   type MapTo[+X] <: AnyView[X]

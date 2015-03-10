@@ -4,7 +4,8 @@ import std._
 import com.squareup.{ okhttp => ok }
 
 package object dev {
-  type Id[X] = X
+  def readAs[A](implicit z: Read[A]): String => A = z.read
+  def asExpected[A](body: Any): A                 = body.castTo[A]
 
   val cacheSize     = 1024L * 1024L * 100L
   val cacheDir      = userHome.toFile / ".pspcache"
