@@ -16,6 +16,7 @@ import psp.dmz.PolicyDmz
 abstract class StdPackage
       extends impl.OrderInstances
          with impl.EmptyInstances
+         with impl.PrimitiveInstances
          with StdTypeclasses
          with StdProperties
          with impl.AlgebraInstances

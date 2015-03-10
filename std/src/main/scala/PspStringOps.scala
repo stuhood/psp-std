@@ -3,7 +3,6 @@ package std
 
 import api._
 import java.{ lang => jl }
-import StdEq.charEq
 import Regex._
 import java.util.regex.{ Pattern, Matcher }
 
