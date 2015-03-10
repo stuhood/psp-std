@@ -11,10 +11,6 @@ trait Eq[-A]     extends Any                         { def equiv(x: A, y: A): Bo
 trait Hash[-A]   extends Any                         { def hash(x: A): Int            }
 trait HashEq[-A] extends Any with Hash[A] with Eq[A]
 
-/** The classic type class for turning string representations into typed values.
- */
-trait Read[A] extends Any { def read(x: String): A }
-
 /** The classic type class for turning typed values into string representations.
  */
 trait Show[-A] extends Any { def show(x: A): String }

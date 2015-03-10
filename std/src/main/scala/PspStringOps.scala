@@ -91,8 +91,6 @@ final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
   def toBigInt: BigInt      = scala.math.BigInt(self)
   def toDecimal: BigDecimal = scala.math.BigDecimal(self)
 
-  def readAs[A](implicit reads: Read[A]): A = reads read self
-
   def foldMatch[A](r: Regex)(none: => A, some: String => A): A        = (r first self).fold(none)(some)
   def foldPrefix[A](prefix: String)(none: => A, some: String => A): A = foldRemove(prefix.r.literal.starts)(none, some)
   def foldRemove[A](r: Regex)(none: => A, some: String => A): A       = remove(r) match { case `self` => none ; case s => some(s) }

@@ -12,8 +12,8 @@ final case class ColorName(name: String)
 object ColorName {
   def empty = ColorName("<none>")
 
-  implicit def ReadColorNames: Read[Direct[ColorName]] = Read[Direct[ColorName]](s => colorMap namesOf s.readAs[RGB])
-  implicit def ShowColorName: Show[ColorName]           = Show[ColorName](x => (colorMap get x).fold(x.name)(idx => Ansi(38, 5, idx.getInt)(x.name)))
+  implicit def ReadColorNames: Read[Direct[ColorName]] = Read(readAs[RGB] andThen colorMap.namesOf)
+  implicit def ShowColorName: Show[ColorName]          = Show[ColorName](x => (colorMap get x).fold(x.name)(idx => Ansi(38, 5, idx.getInt)(x.name)))
 }
 
 final class RGB private (val bits: Int) extends AnyVal {
