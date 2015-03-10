@@ -17,7 +17,6 @@ abstract class StdPackage
       extends impl.OrderInstances
          with impl.EmptyInstances
          with impl.PrimitiveInstances
-         with StdTypeclasses
          with StdProperties
          with impl.AlgebraInstances
          with GlobalShow
@@ -33,7 +32,14 @@ abstract class StdPackage
   // implicit class JavaMap[K, V](val xs: jMap[K, V]) {
   //   def apply(k: K): V = xs get k
   // }
-
+  implicit class CleaveOps[R, A, B](xs: R)(implicit z: Pair.Cleave[R, A, B]) {
+    def mapLeft(f: A => A): R  = z.join(f(z left xs), z right xs)
+    def mapRight(f: B => B): R = z.join(z left xs, f(z right xs))
+  }
+  implicit class PairSplitOps[R, A, B](z: Pair.Split[R, A, B]) {
+    def left(x: R): A  = fst(z split x)
+    def right(x: R): B = snd(z split x)
+  }
   implicit class ApiOrderOps[A](val ord: Order[A]) {
     def |[B: Order](f: A => B): Order[A] = Order((x, y) => ord.compare(x, y) || ?[Order[B]].compare(f(x), f(y)))
     def toEq: Eq[A]                      = Eq[A]((x, y) => ord.compare(x, y) == Cmp.EQ)

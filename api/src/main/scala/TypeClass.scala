@@ -33,20 +33,27 @@ trait Builds[-Elem, +To] extends Any { def build(xs: Each[Elem]): To }
 trait Order[-A] extends Any { def compare(x: A, y: A): Cmp }
 
 /** Type classes and extractors for composing and decomposing an R into A -> B.
+ *  Somewhat conveniently for us, "cleave" is a word which has among its meanings
+ *  "to adhere firmly and closely as though evenly and securely glued" as well
+ *  as "to divide into two parts by a cutting blow".
  */
 object Pair {
-  trait Join[+R, -A, -B]  { def join(x: A, y: B): R }
-  trait Split[-R, +A, +B] { def left(x: R): A ; def right(x: R): B ; def pair(x: R): A -> B }
+  trait Join[+R, -A, -B]  extends Any { def join(x: A, y: B): R }
+  trait Split[-R, +A, +B] extends Any { def split(x: R): A -> B }
+  trait Cleave[R, A, B]   extends Any with Join[R, A, B] with Split[R, A, B]
 
   def apply[R, A, B](x: A, y: B)(implicit z: Join[R, A, B]): R         = z.join(x, y)
-  def unapply[R, A, B](x: R)(implicit z: Split[R, A, B]): Some[A -> B] = some(z pair x)
+  def unapply[R, A, B](x: R)(implicit z: Split[R, A, B]): Some[A -> B] = some(z split x)
 
-  object Split {
-    def apply[R, A, B](l: R => A, r: R => B): Split[R, A, B] = new Split[R, A, B] {
-      def left(x: R): A      = l(x)
-      def right(x: R): B     = r(x)
-      def pair(x: R): A -> B = ((left(x), right(x)))
+  object Cleave {
+    def apply[R, A, B](f: (A, B) => R, l: R => A, r: R => B): Cleave[R, A, B] = new Cleave[R, A, B] {
+      def split(x: R): A -> B = ((l(x), r(x)))
+      def join(x: A, y: B): R = f(x, y)
     }
+  }
+  object Split {
+    def apply[R, A, B](l: R => A, r: R => B): Split[R, A, B] =
+      new Split[R, A, B] { def split(x: R): A -> B = ((l(x), r(x))) }
   }
   object Join {
     def apply[R, A, B](f: (A, B) => R): Join[R, A, B] =

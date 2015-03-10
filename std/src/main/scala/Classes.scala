@@ -69,7 +69,7 @@ final case class Split[A](left: View[A], right: View[A]) extends api.SplitView[A
 final case class Zipped0[A, A1, A2](xs: View[A])(implicit z: Pair.Split[A, A1, A2]) extends ZipView[A1, A2] {
   def lefts  = xs map z.left
   def rights = xs map z.right
-  def pairs  = xs map z.pair
+  def pairs  = xs map z.split
 }
 final case class Zipped1[A1, A2](pairs: View[A1 -> A2]) extends ZipView[A1, A2] {
   def lefts  = pairs map fst

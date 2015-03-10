@@ -6,6 +6,16 @@ import java.{ lang => jl }
 import Regex._
 import java.util.regex.{ Pattern, Matcher }
 
+object Extract {
+  final class Decompose[A](hd: String => A, tl: String => String) {
+    def unapply(s: String): Option[A -> String] = tl(s) match {
+      case ""   => None
+      case tail => some(hd(s) -> tail)
+    }
+  }
+  val Char = new Decompose[Char](_ charAt 0, s => if (s == "") s else s substring 1)
+}
+
 /** Rather than struggle with ambiguities with Predef.augmentString, we'll
  *  bury it and reimplement what we want.
  */
@@ -45,19 +55,23 @@ final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
   def isNonEmptyDigits       = self matches """^[\d]+$"""
   def isAllWhitespace        = self matches """[\s]*"""
   def nonEmpty: Boolean      = onull.length > 0
-  def capitalize: String     = mapNonEmpty(x => x splitAt 1.index match { case Split(l, r) => l.force.toUpperCase ~ r.force })
+  def capitalize: String     = self match {
+    case Extract.Char(hd, tl) => "" + hd.toUpper + tl
+    case _                    => self
+  }
 
   // Ugh.
-  def toCamelCase: String =
-    mapNonEmpty(x => x splitAt 1.index match { case Split(l, r) =>
-      l.force.toUpperCase ~ {
-        val m = java.util.regex.Pattern compile "_([a-z])" matcher r.force
+  def toCamelCase: String = self match {
+    case Extract.Char(l, r) =>
+      l.toUpper.to_s ~ {
+        val m = java.util.regex.Pattern compile "_([a-z])" matcher r
         val sb = new java.lang.StringBuffer
         while (m.find()) m.appendReplacement(sb, m group 1 toUpperCase)
         m appendTail sb
         sb.toString
       }
-    })
+    case _ => self
+  }
 
   def ~ (that: String): String    = self + that
   def * (n: Int): String          = this * n.size
