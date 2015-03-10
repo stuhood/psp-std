@@ -12,7 +12,7 @@ object Streams {
       case -1 => out.toByteArray
       case n  => out.write(buf, 0, n) ; loop()
     }
-    loop() sideEffect in.close()
+    andClose(in)(_ => loop())
   }
   def slurp(in: BufferedInputStream, size: Precise): Array[Byte] = {
     val len = size.getInt
@@ -24,7 +24,7 @@ object Streams {
         case n  => loop(remaining - n)
       }
     }
-    loop(len) sideEffect in.close()
+    andClose(in)(_ => loop(len))
   }
 }
 final class ByteBufferInputStream(b: ByteBuffer) extends InputStream {

@@ -20,11 +20,11 @@ package psys {
     def freeMem  = physical.getFreeBytes
     def totalMem = physical.getTotalBytes
 
-    def cpuFrequency: Frequency = Hertz(cpuFrequencyInHz)
-    def ptable: View[ProcInfo]  = processTable.map(x => new ProcInfo(x)).toDirect.m sortBy (_.pid)
-    def ptree: OsProcess        = processTree
-    def pid: Pid                = Pid(currentPid())
-    def kill(pid: Pid)          = killProcess(pid.pid)
+    def cpuFrequency: Frequency  = Hertz(cpuFrequencyInHz)
+    def ptable: Direct[ProcInfo] = processTable map (x => new ProcInfo(x)) sortBy (_.pid)
+    def ptree: OsProcess         = processTree
+    def pid: Pid                 = Pid(currentPid())
+    def kill(pid: Pid)           = killProcess(pid.pid)
   }
   final case class Pid(pid: Int) extends AnyVal with ForceShowDirect {
     def to_s = s"$pid"

@@ -28,10 +28,10 @@ object HashEq extends HashEqLow {
 
   def apply[A](cmp: Relation[A], hashFn: A => Int): HashEq[A] = new impl.HashEqImpl[A](cmp, hashFn)
 
-  def natural[A](eqs: Eq[A]): HashEq[A]   = apply[A](eqs.equiv, _.##)
-  def natural[A](): HashEq[A]             = apply[A](_ == _, _.##)
-  def reference[A <: AnyRef](): HashEq[A] = apply[A](_ eq _, identityHashCode)
-  def shown[A: Show](): HashEq[A]         = apply[A](_.to_s == _.to_s, _.to_s.##)
+  def natural[A](eqs: Eq[A]): HashEq[A]        = apply[A](eqs.equiv, _.##)
+  def natural[A](): HashEq[A]                  = apply[A](_ == _, _.##)
+  def reference[A <: AnyRef](): HashEq[Ref[A]] = apply[Ref[A]](_ eq _, identityHashCode)
+  def shown[A: Show](): HashEq[A]              = apply[A](_.to_s == _.to_s, _.to_s.##)
 
   final case class Wrap[A: HashEq](value: A) {
     override def hashCode = value.hash

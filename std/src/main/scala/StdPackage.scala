@@ -30,6 +30,9 @@ abstract class StdPackage
   // Higher than Direct.
   implicit def arraySpecificOps[A](xs: Array[A]): ops.ArraySpecificOps[A] = new ops.ArraySpecificOps[A](xs)
 
+  // implicit class JavaMap[K, V](val xs: jMap[K, V]) {
+  //   def apply(k: K): V = xs get k
+  // }
 
   implicit class ApiOrderOps[A](val ord: Order[A]) {
     def |[B: Order](f: A => B): Order[A] = Order((x, y) => ord.compare(x, y) || ?[Order[B]].compare(f(x), f(y)))

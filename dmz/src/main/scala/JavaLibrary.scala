@@ -45,6 +45,7 @@ trait JavaLibrary extends Any {
 
   // Exceptions and Throwables.
   type AssertionError                = java.lang.AssertionError
+  type ClassCastException            = java.lang.ClassCastException
   type Exception                     = java.lang.Exception
   type IOException                   = java.io.IOException
   type IllegalArgumentException      = java.lang.IllegalArgumentException
@@ -57,40 +58,41 @@ trait JavaLibrary extends Any {
   type UnsupportedOperationException = java.lang.UnsupportedOperationException
 
   // java types which I acknowledge as victors in the battle for simple names.
-  type AtomicInteger           = java.util.concurrent.atomic.AtomicInteger
-  type AtomicLong              = java.util.concurrent.atomic.AtomicLong
-  type BufferedInputStream     = java.io.BufferedInputStream
-  type BufferedReader          = java.io.BufferedReader
-  type BufferedWriter          = java.io.BufferedWriter
-  type ByteArrayInputStream    = java.io.ByteArrayInputStream
-  type ByteArrayOutputStream   = java.io.ByteArrayOutputStream
-  type ByteBuffer              = java.nio.ByteBuffer
-  type CharSequence            = java.lang.CharSequence
-  type Charset                 = java.nio.charset.Charset
-  type ClassLoader             = java.lang.ClassLoader
-  type Class[A]                = java.lang.Class[A]
-  type Comparable[A]           = java.lang.Comparable[A]
-  type Comparator[-A]          = java.util.Comparator[A @uV]
-  type DataInput               = java.io.DataInput
-  type DataInputStream         = java.io.DataInputStream
-  type DataOutputStream        = java.io.DataOutputStream
-  type FileInputStream         = java.io.FileInputStream
-  type FileOutputStream        = java.io.FileOutputStream
-  type InputStream             = java.io.InputStream
-  type JarEntry                = java.util.jar.JarEntry
-  type JarFile                 = java.util.jar.JarFile
-  type JarInputStream          = java.util.jar.JarInputStream
-  type LinkedBlockingQueue[A]  = java.util.concurrent.LinkedBlockingQueue[A]
-  type Object                  = java.lang.Object
-  type ObjectInputStream       = java.io.ObjectInputStream
-  type ObjectOutputStream      = java.io.ObjectOutputStream
-  type OutputStream            = java.io.OutputStream
-  type PrintStream             = java.io.PrintStream
-  type SeekableByteChannel     = java.nio.channels.SeekableByteChannel
-  type StackTraceElement       = java.lang.StackTraceElement
-  type Thread                  = java.lang.Thread
-  type URLClassLoader          = java.net.URLClassLoader
-  type Void                    = java.lang.Void
+  type AtomicInteger          = java.util.concurrent.atomic.AtomicInteger
+  type AtomicLong             = java.util.concurrent.atomic.AtomicLong
+  type BufferedInputStream    = java.io.BufferedInputStream
+  type BufferedReader         = java.io.BufferedReader
+  type BufferedWriter         = java.io.BufferedWriter
+  type ByteArrayInputStream   = java.io.ByteArrayInputStream
+  type ByteArrayOutputStream  = java.io.ByteArrayOutputStream
+  type ByteBuffer             = java.nio.ByteBuffer
+  type CharSequence           = java.lang.CharSequence
+  type Charset                = java.nio.charset.Charset
+  type ClassLoader            = java.lang.ClassLoader
+  type Class[A]               = java.lang.Class[A]
+  type Closeable              = java.io.Closeable
+  type Comparable[A]          = java.lang.Comparable[A]
+  type Comparator[-A]         = java.util.Comparator[A @uV]
+  type DataInput              = java.io.DataInput
+  type DataInputStream        = java.io.DataInputStream
+  type DataOutputStream       = java.io.DataOutputStream
+  type FileInputStream        = java.io.FileInputStream
+  type FileOutputStream       = java.io.FileOutputStream
+  type InputStream            = java.io.InputStream
+  type JarEntry               = java.util.jar.JarEntry
+  type JarFile                = java.util.jar.JarFile
+  type JarInputStream         = java.util.jar.JarInputStream
+  type LinkedBlockingQueue[A] = java.util.concurrent.LinkedBlockingQueue[A]
+  type Object                 = java.lang.Object
+  type ObjectInputStream      = java.io.ObjectInputStream
+  type ObjectOutputStream     = java.io.ObjectOutputStream
+  type OutputStream           = java.io.OutputStream
+  type PrintStream            = java.io.PrintStream
+  type SeekableByteChannel    = java.nio.channels.SeekableByteChannel
+  type StackTraceElement      = java.lang.StackTraceElement
+  type Thread                 = java.lang.Thread
+  type URLClassLoader         = java.net.URLClassLoader
+  type Void                   = java.lang.Void
 
   // java types for which the battle rages on.
   type jAbstractCollection[A]                  = java.util.AbstractCollection[A]
@@ -116,6 +118,7 @@ trait JavaLibrary extends Any {
   type jGenericDeclaration                     = java.lang.reflect.GenericDeclaration
   type jHashMap[K, V]                          = java.util.HashMap[K, V]
   type jHashSet[A]                             = java.util.HashSet[A]
+  type jIdMap[K, V]                            = java.util.IdentityHashMap[K, V]
   type jIterable[+A]                           = java.lang.Iterable[A @uV]
   type jIterator[+A]                           = java.util.Iterator[A @uV]
   type jLineIterable                           = jIterable[_ <: CharSequence]
