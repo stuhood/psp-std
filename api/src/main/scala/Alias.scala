@@ -27,8 +27,9 @@ trait Aliases extends scala.Any {
 
   // Missing pieces of scala-library.
   // Caveat: ?=> associates to the left instead of the right.
-  type Ref[+A]     = A with AnyRef               // Promotes an A <: Any into an A <: AnyRef
-  type ->[+A, +B]  = scala.Product2[A, B]        // A less overconstrained tuple.
+  type Ref[+A]     = A with AnyRef               // Promotes an A <: Any into an A <: AnyRef.
+  type Id[X]       = X                           // The identity type constructor.
+  type ->[+A, +B]  = scala.Product2[A, B]        // A less overconstrained product type.
   type ?=>[-A, +B] = scala.PartialFunction[A, B] // Less clumsy syntax for the all-important partial function.
 
   // The eight primitive types of the jvm, plus the scala version of void.

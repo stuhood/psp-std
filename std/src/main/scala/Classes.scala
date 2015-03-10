@@ -13,6 +13,7 @@ object +: {
   def unapply[A](xs: Each[A])        = xs match { case Each(hd, _*) => Some(hd -> xs.tail) ; case _ => None }
   def unapply[A](xs: sCollection[A]) = if (xs.isEmpty) None else Some(xs.head -> xs.tail)
 }
+
 object StdEq extends impl.EqInstances
 object StdShow extends ShowInstances
 object Unsafe extends LowPriorityUnsafe {
