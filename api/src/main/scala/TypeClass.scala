@@ -32,13 +32,6 @@ trait Builds[-Elem, +To] extends Any { def build(xs: Each[Elem]): To }
  */
 trait Order[-A] extends Any { def compare(x: A, y: A): Cmp }
 
-/** Name-based extractor methods. These interfaces aren't necessary
- *  for it (thus "name-based") but provide helpful structure when used.
- */
-trait IsEmpty extends Any              { def isEmpty: Boolean }
-trait Opt[+A] extends Any with IsEmpty { def get: A           }
-trait Index extends Any with Opt[Long]
-
 /** Type classes and extractors for composing and decomposing an R into A -> B.
  */
 object Pair {

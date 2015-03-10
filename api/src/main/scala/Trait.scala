@@ -8,7 +8,12 @@ import Api._
 trait HasSize        extends Any                           { def size: Size     }
 trait HasAtomicSize  extends Any with HasSize with IsEmpty { def size: Atomic   }
 trait HasPreciseSize extends Any with HasAtomicSize        { def size: Precise  }
-trait HasIntSize     extends Any with HasPreciseSize       { def size: IntSize  }
+
+/** Name-based extractor methods. These interfaces aren't necessary
+ *  for it (thus "name-based") but provide helpful structure when used.
+ */
+trait IsEmpty extends Any              { def isEmpty: Boolean }
+trait Opt[+A] extends Any with IsEmpty { def get: A           }
 
 trait Each[+A] extends Any with HasSize                          { def foreach(f: A => Unit): Unit   }
 trait Indexed[+A] extends Any with Each[A]                       { def elemAt(i: Index): A           }
@@ -22,6 +27,9 @@ trait InMap[-K, +V]       extends Any with Intensional[K, V]       { def domain:
 trait Extensional[+A]     extends Any with Each[A]
 trait ExSet[A]            extends Any with Extensional[A] with InSet[A]         { def hashEq: HashEq[A] }
 trait ExMap[K, +V]        extends Any with Extensional[K -> V] with InMap[K, V] { def domain: ExSet[K]  }
+
+
+trait Index extends Any with Opt[Long]
 
 trait AnyView[+A] extends Any with HasSize {
   type MapTo[+X] <: AnyView[X]
