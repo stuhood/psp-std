@@ -21,8 +21,10 @@ object Extract {
  */
 final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
   def render: String = self // XXX
+
   def r: Regex = Regex(self)
   def u: jUrl  = jUrl(self)
+  def s: Shown = Shown(self)
 
   private def unwrapArg(arg: Any): AnyRef = arg match {
     case x: ScalaNumber => x.underlying

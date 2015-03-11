@@ -85,7 +85,6 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   def assert(assertion: => Boolean)(implicit z: Assertions): Unit                          = Assertions.using(z)(assertion, "assertion failed")
   def assert(assertion: => Boolean, msg: => Any)(implicit z: Assertions): Unit             = Assertions.using(z)(assertion, s"assertion failed: $msg")
   def asserting[A](x: A)(assertion: => Boolean, msg: => String)(implicit z: Assertions): A = x sideEffect assert(assertion, msg)
-  def echoErr[A: TryShow](x: A): Unit                                                      = Console echoErr pp"$x"
   def printResult[A: TryShow](msg: String)(result: A): A                                   = result doto (r => println(pp"$msg: $r"))
   def printResultIf[A: TryShow : Eq](show: A, msg: String)(result: A): A                   = result doto (r => if (r === show) println(pp"$msg: $r"))
   def print[A: TryShow](x: A): Unit                                                        = Console putOut pp"$x"
@@ -93,6 +92,9 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   def require(requirement: Boolean): Unit                                                  = if (!requirement) illegalArgumentException("requirement failed")
   def require(requirement: Boolean, msg: => Any): Unit                                     = if (!requirement) illegalArgumentException(s"requirement failed: $msg")
   def showResult[A: TryShow](msg: String)(result: A): A                                    = result doto (r => println(pp"$msg: $r"))
+
+  def echoErr(x: Shown): Unit = Console echoErr x.to_s
+  def echoOut(x: Shown): Unit = Console echoOut x.to_s
 
   // Operations involving classes, classpaths, and classloaders.
   def classLoaderOf[A: CTag](): ClassLoader = classOf[A].getClassLoader

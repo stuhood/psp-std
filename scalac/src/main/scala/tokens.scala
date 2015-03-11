@@ -16,10 +16,10 @@ class TokenAnalysis(val global: Global, val content: Array[Char]) {
     init()
     // scalac helpfully throws errors when trying to compile itself.
     // "macro is now a reserved word; usage as an identifier is disallowed"
-    def deprecationWarning(off: Int, msg: String): Unit   = echoErr(s"deprecationWarning($off, $msg)")
-    def error  (off: Int, msg: String): Unit              = echoErr(s"error($off, $msg)")
-    def incompleteInputError(off: Int, msg: String): Unit = echoErr(s"incompleteInputError($off, $msg)")
-    def warning(off: Int, msg: String): Unit              = echoErr(s"warning($off, $msg)") // 2.10 only
+    def deprecationWarning(off: Int, msg: String): Unit   = echoErr(s"deprecationWarning($off, $msg)".s)
+    def error  (off: Int, msg: String): Unit              = echoErr(s"error($off, $msg)".s)
+    def incompleteInputError(off: Int, msg: String): Unit = echoErr(s"incompleteInputError($off, $msg)".s)
+    def warning(off: Int, msg: String): Unit              = echoErr(s"warning($off, $msg)".s) // 2.10 only
   }
 
   private def tokenize(): Direct[Token] = {
