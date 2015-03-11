@@ -109,12 +109,17 @@ object Build extends sbt.Build {
   // A console project which pulls in misc additional dependencies currently being explored.
   // Removing all scalac options except the ones listed here, to eliminate all the warnings
   // repl startup code in resources/initialCommands.scala
-  lazy val consoleOnly = project.helper.usesCompiler.alsoToolsJar dependsOn (testOnly % "test->test") dependsOn (classpathDeps: _*) also (guava, jsr305) settings (
-                    libraryDependencies <+=  scalaCompiler,
-    scalacOptions in (Compile, console)  :=  replArgs,
-       scalacOptions in (Test, console)  :=  replArgs,
-                           key.initRepl <+=  resourceDirectory in Compile mapValue (d => IO.read(d / "initialCommands.scala")),
-                   key.initRepl in Test  +=  "\nimport org.scalacheck._, Prop._, Gen._\nimport psp.tests._"
+  lazy val consoleOnly = (
+    project.helper.usesCompiler.alsoToolsJar
+    dependsOn (testOnly % "test->test")
+    dependsOn (classpathDeps: _*)
+    also (guava, jsr305) settings (
+                      libraryDependencies <+=  scalaCompiler,
+      scalacOptions in (Compile, console)  :=  replArgs,
+         scalacOptions in (Test, console)  :=  replArgs,
+                             key.initRepl <+=  resourceDirectory in Compile mapValue (d => IO.read(d / "initialCommands.scala")),
+                     key.initRepl in Test  +=  "\nimport org.scalacheck._, Prop._, Gen._\nimport psp.tests._"
+    )
   )
 
   def testDependencies = Def setting Seq(
