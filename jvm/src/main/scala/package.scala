@@ -4,6 +4,7 @@ package std
 import api._
 import javax.tools._, Diagnostic.Kind, JavaFileManager.Location
 import StdShow._
+import psp.std.token.Keyword
 
 package jvm {
   object opcodes {
@@ -135,6 +136,17 @@ package object jvm extends psp.std.jvm.StdClasses {
   //   //     |""".stripMargin
   // }
 
+  implicit def showKeyword: Show[Keyword] = Show[Keyword] {
+    case Keyword.Empty            => ""
+    case Keyword.ClassConstructor => ""
+    case Keyword.ValueParameter   => ""
+    case Keyword.TypeParameter    => ""
+    case Keyword.Constructor      => "def this"
+    case Keyword.PackageObject    => "package object"
+    case Keyword.CaseObject       => "case object"
+    case Keyword.CaseClass        => "case class"
+    case k                        => k.toString.toLowerCase
+  }
   implicit def ShowAccess        = Show[Access](_.toString.toLowerCase)
   implicit def ShowJvmName       = Show[JvmName](_.decoded)
   implicit def ShowJvmRef        = Show[JvmRef](ref => s"def ${ref.name} ${ref.descriptor}")
