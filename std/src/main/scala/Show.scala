@@ -3,7 +3,6 @@ package std
 
 import api._
 import StdEq.stringEq
-import psp.std.token.Keyword
 
 final class Label(val label: String) extends AnyVal {
   def matches(r: Regex)   = r isMatch label
@@ -166,17 +165,6 @@ trait ShowInstances extends ShowEach {
   implicit def showStackTraceElement: Show[StackTraceElement] = Show("\tat" + _ + "\n")
   implicit def showPair[A: Show, B: Show] : Show[A -> B]      = Show(x => x._1 ~ " -> " ~ x._2 to_s)
 
-  implicit def showKeyword: Show[Keyword] = Show[Keyword] {
-    case Keyword.Empty            => ""
-    case Keyword.ClassConstructor => ""
-    case Keyword.ValueParameter   => ""
-    case Keyword.TypeParameter    => ""
-    case Keyword.Constructor      => "def this"
-    case Keyword.PackageObject    => "package object"
-    case Keyword.CaseObject       => "case object"
-    case Keyword.CaseClass        => "case class"
-    case k                        => k.toString.toLowerCase
-  }
   implicit def showSize: Show[Size] = Show[Size] {
     case IntSize(size)         => show"$size"
     case LongSize(size)        => show"$size"
