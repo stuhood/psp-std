@@ -26,18 +26,18 @@ trait HasPreciseSize extends Any with HasAtomicSize        { def size: Precise  
 trait IsEmpty extends Any              { def isEmpty: Boolean }
 trait Opt[+A] extends Any with IsEmpty { def get: A           }
 
-trait Each[+A]    extends Any with HasSize                            { def foreach(f: A => Unit): Unit }
-trait Indexed[+A] extends Any with Each[A]                            { def elemAt(i: Index): A         }
-trait Direct[+A]  extends Any with Indexed[A] with HasPreciseSize
-trait Linear[+A]  extends Any with Each[A]    with IsEmpty            { def head: A ; def tail: Linear[A] }
+trait Each[+A]      extends Any with HasSize                        { def foreach(f: A => Unit): Unit    }
+trait Indexed[+A]   extends Any with Each[A]                        { def elemAt(i: Index): A            }
+trait Direct[+A]    extends Any with Indexed[A] with HasPreciseSize
+trait Linear[+A]    extends Any with Each[A]    with IsEmpty        { def head: A ; def tail: Linear[A]  }
 
 trait Intensional[-K, +V] extends Any                              { def apply(x: K): V       }
 trait InSet[-A]           extends Any with Intensional[A, Boolean] { def apply(x: A): Boolean }
 trait InMap[-K, +V]       extends Any with Intensional[K, V]       { def domain: InSet[K]     }
 
 trait Extensional[+A]     extends Any with Each[A]
-trait ExSet[A]            extends Any with Extensional[A] with InSet[A]         { def hashEq: HashEq[A] }
-trait ExMap[K, +V]        extends Any with Extensional[K -> V] with InMap[K, V] { def domain: ExSet[K]  }
+trait ExSet[A]            extends Any with Extensional[A] with InSet[A]         { def equiv(x: A, y: A): Boolean }
+trait ExMap[K, +V]        extends Any with Extensional[K -> V] with InMap[K, V] { def domain: ExSet[K]           }
 
 // TODO - maybe.
 // final case class LongIndex(x: Long) extends AnyVal with Index { def isEmpty = x < 0 ; def get: Long = x }
@@ -48,10 +48,7 @@ trait AnyView[+A] extends Any with HasSize {
   type MapTo[+X] <: AnyView[X]
 
   def foreach(f: A => Unit): Unit
-  def toEach: Each[A]
-}
-
-trait SetView[A] extends Any with AnyView[A] with ExSet[A] {
+  // def toEach: Each[A]
 }
 
 /** Contiguous operations share the property that the result is always
@@ -85,7 +82,7 @@ trait NonContiguousViewOps[+A] extends Any with AnyView[A] {
 
 trait View[+A] extends Any with ContiguousViewOps[A] with NonContiguousViewOps[A] {
   type MapTo[+X] <: View[X]
-  def viewOps: Direct[String]
+  def viewOps: Direct[Doc]
 }
 
 trait ContiguousView[+A] extends Any with View[A] {

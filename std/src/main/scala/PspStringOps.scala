@@ -5,6 +5,7 @@ import api._
 import java.{ lang => jl }
 import Regex._
 import java.util.regex.{ Pattern, Matcher }
+import StdEq._
 
 object Extract {
   final class Decompose[A](hd: String => A, tl: String => String) {
@@ -24,7 +25,7 @@ final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
 
   def r: Regex = Regex(self)
   def u: jUrl  = jUrl(self)
-  def s: Shown = Shown(self)
+  def s: Doc   = Doc.Literal(self)
 
   private def unwrapArg(arg: Any): AnyRef = arg match {
     case x: ScalaNumber => x.underlying

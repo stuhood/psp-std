@@ -5,9 +5,11 @@ import java.nio.file.{ attribute => jnfa }
 import scala.{ collection => sc }
 import sc.{ mutable => scm, immutable => sci }
 import psp.api._
-import psp.std.StdShow._
 
 package object std extends psp.std.StdPackage with psp.impl.CreateBy {
+  private implicit def showString0: Show[String]   = Show.natural()
+  private implicit def orderString0: Order[String] = Order.fromInt[String](_ compareTo _)
+
   /** Scala, so aggravating.
    *  [error] could not find implicit value for parameter equiv: psp.api.Eq[psp.tests.Pint => psp.std.Boolean]
    *  The parameter can be given explicitly, it just won't be found unless the function type is invariant.
@@ -19,6 +21,17 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   type Each2D[+A]            = Each[Each[A]]
   type IndexRange            = Consecutive[Index]
   type IntRange              = Consecutive[Int]
+  type BuildsMap[K, V]       = Builds[K -> V, ExMap[K, V]]
+  type gSet[A]               = com.google.common.collect.ImmutableSet[A]
+  type gMap[K, V]            = com.google.common.collect.ImmutableMap[K, V]
+  type gSortedSet[A]         = com.google.common.collect.ImmutableSortedSet[A]
+  type gSortedMap[K, V]      = com.google.common.collect.ImmutableSortedMap[K, V]
+
+  val StringOrder   = orderBy[Any](_.any_s)
+  val NaturalEq     = Eq[Any](_ == _)
+  val NaturalHash   = Hash[Any](_.##)
+  val ReferenceEq   = Eq[AnyRef](_ eq _)
+  val ReferenceHash = Hash[AnyRef](_.id_##)
 
   // Inlinable.
   final val InputStreamBufferSize = 8192
@@ -80,21 +93,43 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   final val NoNth         = Nth.undefined
   final val ->            = psp.api.Pair
 
+  implicit val defaultRenderer: FullRenderer              = new FullRenderer
+  implicit def docOrder(implicit z: Renderer): Order[Doc] = orderBy[Doc](z render _)
+  implicit def showableDocOps[A: Show](x: A): DocOps      = new DocOps(Doc.Shown(x, ?[Show[A]]))
+
+  implicit class DocOps(val lhs: Doc) {
+    def doc: Doc                             = lhs
+    def render(implicit z: Renderer): String = z render lhs
+    def isEmpty: Boolean                     = lhs == Doc.NoDoc
+
+    def ~(rhs: Doc): Doc   = Doc.Cat(lhs, rhs)
+    def <>(rhs: Doc): Doc  = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ rhs
+    def <+>(rhs: Doc): Doc = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ " ".s ~ rhs
+  }
+
+  implicit class TryDocOps(val x: TryDoc) {
+    def doc: Doc = x match {
+      case TryDoc.NoDoc(value, _) => ("" + value).s
+      case TryDoc.HasDoc(x)       => x
+    }
+    def render(implicit z: Renderer): String = z render doc
+  }
+
   // Methods similar to the more useful ones in scala's Predef.
   def ??? : Nothing                                                                        = throw new scala.NotImplementedError
   def assert(assertion: => Boolean)(implicit z: Assertions): Unit                          = Assertions.using(z)(assertion, "assertion failed")
   def assert(assertion: => Boolean, msg: => Any)(implicit z: Assertions): Unit             = Assertions.using(z)(assertion, s"assertion failed: $msg")
   def asserting[A](x: A)(assertion: => Boolean, msg: => String)(implicit z: Assertions): A = x sideEffect assert(assertion, msg)
-  def printResult[A: TryShow](msg: String)(result: A): A                                   = result doto (r => println(pp"$msg: $r"))
-  def printResultIf[A: TryShow : Eq](show: A, msg: String)(result: A): A                   = result doto (r => if (r === show) println(pp"$msg: $r"))
-  def print[A: TryShow](x: A): Unit                                                        = Console putOut pp"$x"
-  def println[A: TryShow](x: A): Unit                                                      = Console echoOut pp"$x"
   def require(requirement: Boolean): Unit                                                  = if (!requirement) illegalArgumentException("requirement failed")
   def require(requirement: Boolean, msg: => Any): Unit                                     = if (!requirement) illegalArgumentException(s"requirement failed: $msg")
-  def showResult[A: TryShow](msg: String)(result: A): A                                    = result doto (r => println(pp"$msg: $r"))
 
-  def echoErr(x: Shown): Unit = Console echoErr x.to_s
-  def echoOut(x: Shown): Unit = Console echoOut x.to_s
+  def echoErr(x: Doc): Unit                                        = Console echoErr x.render
+  def echoOut(x: Doc): Unit                                        = Console echoOut x.render
+  def printResult[A: Show](msg: String)(result: A): A              = result doto (r => println(show"$msg: $r"))
+  def printResultIf[A: Show : Eq](x: A, msg: String)(result: A): A = result doto (r => if (r === x) println(show"$msg: $r"))
+  def print[A: Show](x: A): Unit                                   = Console putOut show"$x"
+  def println[A: Show](x: A): Unit                                 = Console echoOut show"$x"
+  def anyprintln(x: Any): Unit                                     = Console echoOut x.anydoc
 
   // Operations involving classes, classpaths, and classloaders.
   def classLoaderOf[A: CTag](): ClassLoader = classOf[A].getClassLoader
@@ -161,13 +196,14 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   def jUri(x: String): jUri                                     = java.net.URI create x
   def jUrl(x: String): jUrl                                     = jUri(x).toURL
   def jIdMap[K, V](xs: (K -> V)*): jIdMap[K, V]                 = new jIdMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
+  def jArrayList[A](xs: A*): jArrayList[A]                      = new jArrayList[A] doto (b => xs foreach (b add _))
 
   def fst[A, B](x: A -> B): A = x._1
   def snd[A, B](x: A -> B): B = x._2
 
-  def exMap[K: HashEq, V](xs: (K -> V)*): ExMap[K, V]   = xs.m.toExMap
+  def exMap[K: Eq, V](xs: (K -> V)*): ExMap[K, V]       = xs.m.toEach.toMap[ExMap]
   def exSeq[A](xs: A*): Each[A]                         = xs.m.toEach
-  def exSet[A: HashEq](xs: A*): ExSet[A]                = xs.m.toExSet
+  def exSet[A: Eq](xs: A*): ExSet[A]                    = xs.m.toExSet
   def exView[A](xs: A*): View[A]                        = Direct[A](xs: _*).m
   def inMap[K, V](p: ToBool[K], f: K => V): InMap[K, V] = InMap(inSet(p), f)
   def inSet[A](p: ToBool[A]): InSet[A]                  = InSet(p)

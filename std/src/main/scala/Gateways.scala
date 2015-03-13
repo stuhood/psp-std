@@ -4,27 +4,24 @@ package std
 import api._
 import scala.{ collection => sc }
 import scala.Any
-import scala.Predef.StringCanBuildFrom
 import scala.math.Numeric
 
-/** Implicits handling the way in and the way out of policy collections.
+/** Implicits handling the way in and the way out of psp collections.
  */
-trait StdGateways extends Any
+trait StdGateways extends scala.AnyRef
       with StdBuilds
+      with StdUnbuilds
       with StdOps
       with SetAndMapOps
       with StdUniversal {
 
   self =>
 
-  /** Scala map builders require Tuple2s, even though Product2 should suffice.
-   */
-  implicit def implicitBuildsFromMapCBF[K, V, That](implicit z: CanBuild[(K, V), That]): Builds[K -> V, That] = Builds wrapMap z
-  implicit def cleaveTuple[A, B] : Pair.Cleave[A -> B, A, B]                                                  = Pair.Cleave[A -> B, A, B](_ -> _, fst, snd)
-  implicit def splitLinearSeq[A] : Pair.Split[Linear[A], A, Linear[A]]                                        = Pair.Split(_.head, _.tail)
+  implicit def cleaveTuple[A, B] : Pair.Cleave[A -> B, A, B]           = Pair.Cleave[A -> B, A, B](_ -> _, fst, snd)
+  implicit def splitLinearSeq[A] : Pair.Split[Linear[A], A, Linear[A]] = Pair.Split(_.head, _.tail)
 
-  implicit def opsDirect[A](xs: Direct[A]): ops.DirectOps[A]   = new ops.DirectOps(xs)
-  implicit def opsLinear[A](xs: Linear[A]): ops.LinearOps[A]   = new ops.LinearOps(xs)
+  implicit def opsDirect[A](xs: Direct[A]): ops.DirectOps[A] = new ops.DirectOps(xs)
+  implicit def opsLinear[A](xs: Linear[A]): ops.LinearOps[A] = new ops.LinearOps(xs)
 
   implicit def viewToEach[A](xs: View[A]): Each[A]                          = Each(xs foreach _)
   implicit def splitViewOps[A](xs: SplitView[A]): Split[A]                  = Split(xs.left, xs.right)
@@ -37,23 +34,14 @@ trait StdGateways extends Any
   implicit def conversionsForString[A](s: String): Conversions[Char]      = new Conversions[Char](Direct fromString s)
 }
 
-// Adapt CanBuildFrom to Builds, since there are zillions of implicit CanBuildFroms already lying around.
-// This lets us use all our own methods yet still build the scala type at the end, e.g.
-//   Vector("a", "b", "cd", "ef").m filter (_.length == 1) build
-// Returns a Vector[String].
-trait StdBuilds0 extends Any                 { implicit def implicitBuildsFromCBF[A, That](implicit z: CanBuild[A, That]): Builds[A, That] = Builds wrap z          }
-trait StdBuilds1 extends Any with StdBuilds0 { implicit def implicitBuildsArray[A: CTag] : Builds[A, Array[A]]                             = Direct.arrayBuilder[A] }
-trait StdBuilds2 extends Any with StdBuilds1 { implicit def implicitBuildsList[A] : Builds[A, Linear[A]]                                   = Linear.builder[A]      }
-trait StdBuilds3 extends Any with StdBuilds2 { implicit def implicitBuildsSet[A: HashEq] : Builds[A, ExSet[A]]                             = ExSet.builder[A]       }
-trait StdBuilds4 extends Any with StdBuilds3 { implicit def implicitBuildsDirect[A] : Builds[A, Direct[A]]                                 = Direct.builder[A]      }
-trait StdBuilds  extends Any with StdBuilds4 { implicit def implicitBuildsString: Builds[Char, String]                                     = Direct.stringBuilder() }
-
 trait GlobalShow0 {
   // A weaker variation of Shown - use Show[A] if one can be found and toString otherwise.
-  implicit def showableToTryShown[A](x: A)(implicit z: TryShow[A]): TryShown = new TryShown(z show x)
+  // implicit def showableToTryShown[A](x: A)(implicit z: TryShow[A]): TryShown = new TryShown(z show x)
+  implicit def tryDocViaString[A](x: A)(implicit z: CTag[A]): TryDoc = TryDoc.NoDoc(x, z)
 }
 trait GlobalShow extends GlobalShow0 {
-  implicit def showableToShown[A](x: A)(implicit z: Show[A]): Shown   = Shown(z show x)
+  implicit def tryDocViaShow[A](x: A)(implicit z: Show[A]): TryDoc = TryDoc.HasDoc(x.doc)
+  implicit def docViaShow[A](x: A)(implicit z: Show[A]): Doc       = x.doc
 }
 
 trait SetAndMapOps1 extends Any {
@@ -66,18 +54,11 @@ trait SetAndMapOps extends Any with SetAndMapOps1 {
 }
 
 trait StdOps0 extends Any {
-  implicit def opsForeach[A](xs: Each[A]): ops.ForeachOps[A] = new ops.ForeachOps(xs)
-
-  implicit class ForeachableOps[A, Repr](repr: Repr)(implicit z: Foreachable.Coll[A, Repr]) {
-    def m: AtomicView[A, Repr] = z wrap repr
-  }
+  implicit def opsForeach[A](xs: Each[A]): ops.ForeachOps[A]                                               = new ops.ForeachOps(xs)
+  implicit def opsCreateView[A, Repr](repr: Repr)(implicit z: Unbuilds[A, Repr]): Unbuilds.Create[A, Repr] = new Unbuilds.Create(repr)
 }
 trait StdOps1 extends Any with StdOps0 {
   implicit def unViewify0[A, CC[A]](xs: View[A])(implicit z: Builds[A, CC[A]]): CC[A] = z build xs
-
-  implicit class ForeachableSetOps[A, Repr](repr: Repr)(implicit z: ForeachableSet.Coll[A, Repr]) {
-    def m: ExSetView[A, Repr] = z wrap repr
-  }
 }
 trait StdOps2 extends Any with StdOps1 {
   implicit def opsDirectArray[A](xs: Array[A]): ops.DirectOps[A] = new ops.DirectOps(Direct fromArray xs)
@@ -86,22 +67,19 @@ trait StdOps2 extends Any with StdOps1 {
   // We buried Predef's {un,}augmentString in favor of these.
   @inline final implicit def pspAugmentString(x: String): PspStringOps   = new PspStringOps(x)
 
-  implicit class ForeachableLinearOps[A, Repr](repr: Repr)(implicit z: ForeachableLinear.Coll[A, Repr]) {
-    def m: LinearView[A, Repr] = z wrap repr
-  }
-
   implicit def sCollectionIs[A, CC[X] <: sCollection[X]](xs: CC[A]): LinearView[A, CC[A]] = View linear (Linear fromScala xs)
   implicit def jIterableIs[A, CC[X] <: jIterable[X]](xs: CC[A]): LinearView[A, CC[A]]     = View linear (Linear fromJava xs)
   implicit def atomicForeachIs[A, CC[X] <: Each[X]](xs: CC[A]): AtomicView[A, CC[A]]      = View each xs
   implicit def opsEachView[A](x: View[A]): ops.EachApiViewOps[A]                          = new ops.EachApiViewOps(x)
   implicit def opsInvariantView[A](x: InvariantView[A]): ops.InvariantApiViewOps[A]       = new ops.InvariantApiViewOps(x)
-  // implicit def viewHasOrder[A: Order](xs: View[A]): ops.HasOrder[A]                       = new ops.HasOrder[A](xs)
+
+  implicit def jMapIs[K, V, CC[K, V] <: jMap[K, V]](xs: CC[K, V]): AtomicView[K -> V, CC[K, V]] = View each (Each fromJavaMap xs)
+
+  implicit def infixOpsOrder[A: Order](x: A): infix.OrderOps[A]              = new infix.OrderOps[A](x)
+
 }
 
 trait StdOps3 extends Any with StdOps2 {
-  implicit class ForeachableIndexedOps[A, Repr](repr: Repr)(implicit z: ForeachableIndexed.Coll[A, Repr]) {
-    def m: DirectView[A, Repr] = z wrap repr
-  }
   implicit def directIndexedIs[A, CC[X] <: Direct[X]](xs: CC[A]): DirectView[A, CC[A]]             = View direct xs
   implicit def directScalaIndexedIs[A, CC[X] <: sciIndexedSeq[X]](xs: CC[A]): DirectView[A, CC[A]] = View direct (Direct fromScala xs)
   implicit def directArrayIs[A](xs: Array[A]): DirectView[A, Array[A]]                             = View direct (Direct fromArray xs)
@@ -110,7 +88,6 @@ trait StdOps3 extends Any with StdOps2 {
   // We're (sickly) using the context bound to reduce the applicability of the implicit,
   // but then discarding it. The only way these can be value classes is if the type class
   // arrives with the method call.
-  implicit def infixOpsOrder[A: Order](x: A): infix.OrderOps[A]              = new infix.OrderOps[A](x)
   implicit def infixOpsAlgebra[A: BooleanAlgebra](x: A): infix.AlgebraOps[A] = new infix.AlgebraOps[A](x)
   implicit def infixOpsEq[A: Eq](x: A): infix.EqOps[A]                       = new infix.EqOps[A](x)
   implicit def infixOpsHash[A: Hash](x: A): infix.HashOps[A]                 = new infix.HashOps[A](x)

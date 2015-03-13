@@ -15,10 +15,10 @@ object TestRunner_211 extends TestRunnerCommon {
     (Test check prop)(identity).passed
   }
 
-  implicit def pintHashEq: HashEq[Pint]                                      = HashEq.natural[Pint]()
-  implicit def pintShow: Show[Pint]                                          = Show.natural[Pint]()
-  implicit def predicateEq[A : Arbitrary] : Eq[InvariantPredicate[A]]        = observationalEq[InvariantPredicate, A, Boolean](_ apply _)
-  implicit def intensionalEq[A : Arbitrary : HashEq] : Eq[InvariantInSet[A]] = observationalEq[InvariantInSet, A, Boolean](_ apply _)
+  implicit def pintEq: Eq[Pint]                                          = NaturalEq
+  implicit def pintShow: Show[Pint]                                      = Show.natural[Pint]()
+  implicit def predicateEq[A : Arbitrary] : Eq[InvariantPredicate[A]]    = observationalEq[InvariantPredicate, A, Boolean](_ apply _)
+  implicit def intensionalEq[A : Arbitrary : Eq] : Eq[InvariantInSet[A]] = observationalEq[InvariantInSet, A, Boolean](_ apply _)
 
   lazy val bundles = commonBundles ++ Direct[Bundle](
     new Typecheck,

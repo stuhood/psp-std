@@ -126,6 +126,7 @@ trait JavaLibrary extends Any {
   type jLocale                                 = java.util.Locale
   type jManifest                               = java.util.jar.Manifest
   type jMap[K, V]                              = java.util.Map[K, V]
+  type jMapEntry[K, V]                         = java.util.Map.Entry[K, V]
   type jMethod                                 = java.lang.reflect.Method
   type jPackage                                = java.lang.Package
   type jParameterizedType                      = java.lang.reflect.ParameterizedType

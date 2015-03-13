@@ -35,7 +35,7 @@ final class jAppliedType(constructor: jType, args: Array[jType]) extends jParame
     case _         => null
   }
   def getActualTypeArguments = args
-  override def toString      = this.to_s
+  override def toString      = this.render
 }
 
 object jApplied {

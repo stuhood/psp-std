@@ -39,7 +39,6 @@ object Linear {
     case _                => WrapList(xs.toList)
   }
   def fromJava[A](xs: jIterable[A]): Linear[A] = WrapList(xs.m.toScalaList)
-  def builder[A] : Builds[A, Linear[A]]        = Builds[A, sciList[A]](_.toScalaList) map fromScala
   def empty[A] : Linear[A]                     = Empty
   def fill[A](n: Int)(body: => A): Linear[A]   = WrapList[A](sciList.fill(n)(body))
   def apply[A](xs: A*): Linear[A]              = WrapList[A](xs.toList)

@@ -1,7 +1,7 @@
 package psp
 package tests
 
-import psp.std._, api._
+import psp.std._, api._, StdShow._
 import org.scalacheck.Test
 import scala.Console.{ println => _, _ }
 

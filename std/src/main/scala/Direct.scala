@@ -43,13 +43,6 @@ object Direct {
     def isEmpty = size.isZero
   }
 
-  def builder[A] : Builds[A, Direct[A]]     = Builds[A, sciVector[A]](xs => sciVector.newBuilder[A] doto (b => xs foreach b.+=) result) map fromScala
-  def stringBuilder(): Builds[Char, String] = Builds[Char, String](xs => new StringBuilder doto (b => xs foreach (c => b append c)) result)
-  def arrayBuilder[A: CTag]: Builds[A, Array[A]] = Builds[A, Array[A]] {
-    case xs @ HasSize(PreciseInt(n)) => newArray[A](n) doto (arr => xs foreachWithIndex ((x, i) => arr(i.getInt) = x))
-    case xs                          => scala.Array.newBuilder[A] doto (b => xs foreach b.+=) result
-  }
-
   def empty[A] : Direct[A]                             = Empty
   def fromScala[A](xs: sCollection[A]): Direct[A]      = WrapVector(xs.toVector)
   def fromJava[A](xs: jList[A]): Direct[A]             = WrapJava(xs)

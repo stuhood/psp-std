@@ -17,9 +17,13 @@ object +: {
 object StdEq extends impl.EqInstances
 object StdShow extends ShowInstances
 object Unsafe extends LowPriorityUnsafe {
-  implicit def universalEq[A] : HashEq[A]        = HashEq.natural()
-  implicit def universalShow[A] : Show[A]        = Show.natural()
-  implicit def showableOrder[A: Show] : Order[A] = orderBy[A](_.to_s)
+  implicit def naturalEq[A] : Eq[A]           = NaturalEq
+  implicit def naturalShow[A] : Show[A]       = Show.natural()
+  implicit def shownOrder[A: Show] : Order[A] = orderBy[A](_.render)
+}
+trait LowPriorityUnsafe {
+  // We may as well derive some convenience from the absence of parametricity.
+  implicit def naturalOrder[A] : Order[A] = StringOrder | (_.##)
 }
 
 /** Motley classes for which a file of residence is not obvious.
@@ -49,10 +53,6 @@ final class LabeledFunction[-T, +R](f: T => R, val to_s: String) extends (T ?=> 
     case _           => true
   }
   def apply(x: T): R = f(x)
-}
-trait LowPriorityUnsafe {
-  // We may as well derive some convenience from the absence of parametricity.
-  implicit def universalOrder[A] : Order[A] = orderBy[A]("" + _) | (_.##)
 }
 
 final case class Split[A](left: View[A], right: View[A]) extends api.SplitView[A] {

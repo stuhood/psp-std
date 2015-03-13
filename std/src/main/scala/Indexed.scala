@@ -1,7 +1,7 @@
 package psp
 package std
 
-import api._
+import api._, StdEq._
 
 /** Indexed is somewhere between Each and Direct.
  *  There's an apply(index) method, but its size may not be known and may be infinite.

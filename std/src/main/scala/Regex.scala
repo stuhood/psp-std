@@ -40,7 +40,7 @@ final class Regex(val pattern: Pattern) extends AnyVal {
   def surround(s: String, e: String): Regex = mapRegex(s + _ + e)
   def append(e: String)                     = mapRegex(_ + e)
 
-  def isMatch[A: Show](x: A): Boolean        = isMatch(x.to_s)
+  def isMatch[A: Show](x: A): Boolean        = isMatch(x.render)
   def isMatch(input: CharSequence): Boolean  = matcher(input).matches
   def hasMatch(input: CharSequence): Boolean = matcher(input).find()
   def all(input: CharSequence)               = matcher(input) |> (m => option(m.matches(), 1 to m.groupCount map m.group))

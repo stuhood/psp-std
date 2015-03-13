@@ -2,7 +2,7 @@ package psp
 package dev
 package ansi
 
-import std._, Ansi._, StdShow._
+import std._, api._, Ansi._, StdShow._
 
 object Ansi {
   final val ESC       = '\u001b'                    // <esc>

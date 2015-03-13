@@ -5,6 +5,7 @@ package pio
 import api._
 import java.nio.file.{ Files, FileSystems, FileVisitResult, StandardOpenOption, FileSystemException }
 import StandardOpenOption._
+import StdEq._
 
 final class PioPathOps[T <: Path](val path: T) extends AnyVal with JavaPathMethods
 

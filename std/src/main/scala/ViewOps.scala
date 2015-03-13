@@ -28,7 +28,7 @@ trait ApiViewOps[+A] extends Any {
   def isEmpty: Boolean                                   = xs.size.isZero || directIsEmpty
   def last: A                                            = xs takeRight 1.size optionally { case Each(x) => x } orFail "empty.last"
   def mkString(sep: String): String                      = stringed(sep)(_.any_s)
-  def mk_s(sep: String)(implicit z: Show[A]): String     = stringed(sep)(_.to_s)
+  def mk_s(sep: String)(implicit z: Show[A]): String     = stringed(sep)(_.render)
   def nonEmpty: Boolean                                  = xs.size.isNonZero || !directIsEmpty
   def tabular(columns: ToString[A]*): String             = if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toDirect, columns.m).render else ""
   def toRefs: View[Ref[A]]                               = xs map (_.toRef)
@@ -36,7 +36,8 @@ trait ApiViewOps[+A] extends Any {
   def zfoldl[B](f: (B, A) => B)(implicit z: Empty[B]): B = foldl(z.empty)(f)
   def zfoldr[B](f: (A, B) => B)(implicit z: Empty[B]): B = foldr(z.empty)(f)
 
-  def tee(f: A => Shown): View[A] = xs map (_ doto (x => echoOut(f(x))))
+  def tee(f: A => Doc): View[A]       = xs map (_ doto (x => echoOut(f(x))))
+  def mapNow[B](f: A => B): Direct[B] = xs map f toDirect
 
   /** Not especially efficient while we're sorting this out.
    *                                       sorting this out.
@@ -72,13 +73,13 @@ trait ApiViewOps[+A] extends Any {
   def takeToFirst(p: ToBool[A]): View[A] = xs.toEach span !p mapRight (_ take 1.size) rejoin
   def dropIndex(index: Index): View[A]   = xs.toEach splitAt index mapRight (_ drop 1.size) rejoin
 
-  def clusterBy[B: HashEq](f: A => B): Direct[Direct[A]] = groupBy[B](f).values
+  def clusterBy[B: Eq](f: A => B): Direct[Direct[A]] = groupBy[B](f).values
 
   /** This is kind of horrific but has the advantage of not being as busted.
    *  We need to not be using scala's map because it will always compare keys based
    *  on the inherited equals.
    */
-  def groupBy[B: HashEq](f: A => B): ExMap[B, Direct[A]] = {
+  def groupBy[B: Eq](f: A => B): ExMap[B, Direct[A]] = {
     var seen: Direct[B] = Direct()
     val buf = bufferMap[Index, Direct[A]]()
     xs foreach { x =>
@@ -89,7 +90,8 @@ trait ApiViewOps[+A] extends Any {
       }
       buf(idx) :+= x
     }
-    buf.toMap map { case (k, v) => seen(k) -> v } toExMap
+    val res = buf.toMap map { case (k, v) => seen(k) -> v }
+    res.m.toMap[ExMap]
   }
 
   def foldWithIndex[B](zero: B)(f: (B, A, Index) => B): B  = foldFrom(zero) indexed f
@@ -102,9 +104,9 @@ trait ApiViewOps[+A] extends Any {
 trait ByOps[A] extends Any {
   def xs: View[A]
 
-  def byEquals: HasHashEq[A]                    = new HasHashEq[A](xs)(HashEq.natural[A]())
-  def byRef: HasHashEq[Ref[A]]                  = new HasHashEq[Ref[A]](xs.toRefs)(HashEq.reference[Ref[A]]())
-  def byShow(implicit z: Show[A]): HasHashEq[A] = new HasHashEq[A](xs)(HashEq.shown[A]())
+  def byEquals: HasEq[A]                    = new HasEq[A](xs)(NaturalEq)
+  def byRef: HasEq[Ref[A]]                  = new HasEq[Ref[A]](xs.toRefs)(ReferenceEq)
+  def byShow(implicit z: Show[A]): HasEq[A] = new HasEq[A](xs)(Eq.shown[A])
 }
 
 trait InvariantViewOps[A] extends Any with ApiViewOps[A] with ByOps[A] {
@@ -112,14 +114,14 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] with ByOps[A] {
   def :+(elem: A): View[A] = xs ++ exView(elem)
 
   // We'd love for these not to be here in favor of HasEq and etc, but see the note there.
-  def contains(x: A)(implicit z: Eq[A]): Boolean                = exists (_ === x)
-  def distinct(implicit z: HashEq[A]): View[A]                  = xs.toExSet
-  def indexOf(x: A)(implicit z: Eq[A]): Index                   = indexWhere (_ === x)
-  def indicesOf(x: A)(implicit z: Eq[A]): View[Index]           = indicesWhere (_ === x)
-  def mapOnto[B](f: A => B)(implicit z: HashEq[A]): ExMap[A, B] = xs.toExSet mapOnto f
-  def toBag(implicit z: HashEq[A]): Bag[A]                      = xs groupBy identity map (_.size) toExMap
-  def without(x: A)(implicit z: Eq[A]): View[A]                 = xs filterNot (_ === x)
-  def withoutEmpty(implicit z: Empty[A], eqs: Eq[A]): View[A]   = xs without z.empty
+  def contains(x: A)(implicit z: Eq[A]): Boolean              = exists (_ === x)
+  def distinct(implicit z: Eq[A]): View[A]                    = xs.toExSet
+  def indexOf(x: A)(implicit z: Eq[A]): Index                 = indexWhere (_ === x)
+  def indicesOf(x: A)(implicit z: Eq[A]): View[Index]         = indicesWhere (_ === x)
+  def mapOnto[B](f: A => B)(implicit z: Eq[A]): ExMap[A, B]   = xs.toExSet mapOnto f
+  def toBag(implicit z: Eq[A]): Bag[A]                        = xs groupBy identity map (_.size) toExMap
+  def without(x: A)(implicit z: Eq[A]): View[A]               = xs filterNot (_ === x)
+  def withoutEmpty(implicit z: Empty[A], eqs: Eq[A]): View[A] = xs without z.empty
 
   def findOr(p: ToBool[A], alt: => A): A            = find(p) | alt
   def reducel(f: BinOp[A]): A                       = tail.foldl(head)(f)
@@ -149,7 +151,7 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] with ByOps[A] {
     })
   )
 
-  def distinctBy[B: HashEq](f: A => B): View[A] = inView { mf =>
+  def distinctBy[B: Eq](f: A => B): View[A] = inView { mf =>
     zfoldl[ExSet[B]]((seen, x) => f(x) |> (y => try seen add y finally seen(y) || mf(x)))
   }
 
@@ -184,7 +186,7 @@ final class InvariantApiViewOps[A](val xs: InvariantView[A]) extends AnyVal with
 /** A ZipView has similar operations to a View, but with the benefit of
  *  being aware each element has a left and a right.
  */
- final case class ZipViewOps[A1, A2](x: ZipView[A1, A2]) extends AnyVal {
+final case class ZipViewOps[A1, A2](x: ZipView[A1, A2]) extends AnyVal {
   import x._
   def zfoldl[B](f: (B, A1, A2) => B)(implicit z: Empty[B]): B = foldl(z.empty)(f)
   def foldl[B](zero: B)(f: (B, A1, A2) => B): B = {
@@ -203,13 +205,13 @@ final class InvariantApiViewOps[A](val xs: InvariantView[A]) extends AnyVal with
     case _                                => lefts.iterator |> (it => rights foreach (y => if (it.hasNext) f(it.next, y) else return))
   }
 
-  def flatMap[B](f: (A1, A2) => View[B]): View[B] = inView(mf => foreach((x, y) => f(x, y) foreach mf))
-  def map[B](f: (A1, A2) => B): View[B]           = inView(mf => foreach((x, y) => mf(f(x, y))))
   def corresponds(f: (A1, A2) => Boolean)         = this map f forallTrue
   def drop(n: Precise): ZipView[A1, A2]           = new Zipped2(lefts drop n, rights drop n)
   def filter(q: Predicate2[A1, A2])               = withFilter(q)
+  def flatMap[B](f: (A1, A2) => View[B]): View[B] = inView(mf => foreach((x, y) => f(x, y) foreach mf))
+  def map[B](f: (A1, A2) => B): View[B]           = inView(mf => foreach((x, y) => mf(f(x, y))))
   def take(n: Precise): ZipView[A1, A2]           = new Zipped2(lefts take n, rights take n)
-  def toMap[A0 >: A1]: sciMap[A0, A2]             = this map (_ -> _) toScalaMap
+  def toMap[A0 >: A1]: sciMap[A0, A2]             = (pairs: View[A0 -> A2]).toScalaMap
   def withFilter(q: Predicate2[A1, A2])           = inView[A1 -> A2](mf => foreach((x, y) => if (q(x, y)) mf(x -> y)))
 
   def filterLeft(q: ToBool[A1]): ZipView[A1, A2]  = withFilter((x, y) => q(x)).zipView
@@ -239,26 +241,20 @@ final class InvariantApiViewOps[A](val xs: InvariantView[A]) extends AnyVal with
  */
 class HasEq[A](xs: View[A])(implicit z: Eq[A]) {
   def contains(x: A): Boolean                     = xs exists (_ === x)
+  def distinct: View[A]                           = xs withFilter toSet
   def indexOf(x: A): Index                        = xs indexWhere (_ === x)
   def indicesOf(x: A): View[Index]                = xs indicesWhere (_ === x)
+  def mapOnto[B](f: A => B): ExMap[A, B]          = toSet mapOnto f
+  def toBag: Bag[A]                               = xs groupBy identity map (_.size) toExMap
+  def toSet: ExSet[A]                             = xs.toExSet
   def without(x: A): View[A]                      = xs filterNot (_ === x)
   def withoutEmpty(implicit z: Empty[A]): View[A] = this without z.empty
 }
-class HasHashEq[A](xs: View[A])(implicit z: HashEq[A]) extends HasEq[A](xs) {
-  def distinct: View[A]                  = xs withFilter toSet
-  def mapOnto[B](f: A => B): ExMap[A, B] = toSet mapOnto f
-  def toBag: Bag[A]                      = xs groupBy identity map (_.size) toExMap
-  def toSet: ExSet[A]                    = xs.toExSet
-}
-final class HasOrder[A](xs: View[A])(implicit z: Order[A]) {
-  private def hasHashEq = new HasHashEq[A](xs)(z.toHashEq)
-
-  def distinct: View[A]       = xs withFilter toSet
-  def max: A                  = xs reducel (_ max2 _)
-  def min: A                  = xs reducel (_ min2 _)
-  def sortDistinct: Direct[A] = new HasHashEq(sorted)(z.toHashEq) distinct
-  def sorted: Direct[A]       = Direct.wrapArray[A](xs.toRefArray doto (arr => arr.castTo[Array[A]].inPlace.sort))
-  def toSet: ExSet[A]         = hasHashEq.toSet
+final class HasOrder[A](xs: View[A])(implicit z: Order[A]) extends HasEq[A](xs) {
+  def max: A                = xs reducel (_ max2 _)
+  def min: A                = xs reducel (_ min2 _)
+  def sortDistinct: View[A] = sorted.distinct
+  def sorted: View[A]       = xs.toRefArray.inPlace.sort(z.castTo).toDirect.castTo
 }
 final class HasInitialValue[+A, B](xs: View[A], initial: B) {
   def indexed(f: (B, A, Index) => B): B = lowlevel.foldLeftIndexed(xs, initial, f)

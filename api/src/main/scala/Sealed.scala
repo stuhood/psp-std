@@ -36,6 +36,8 @@ final case class IntSize private[api] (override val intValue: Int) extends AnyVa
 final case object Infinite                                         extends Atomic
 
 object Size {
+  val Unknown = Bounded(Precise(0), Infinite)
+
   /** Preserving associativity/commutativity of Size prevents us from
    *  modifying values to enforce any invariants on Bounded.
    */

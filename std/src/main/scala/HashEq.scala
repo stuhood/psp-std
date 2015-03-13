@@ -3,42 +3,40 @@ package std
 
 import api._
 
-/** A bad idea in general, but so much less ceremony for limited-use classes.
- */
-trait NaturalHashEq
-
 object Hash {
-  def reference[A](): Hash[Ref[A]]   = new impl.HashImpl[Ref[A]](_.id_##)
-  def natural[A](): Hash[A]          = new impl.HashImpl[A](_.##)
-  def apply[A](f: A => Int): Hash[A] = new impl.HashImpl[A](f)
+  def reference[A](): Hash[Ref[A]]   = ReferenceHash
+  def natural[A](): Hash[A]          = NaturalHash
+  def apply[A](f: ToInt[A]): Hash[A] = new impl.HashImpl[A](f)
 }
-
 object Eq {
-  def reference[A](): Eq[Ref[A]]      = new impl.EqImpl[Ref[A]](_ id_== _)
-  def natural[A](): Eq[A]             = new impl.EqImpl[A](_ == _)
-  def apply[A](f: Relation[A]): Eq[A] = new impl.EqImpl[A](f)
-}
+  def reference[A](): Eq[Ref[A]]           = ReferenceEq
+  def natural[A](): Eq[A]                  = NaturalEq
+  def shown[A](implicit z: Show[A]): Eq[A] = eqBy[A](z.show)(NaturalEq)
+  def apply[A](f: Relation[A]): Eq[A]      = new impl.EqImpl[A](f)
 
-trait HashEqLow {
-  implicit def universalEq[A <: NaturalHashEq] : HashEq[A] = HashEq.natural()
-}
-
-object HashEq extends HashEqLow {
-  implicit def composeHashEq[A](implicit eqs: Eq[A], hash: Hash[A]): HashEq[A] = new impl.HashEqImpl[A](eqs.equiv, hash.hash)
-
-  def apply[A](cmp: Relation[A], hashFn: A => Int): HashEq[A] = new impl.HashEqImpl[A](cmp, hashFn)
-
-  def natural[A](eqs: Eq[A]): HashEq[A]        = apply[A](eqs.equiv, _.##)
-  def natural[A](): HashEq[A]                  = apply[A](_ == _, _.##)
-  def reference[A <: AnyRef](): HashEq[Ref[A]] = apply[Ref[A]](_ eq _, identityHashCode)
-  def shown[A: Show](): HashEq[A]              = apply[A](_.to_s == _.to_s, _.to_s.##)
-
-  final case class Wrap[A: HashEq](value: A) {
-    override def hashCode = value.hash
-    override def equals(x: Any): Boolean = x match {
-      case Wrap(that) => value === that.castTo[A]
-      case _          => false
-    }
-    override def toString = pp"$value"
+  class EqComparator[A: Eq]() extends Comparator[A] {
+    def compare(x: A, y: A): Int = if (x === y) 0 else x.id_## - y.id_##
   }
+  def eqComparator[A: Eq](): Comparator[A] = new EqComparator[A]
+}
+
+class WrapEqHashShow[A](equiv: Relation[A], hash: ToInt[A], show: ToString[A]) {
+  def apply(x: A): Wrap = new Wrap(x)
+
+  final class Wrap(val value: A) {
+    override def equals(that: Any): Boolean = that match {
+      case x: Wrap => equiv(value, x.value)
+      case _       => false
+    }
+    override def hashCode = hash(value)
+    override def toString = show(value)
+  }
+}
+
+object WrapEqHashShow {
+  def apply[A](implicit z1: Eq[A] = null, z2: Hash[A] = null, z3: Show[A] = null): WrapEqHashShow[A] = new WrapEqHashShow[A](
+    (x, y) => if (z1 == null) x == y else z1.equiv(x, y),
+    x => if (z2 == null) x.## else z2 hash x,
+    x => if (z3 == null) "" + x else z3 show x
+  )
 }

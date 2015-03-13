@@ -5,13 +5,13 @@ package ops
 import api._, StdEq._
 
 final class ShowableSeqOps[A: Show](xs: Each[A]) {
-  private def strs: Each[String]       = xs map (_.to_s)
-  private def nonEmpties: Each[String] = strs filterNot (_.isEmpty) map (_.trim)
-  def inParens: String                 = "(" ~ joinComma ~ ")"
-  def joinLines: String                = strs mkString EOL
-  def joinComma: String                = nonEmpties mkString ", "
-  def joinParents: String              = nonEmpties mkString " with "
-  def joinWords: String                = nonEmpties mkString " "
+  private def strs: Direct[String]       = xs mapNow (_.render)
+  private def nonEmpties: Direct[String] = strs filterNot (_.isEmpty) mapNow (_.trim)
+  def inParens: String                   = "(" ~ joinComma ~ ")"
+  def joinLines: String                  = strs mkString EOL
+  def joinComma: String                  = nonEmpties mkString ", "
+  def joinParents: String                = nonEmpties mkString " with "
+  def joinWords: String                  = nonEmpties mkString " "
 }
 
 final class InMapOps[K, V](xs: InMap[K, V]) {
@@ -39,7 +39,7 @@ final class InSetOps[A](xs: InSet[A]) {
   def filterNot(p: ToBool[A]): InSet[A] = this filter !p
 }
 final class ExSetOps[A](xs: ExSet[A]) {
-  private implicit def heq: HashEq[A] = xs.hashEq
+  private implicit def eqs: Eq[A] = Eq(xs.equiv)
 
   /** replace adds the element, ejecting any existing element which measures === to it.
    *  add adds the element only if no existing element is === to it.

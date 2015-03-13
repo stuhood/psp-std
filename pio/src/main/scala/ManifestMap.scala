@@ -5,14 +5,14 @@ package pio
 import api._
 import java.util.jar.Attributes.Name
 import scala.util.Properties._
-import Unsafe.universalEq
+import Unsafe._
 
 object ManifestMap {
   def initialMainAttrs: View[(Name, String)] = exView(
     Name.MANIFEST_VERSION -> "1.0",
     ScalaCompilerVersion  -> versionNumberString
   )
-  def apply(mainAttrs: (Name, String)*): ManifestMap = apply(new jManifest) ++= mainAttrs.toEach
+  def apply(mainAttrs: (Name, String)*): ManifestMap = apply(new jManifest) ++= mainAttrs.toDirect
   def apply(manifest: jManifest): ManifestMap        = new ManifestMap(manifest) ++= initialMainAttrs
 }
 

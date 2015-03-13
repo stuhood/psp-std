@@ -5,7 +5,6 @@ package jvm
 import api._
 import StdShow._, StdEq._
 import scala.collection.:+
-import pio._
 
 // Type[]  getBounds()
 // Returns an array of Type objects representing the upper bound(s) of this type variable.
@@ -31,10 +30,6 @@ final class jParameterizedTypeOps(val tp: jParameterizedType) extends AnyVal {
   def owner        = tp.getOwnerType
   def constructor  = tp.getRawType
   def args         = tp.getActualTypeArguments
-
-  // def memberType(member: jType): jType = member match {
-
-  // }
 }
 
 final class jTypeOps(val declaration: jType) extends AnyVal with jTypeAndClassOps {
@@ -87,7 +82,7 @@ trait jTypeAndClassOps extends Any {
     case jInfixType(lhs, name, rhs)    => show"$lhs $name $rhs"
     case sPartialFunction(scSeq(t, r)) => show"$t ?=> $r"
     case sFunction(scSeq(p) :+ last)   => show"$p => $last"
-    case sFunction(init :+ last)       => init.m.inParens ~ " => " ~ last.to_s
+    case sFunction(init :+ last)       => init.m.inParens ~ " => ".s ~ last render
     case sTuple(xs)                    => xs.m.inParens
     case jAppliedArray(elem)           => show"Array[$elem]"
     case jApplied(tcon, Nil)           => show"$tcon"
