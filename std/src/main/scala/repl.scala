@@ -1,7 +1,7 @@
 package psp
 package std
 
-import std._, api._
+import api._
 import StdShow._
 
 trait TargetCommon[A] {

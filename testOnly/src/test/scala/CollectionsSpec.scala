@@ -144,7 +144,6 @@ class ViewSplitZip extends ScalacheckBundle {
 class CollectionsSpec extends ScalacheckBundle {
   def bundle = "Type Inference, General"
 
-  val bits = sciBitSet(1, 2, 3)
   val arr  = Array[Int](1, 2, 3)
   val smap = sciMap("a" -> 1, "b" -> 2, "c" -> 3)
   val sseq = sciSeq("a" -> 1, "b" -> 2, "c" -> 3)
@@ -154,13 +153,6 @@ class CollectionsSpec extends ScalacheckBundle {
   def paired[A](x: A): (A, Int) = x -> ("" + x).length
 
   def props: Direct[NamedProp] = policyProps ++ Direct(
-    expectTypes[sciBitSet](
-      bits.m map identity build,
-      bits.m map (_.toString.length) build,
-      bits.m map (_.toString) map (_.length) build,
-      bits.m map (x => sciList(x)) map (_.size) build,
-      bits.m map (x => sciList(x).size) build
-    ),
     expectTypes[String](
       "abc" map identity build,
       "abc" map (_.toInt.toChar) build,
