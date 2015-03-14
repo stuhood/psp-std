@@ -14,9 +14,6 @@ trait ForeachableLinear[Repr] extends Foreachable[Repr] {
 trait ForeachableIndexed[Repr] extends Foreachable[Repr] {
   def wrap(repr: Repr): DirectView[Elem, Repr]
 }
-trait ForeachableSet[Repr] extends Foreachable[Repr] {
-  def wrap(repr: Repr): ExSetView[Elem, Repr]
-}
 
 abstract class ForeachableCompanion[CC[X] <: Foreachable[X]] {
   type Coll[A, Repr] = CC[Repr] { type Elem = A }
@@ -31,17 +28,6 @@ object Foreachable extends ForeachableCompanion[Foreachable] {
   implicit def PolicyForeachIs[A, CC[X] <: Each[X]] : Coll[A, CC[A]]          = apply[A, CC[A]](xs => xs)
   implicit def ScalaCollectionIs[A, CC[X] <: sCollection[X]] : Coll[A, CC[A]] = apply[A, CC[A]](Each fromScala _)
   implicit def JavaIterableIs[A, CC[X] <: jIterable[X]] : Coll[A, CC[A]]      = apply[A, CC[A]](Each fromJava _)
-}
-
-object ForeachableSet extends ForeachableCompanion[ForeachableSet] {
-  def apply[A, Repr](f: Repr => ExSet[A]): Coll[A, Repr] = new ForeachableSet[Repr] {
-    type Elem = A
-    def wrap(repr: Repr) = new ExSetView(f(repr))
-  }
-  implicit def PolicySetIs[A, CC[X] <: ExSet[X]] : Coll[A, CC[A]] = apply[A, CC[A]](xs => xs)
-  implicit def JavaSetIs[A, CC[X] <: jSet[X]] : Coll[A, CC[A]]    = apply[A, CC[A]](ExSet fromJava _)
-  implicit def ScalaSetIs[A, CC[X] <: scSet[X]] : Coll[A, CC[A]]  = apply[A, CC[A]](ExSet fromScala _)
-  implicit def ScalaBitSetIs: Coll[Int, sciBitSet]                = apply[Int, sciBitSet](ExSet fromScala _)
 }
 
 object ForeachableLinear extends ForeachableCompanion[ForeachableLinear] {

@@ -51,9 +51,6 @@ trait AnyView[+A] extends Any with HasSize {
   def toEach: Each[A]
 }
 
-trait SetView[A] extends Any with AnyView[A] with ExSet[A] {
-}
-
 /** Contiguous operations share the property that the result is always
  *  a (possibly empty) uninterrupted subsequence of the elements of the
  *  target collection.
