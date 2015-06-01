@@ -4,14 +4,16 @@ sudo: false
 cache:
   directories:
     - $HOME/.ivy2/cache
-    # The latest sbt launcher version preinstalled in Travis VM image is 0.13.5 at the moment
-    - $HOME/.sbt/launchers/0.13.7
-    # already preinstalled:
-    #- $HOME/.sbt/boot/scala-2.10.4
+    - $HOME/.sbt/launchers/0.13.8
 
 language: scala
 script: bin/run-travis
 jdk:
   - oraclejdk7
   - oraclejdk8
+
 scala: latest # set a dummy value as this build configuration does not rely on TRAVIS_SCALA_VERSION
+
+# codecov
+before_install: pip install --user codecov
+after_success: codecov
