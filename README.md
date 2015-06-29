@@ -23,7 +23,7 @@ Suggested contents for ```build.sbt``` - note this syntax requires sbt 0.13.7, t
 ```scala
                       name :=  "scratch"
                  resolvers +=  "bintray/paulp" at "https://dl.bintray.com/paulp/maven"
-              scalaVersion :=  "2.11.6"
+              scalaVersion :=  "2.11.7"
 initialCommands in console :=  "import psp._, std._, api._, StdEq._"
        libraryDependencies +=  "org.improving" %% "psp-std" % "0.5.5"
 ```
