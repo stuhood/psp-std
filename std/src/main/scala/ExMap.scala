@@ -21,7 +21,7 @@ object ExMap {
     protected[this] def newDomain(p: ToBool[K])                                              = domain filter p
     protected[this] def newMap[K1, V1](domain: ExSet[K1], lookup: Lookup[K1, V1]): Impl[K1, V1] = new Impl(domain, lookup)
 
-    def +(key: K, value: V): This             = newMap(domain, lookup.put(key, value)(domain.hashEq))
+    def +(key: K, value: V): This             = newMap(domain + key, lookup.put(key, value)(domain.hashEq))
     def entries: View[Entry]                  = keys mapZip lookup
     def foreach(f: (K -> V) => Unit): Unit    = foreachKey(k => f(k -> apply(k)))
     def foreachEntry(f: (K, V) => Unit): Unit = foreachKey(k => f(k, apply(k)))

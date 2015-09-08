@@ -77,6 +77,7 @@ object ExSet {
       override def hashCode = hash(unwrap)
       override def toString = s"$unwrap (wrapped)"
     }
+    def +(elem: A): ExSet[A]                = this union ExSet.elems(elem)(hashEq)
     def apply(elem: A)                      = wrapSet contains wrap(elem)
     def size: Precise                       = wrapSet.size.size
     @inline def foreach(f: A => Unit): Unit = wrapSet foreach (x => f(x.unwrap))

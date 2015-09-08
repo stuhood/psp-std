@@ -27,7 +27,7 @@ trait Builds[-Elem, +To] extends Any { def build(xs: Each[Elem]): To }
 
 /** Contravariance vs. implicits, the endless battle.
  *  We return a java three-value enum from compare in preference
- *  to a wild stab into the 2^32 states of an Int. This is a
+ *  to a wild stab into the `2^32` states of an Int. This is a
  *  controversial thing to do, in the year 2014. Not joking.
  */
 trait Order[-A] extends Any { def compare(x: A, y: A): Cmp }
