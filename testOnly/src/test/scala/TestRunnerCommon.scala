@@ -22,7 +22,8 @@ abstract class TestRunnerCommon {
     new CollectionsSpec,
     new SliceSpec,
     new OperationCounts,
-    new TokenSpec
+    new TokenSpec,
+    new ResourcesSpec
   )
 
   def wrapRun(b: Bundle): Boolean = Try(b.run) fold (
