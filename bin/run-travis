@@ -14,7 +14,6 @@ EOM
 runTests () {
   sbt -J-Xmx3784m clean test || exit 1
   echo "[info] $(date) - finished sbt test"
-  # sbt coverageReport
 
   # Tricks to avoid unnecessary cache updates
   find $HOME/.sbt -name "*.lock" -delete
