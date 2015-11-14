@@ -18,6 +18,40 @@ class SizeSpec extends ScalacheckBundle {
   )
 }
 
+class FunSpec extends ScalacheckBundle {
+  def bundle = "Fun laws"
+  implicit def convert[A, B](f: Fun[A, B]): A ?=> B = f.toPartial
+
+  val f1 = Fun((_: Int) * 2)
+  val f2 = f1 mapOut (_ * 3)
+  val f3 = f2 filterIn (_ <= 2)
+  val f4 = f3 defaulted (_ => 99)
+  val xs = exSeq(1, 2, 3)
+
+  var seen = ""
+  val m1 = f1.traced(
+    x => seen += s"f($x): ",
+    x => seen += s"$x "
+  )
+  lazy val m1trace = {
+    xs mapNow m1
+    seen.trim
+  }
+
+  def props = Direct(
+    seqShows("2, 4, 6", xs map f1),
+    seqShows("6, 12, 18", xs map f2),
+    seqShows("6, 12", xs collect f3),
+    seqShows("6, 12", xs collect f4),
+    seqShows("6, 12, 99", xs map f4),
+    showsAs("18", f2 get 3),
+    showsAs("-", f3 get 3),
+    showsAs("-", f4 get 3),
+    showsAs("99", f4(3)),
+    showsAs("f(1): 2 f(2): 4 f(3): 6", m1trace)
+  )
+}
+
 class StringExtensions extends ScalacheckBundle {
   def bundle = "String Extensions"
 
