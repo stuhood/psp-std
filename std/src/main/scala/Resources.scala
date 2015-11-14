@@ -21,7 +21,7 @@ object Resources {
         val entry = name substring path.length
         (entry indexOf "/") |> (i => if (i < 0) entry else entry.substring(0, i))
       }
-      resources.toArray distinct NaturalEq toArray
+      resources.toArray.byEquals.distinct.toArray
     }
   }
 }

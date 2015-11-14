@@ -6,28 +6,38 @@ import scala.{ collection => sc }
 import sc.{ mutable => scm, immutable => sci }
 import psp.api._
 
-package object std extends psp.std.StdPackage with psp.impl.CreateBy {
-  private implicit def showString0: Show[String]   = Show.natural()
-  private implicit def orderString0: Order[String] = Order.fromInt[String](_ compareTo _)
+package object std extends psp.std.StdPackage {
+  import Unsafe.inheritedShow
+  private implicit def lexical = lexicalOrder
 
   /** Scala, so aggravating.
    *  [error] could not find implicit value for parameter equiv: psp.api.Eq[psp.tests.Pint => psp.std.Boolean]
    *  The parameter can be given explicitly, it just won't be found unless the function type is invariant.
    *  The same issue arises with intensional sets.
    */
-  type InvariantPredicate[A] = A => Boolean
-  type InvariantInSet[A]     = InSet[A]
-  type View2D[+A]            = View[View[A]]
-  type Each2D[+A]            = Each[Each[A]]
-  type IndexRange            = Consecutive[Index]
-  type IntRange              = Consecutive[Int]
-  type BuildsMap[K, V]       = Builds[K -> V, ExMap[K, V]]
+   type InvariantPredicate[A] = A => Boolean
+   type InvariantInSet[A]     = InSet[A]
+   type View2D[+A]            = View[View[A]]
+   type Each2D[+A]            = Each[Each[A]]
+   type IndexRange            = Consecutive[Index]
+   type IntRange              = Consecutive[Int]
+   type BuildsMap[K, V]       = Builds[K -> V, ExMap[K, V]]
 
-  val StringOrder   = orderBy[Any](_.any_s)
-  val NaturalEq     = Eq[Any](_ == _)
-  val NaturalHash   = Hash[Any](_.##)
-  val ReferenceEq   = Eq[AnyRef](_ eq _)
-  val ReferenceHash = Hash[AnyRef](_.id_##)
+   val StringOrder = orderBy[Any](_.any_s)
+
+   def lexicalOrder: Order[String] = Order.fromInt(_ compareTo _)
+
+   def inheritShow[A] : Show[A]           = Show.Inherited
+   def inheritEq[A] : Hash[A]             = Eq.Inherited
+   def referenceEq[A <: AnyRef] : Hash[A] = Eq.Reference
+   def stringEq[A] : Hash[A]              = Eq.ToString
+   def shownEq[A: Show] : Hash[A]         = inheritEq[String] on (_.render)
+
+   // Helpers for inference when calling 'on' on contravariant type classes.
+   def eqBy[A]    = new psp.impl.EqBy[A]
+   def hashBy[A]  = new psp.impl.HashBy[A]
+   def orderBy[A] = new psp.impl.OrderBy[A]
+   def showBy[A]  = new psp.impl.ShowBy[A]
 
   // Inlinable.
   final val InputStreamBufferSize = 8192

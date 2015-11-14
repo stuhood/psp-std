@@ -71,11 +71,11 @@ trait EmptyInstances extends EmptyInstances0 {
 }
 
 trait EqInstances extends OrderInstances {
-  implicit def jTypeEq: Eq[jType]           = NaturalEq
-  implicit def offsetEq: Eq[Offset]         = NaturalEq
-  implicit def pathEq: Eq[Path]             = eqBy[Path](_.any_s)
-  implicit def policyClassEq: Eq[JavaClass] = NaturalEq
-  implicit def sizeEq: Eq[Size]             = Eq(Size.equiv)
+  implicit def jTypeEq: Hash[jType]           = inheritEq
+  implicit def offsetEq: Hash[Offset]         = inheritEq
+  implicit def pathEq: Eq[Path]               = eqBy[Path](_.any_s)
+  implicit def policyClassEq: Hash[JavaClass] = inheritEq
+  implicit def sizeEq: Eq[Size]               = Eq(Size.equiv)
 
   /** The throwableEq defined above conveniently conflicts with the actual
    *  implicit parameter to the method. W... T... F. On top of this the error
@@ -99,3 +99,8 @@ trait EqInstances extends OrderInstances {
   def equalizer[A, B: Eq](f: A => B, g: A => B): FunctionEqualizer[A, B] = new FunctionEqualizer(f, g)
   def symmetrically[A](f: Relation[A]): Relation[A]                      = (x, y) => f(x, y) && f(y, x)
 }
+
+final class OrderBy[A] { def apply[B](f: A => B)(implicit z: Order[B]): Order[A] = z on f }
+final class ShowBy[A]  { def apply[B](f: A => B)(implicit z: Show[B]): Show[A]   = z on f }
+final class HashBy[A]  { def apply[B](f: A => B)(implicit z: Hash[B]): Hash[A]   = z on f }
+final class EqBy[A]    { def apply[B](f: A => B)(implicit z: Eq[B]): Eq[A]       = z on f }

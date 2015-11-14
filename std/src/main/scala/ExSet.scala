@@ -4,13 +4,8 @@ package std
 import api._
 
 object ExSet {
-  def apply[A: Eq](xs: Each[A]): ExSet[A]                  = new Impl[A](xs, ?)
-  def natural[A](xs: Each[A]): ExSet[A]                    = apply[A](xs)(NaturalEq)
-  def reference[A <: AnyRef](xs: Each[A]): ExSet[A]        = apply[A](xs)(ReferenceEq)
-  def shown[A: Show](xs: Each[A]): ExSet[A]                = apply[A](xs)(Eq.shown[A])
-  def direct[A](xs: Each[A])(equiv: Relation[A]): ExSet[A] = apply[A](xs)(Eq(equiv))
-  def elems[A: Eq](xs: A*): ExSet[A]                       = apply[A](Direct(xs: _*))
-
+  def apply[A: Eq](xs: Each[A]): ExSet[A]  = new Impl[A](xs, ?)
+  def elems[A: Eq](xs: A*): ExSet[A]       = apply[A](Direct(xs: _*))
   def fromJava[A](xs: jSet[A]): ExSet[A]   = new FromJava(xs)
   def fromScala[A](xs: scSet[A]): ExSet[A] = new FromScala(xs.toSet)
 
@@ -27,13 +22,13 @@ object ExSet {
     def size: IntSize                 = Precise(xs.size)
     @inline def foreach(f: A => Unit) = xs foreach f
     def apply(elem: A)                = xs(elem)
-    def eqs                           = Eq.natural()
+    def eqs                           = Eq.inherit()
   }
   class FromJava[A](xs: jSet[A]) extends ExSetImpl[A] {
     def size: IntSize                 = Precise(xs.size)
     @inline def foreach(f: A => Unit) = xs.iterator foreach f
     def apply(elem: A)                = xs contains elem
-    def eqs                           = Eq.natural()
+    def eqs                           = Eq.inherit()
   }
 
   sealed trait Derived[A] extends ExSetImpl[A] {
@@ -65,12 +60,29 @@ object ExSet {
     def size                                = lhs.size diff rhs.size
   }
   final class Impl[A](basis: Each[A], val eqs: Eq[A]) extends ExSetImpl[A] {
-    private[this] val wrap                     = WrapEqHashShow[A]
-    private[this] val wrapSet: jSet[wrap.Wrap] = basis map (x => wrap(x)) toJavaSet
-    def +(elem: A): ExSet[A]                   = this union ExSet.elems(elem)(eqs)
-    def apply(elem: A)                         = wrapSet contains wrap(elem)
-    def size: Precise                          = wrapSet.size.size
-    @inline def foreach(f: A => Unit): Unit    = wrapSet foreach (x => f(x.value))
+    private[this] def wrap(x: A): Wrap    = new Wrap(x)
+    private[this] val wrapSet: jSet[Wrap] = basis map wrap toJavaSet
+    private class Wrap(val value: A) {
+      override def equals(that: Any): Boolean = that match {
+        case x: Wrap => eqs.equiv(value, x.value)
+        case _       => false
+      }
+      override def hashCode = value.##
+      override def toString = value.any_s
+    }
+
+    def \(relation: Relation[A]): Quotient[A] = new Quotient[A](basis)(Eq(relation))
+    def +(elem: A): ExSet[A]                  = this union ExSet.elems(elem)(eqs)
+    def apply(elem: A)                        = wrapSet contains wrap(elem)
+    def size: Precise                         = wrapSet.size.size
+    @inline def foreach(f: A => Unit): Unit   = wrapSet foreach (x => f(x.value))
+  }
+
+  final class Quotient[A](basis: Each[A])(implicit val eqs: Eq[A]) extends ExSetImpl[A] {
+    private[this] val set = basis.foldl(sciSet[A]())((res, x) => if (res exists (_ === x)) res else res + x)
+    def size: Precise               = set.size.size
+    def apply(x: A): Boolean        = set(x)
+    def foreach(x: A => Unit): Unit = set foreach x
   }
 }
 

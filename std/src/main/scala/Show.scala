@@ -74,18 +74,17 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
 }
 
 object Show {
-  def apply[A](f: ToString[A]): Show[A] = new impl.ShowImpl[A](f)
-  def natural[A](): Show[A]             = ToString
-
   /** This of course is not implicit as that would defeat the purpose of the endeavor.
    */
-  private case object ToString extends Show[Any] {
-    def show(x: Any): String = x match {
-      case null          => ""
-      case x: ShowDirect => x.to_s
-      case x             => x.toString
-    }
+  val Inherited: Show[Any] = apply[Any] {
+    case null          => ""
+    case x: ShowDirect => x.to_s
+    case x             => x.toString
   }
+
+  def apply[A](f: ToString[A]): Show[A] = new Impl[A](f)
+
+  final class Impl[-A](val f: ToString[A]) extends AnyVal with Show[A] { def show(x: A) = f(x) }
 }
 
 /** An incomplete selection of show compositors.
@@ -97,15 +96,15 @@ trait ShowInstances extends ShowEach {
     case TryDoc.NoDoc(value, _) => value.any_s
     case TryDoc.HasDoc(x)       => x.render
   }
-  implicit def showAttributeName : Show[jAttributeName] = Show.natural()
-  implicit def showBoolean: Show[Boolean]               = Show.natural()
-  implicit def showChar: Show[Char]                     = Show.natural()
-  implicit def showDouble: Show[Double]                 = Show.natural()
-  implicit def showInt: Show[Int]                       = Show.natural()
-  implicit def showLong: Show[Long]                     = Show.natural()
-  implicit def showPath: Show[Path]                     = Show.natural()
-  implicit def showScalaNumber: Show[ScalaNumber]       = Show.natural()
-  implicit def showString: Show[String]                 = Show.natural()
+  implicit def showAttributeName : Show[jAttributeName] = inheritShow
+  implicit def showBoolean: Show[Boolean]               = inheritShow
+  implicit def showChar: Show[Char]                     = inheritShow
+  implicit def showDouble: Show[Double]                 = inheritShow
+  implicit def showInt: Show[Int]                       = inheritShow
+  implicit def showLong: Show[Long]                     = inheritShow
+  implicit def showPath: Show[Path]                     = inheritShow
+  implicit def showScalaNumber: Show[ScalaNumber]       = inheritShow
+  implicit def showString: Show[String]                 = inheritShow
 
   implicit def showClass: Show[jClass]                        = Show(_.shortName)
   implicit def showDirect: Show[ShowDirect]                   = Show(_.to_s)
@@ -138,5 +137,5 @@ trait ShowEach extends ShowEach1 {
   }
   implicit def showZipped[A1: Show, A2: Show] : Show[ZipView[A1, A2]] = showBy[ZipView[A1, A2]](_.pairs)
   implicit def showArray[A: Show] : Show[Array[A]] = showBy[Array[A]](Direct.fromArray)
-  implicit def showJavaEnum[A <: jEnum[A]] : Show[jEnum[A]] = Show.natural()
+  implicit def showJavaEnum[A <: jEnum[A]] : Show[jEnum[A]] = inheritShow
 }

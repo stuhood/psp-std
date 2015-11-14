@@ -15,8 +15,8 @@ object TestRunner_211 extends TestRunnerCommon {
     (Test check prop)(identity).passed
   }
 
-  implicit def pintEq: Eq[Pint]                                          = NaturalEq
-  implicit def pintShow: Show[Pint]                                      = Show.natural[Pint]()
+  implicit def pintEq: Hash[Pint]                                        = inheritEq
+  implicit def pintShow: Show[Pint]                                      = inheritShow
   implicit def predicateEq[A : Arbitrary] : Eq[InvariantPredicate[A]]    = observationalEq[InvariantPredicate, A, Boolean](_ apply _)
   implicit def intensionalEq[A : Arbitrary : Eq] : Eq[InvariantInSet[A]] = observationalEq[InvariantInSet, A, Boolean](_ apply _)
 

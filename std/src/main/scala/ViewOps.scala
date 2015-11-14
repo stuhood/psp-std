@@ -104,9 +104,9 @@ trait ApiViewOps[+A] extends Any {
 trait ByOps[A] extends Any {
   def xs: View[A]
 
-  def byEquals: HasEq[A]                    = new HasEq[A](xs)(NaturalEq)
-  def byRef: HasEq[Ref[A]]                  = new HasEq[Ref[A]](xs.toRefs)(ReferenceEq)
-  def byShow(implicit z: Show[A]): HasEq[A] = new HasEq[A](xs)(Eq.shown[A])
+  def byEquals: HasEq[A]   = new HasEq[A](xs)(inheritEq)
+  def byRef: HasEq[Ref[A]] = new HasEq[Ref[A]](xs.toRefs)(referenceEq)
+  def byString: HasEq[A]   = new HasEq[A](xs)(stringEq)
 }
 
 trait InvariantViewOps[A] extends Any with ApiViewOps[A] with ByOps[A] {
@@ -241,7 +241,7 @@ final case class ZipViewOps[A1, A2](x: ZipView[A1, A2]) extends AnyVal {
  */
 class HasEq[A](xs: View[A])(implicit z: Eq[A]) {
   def contains(x: A): Boolean                     = xs exists (_ === x)
-  def distinct: View[A]                           = xs withFilter toSet
+  def distinct: View[A]                           = xs.foldl(sciVector[A]())((res, x) => if (res exists (_ === x)) res else res :+ x).m
   def indexOf(x: A): Index                        = xs indexWhere (_ === x)
   def indicesOf(x: A): View[Index]                = xs indicesWhere (_ === x)
   def mapOnto[B](f: A => B): ExMap[A, B]          = toSet mapOnto f

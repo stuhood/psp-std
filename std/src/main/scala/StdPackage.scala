@@ -39,11 +39,23 @@ abstract class StdPackage
     def left(x: R): A  = fst(z split x)
     def right(x: R): B = snd(z split x)
   }
+  implicit class ApiShowOps[A](val z: Show[A]) {
+    def on[B](f: B => A): Show[B] = Show[B](x => z show f(x))
+  }
+  implicit class ApiEqOps[A](val z: Eq[A]) {
+    def on[B](f: B => A): Eq[B] = Eq[B]((x, y) => z.equiv(f(x), f(y)))
+  }
+  implicit class ApiHashOps[A](val z: Hash[A]) {
+    def on[B](f: B => A): Hash[B] = Eq.hash[B]((x, y) => z.equiv(f(x), f(y)))(x => z hash f(x))
+  }
   implicit class ApiOrderOps[A](val ord: Order[A]) {
     def |[B: Order](f: A => B): Order[A] = Order((x, y) => ord.compare(x, y) || ?[Order[B]].compare(f(x), f(y)))
     def toEq: Eq[A]                      = Eq[A]((x, y) => ord.compare(x, y) == Cmp.EQ)
     def reverse: Order[A]                = Order[A]((x, y) => ord.compare(x, y).flip)
     def on[B](f: B => A): Order[B]       = Order[B]((x, y) => ord.compare(f(x), f(y)))
+
+    def toOrdering[A1 <: A] : Ordering[A1]     = Order.ordering[A1](ord)
+    def toComparator[A1 <: A] : Comparator[A1] = Order.comparator[A1](ord)
   }
   implicit class CmpEnumOps(val cmp: Cmp) {
     def || (that: => Cmp): Cmp = if (cmp == Cmp.EQ) that else cmp

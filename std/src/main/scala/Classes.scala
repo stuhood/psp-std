@@ -17,13 +17,13 @@ object +: {
 object StdEq extends impl.EqInstances
 object StdShow extends ShowInstances
 object Unsafe extends LowPriorityUnsafe {
-  implicit def naturalEq[A] : Eq[A]           = NaturalEq
-  implicit def naturalShow[A] : Show[A]       = Show.natural()
+  implicit def inheritedEq[A] : Hash[A]       = inheritEq
+  implicit def inheritedShow[A] : Show[A]     = inheritShow
   implicit def shownOrder[A: Show] : Order[A] = orderBy[A](_.render)
 }
 trait LowPriorityUnsafe {
   // We may as well derive some convenience from the absence of parametricity.
-  implicit def naturalOrder[A] : Order[A] = StringOrder | (_.##)
+  implicit def universalAdHocOrdering[A] : Order[A] = StringOrder | (_.##)
 }
 
 /** Motley classes for which a file of residence is not obvious.
