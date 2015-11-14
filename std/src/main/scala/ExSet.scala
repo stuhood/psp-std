@@ -4,43 +4,41 @@ package std
 import api._
 
 object ExSet {
-  def apply[A: HashEq](xs: Each[A]): ExSet[A]                              = new Impl[A](xs, ?)
-  def builder[A: HashEq] : Builds[A, ExSet[A]]                             = Builds(ExSet[A](_))
-  def natural[A](xs: Each[A]): ExSet[A]                                    = apply[A](xs)(HashEq.natural[A])
-  def reference[A <: AnyRef](xs: Each[A]): ExSet[A]                        = apply[A](xs)(HashEq.reference[A])
-  def shown[A: Show](xs: Each[A]): ExSet[A]                                = apply[A](xs)(HashEq.shown[A])
-  def direct[A](xs: Each[A])(equiv: Relation[A], hash: A => Int): ExSet[A] = apply[A](xs)(HashEq(equiv, hash))
-  def elems[A: HashEq](xs: A*): ExSet[A]                                   = apply[A](Direct(xs: _*))
+  def apply[A: Eq](xs: Each[A]): ExSet[A]                  = new Impl[A](xs, ?)
+  def natural[A](xs: Each[A]): ExSet[A]                    = apply[A](xs)(NaturalEq)
+  def reference[A <: AnyRef](xs: Each[A]): ExSet[A]        = apply[A](xs)(ReferenceEq)
+  def shown[A: Show](xs: Each[A]): ExSet[A]                = apply[A](xs)(Eq.shown[A])
+  def direct[A](xs: Each[A])(equiv: Relation[A]): ExSet[A] = apply[A](xs)(Eq(equiv))
+  def elems[A: Eq](xs: A*): ExSet[A]                       = apply[A](Direct(xs: _*))
 
   def fromJava[A](xs: jSet[A]): ExSet[A]   = new FromJava(xs)
   def fromScala[A](xs: scSet[A]): ExSet[A] = new FromScala(xs.toSet)
 
   def impl[A](xs: ExSet[A]): Impl[A] = xs match {
     case xs: Impl[A] => xs
-    case _           => apply[A](xs)(xs.hashEq)
+    case _           => new Impl[A](xs.toEach, Eq(xs.equiv))
   }
 
   sealed trait ExSetImpl[A] extends ExSet[A] with ToBool[A] {
-    def hash(x: A): Int             = hashEq hash x
-    def equiv(x: A, y: A): Boolean  = hashEq.equiv(x, y)
+    def eqs: Eq[A]
+    def equiv(x: A, y: A): Boolean = eqs.equiv(x, y)
   }
-
   class FromScala[A](xs: sciSet[A]) extends ExSetImpl[A] {
     def size: IntSize                 = Precise(xs.size)
     @inline def foreach(f: A => Unit) = xs foreach f
     def apply(elem: A)                = xs(elem)
-    def hashEq                        = HashEq.natural()
+    def eqs                           = Eq.natural()
   }
   class FromJava[A](xs: jSet[A]) extends ExSetImpl[A] {
     def size: IntSize                 = Precise(xs.size)
     @inline def foreach(f: A => Unit) = xs.iterator foreach f
     def apply(elem: A)                = xs contains elem
-    def hashEq                        = HashEq.natural()
+    def eqs                           = Eq.natural()
   }
 
   sealed trait Derived[A] extends ExSetImpl[A] {
     protected def underlying: ExSet[A]
-    def hashEq = underlying.hashEq
+    def eqs = underlying.eqs
   }
   final case class Filtered[A](lhs: ExSet[A], p: ToBool[A]) extends Derived[A] {
     protected def underlying                = lhs
@@ -66,21 +64,13 @@ object ExSet {
     @inline def foreach(f: A => Unit): Unit = lhs filterNot rhs foreach f
     def size                                = lhs.size diff rhs.size
   }
-  final class Impl[A](basis: Each[A], val hashEq: HashEq[A]) extends ExSetImpl[A] {
-    private[this] val wrapSet: jSet[Wrap] = basis map wrap toJavaSet
-    private def wrap(elem: A): Wrap = new Wrap(elem)
-    private class Wrap(val unwrap: A) {
-      final override def equals(that: Any): Boolean = that match {
-        case x: Wrap => equiv(unwrap, x.unwrap)
-        case _       => false
-      }
-      override def hashCode = hash(unwrap)
-      override def toString = s"$unwrap (wrapped)"
-    }
-    def +(elem: A): ExSet[A]                = this union ExSet.elems(elem)(hashEq)
-    def apply(elem: A)                      = wrapSet contains wrap(elem)
-    def size: Precise                       = wrapSet.size.size
-    @inline def foreach(f: A => Unit): Unit = wrapSet foreach (x => f(x.unwrap))
+  final class Impl[A](basis: Each[A], val eqs: Eq[A]) extends ExSetImpl[A] {
+    private[this] val wrap                     = WrapEqHashShow[A]
+    private[this] val wrapSet: jSet[wrap.Wrap] = basis map (x => wrap(x)) toJavaSet
+    def +(elem: A): ExSet[A]                   = this union ExSet.elems(elem)(eqs)
+    def apply(elem: A)                         = wrapSet contains wrap(elem)
+    def size: Precise                          = wrapSet.size.size
+    @inline def foreach(f: A => Unit): Unit    = wrapSet foreach (x => f(x.value))
   }
 }
 
@@ -97,23 +87,21 @@ object InSet {
     case ConstantTrue  => One
     case _             => Pure[A](p)
   }
-  def show[A](xs: InSet[A])(implicit z: Show[InSet[A]] = shower[A]): String = xs match {
-    case Zero                => "∅"
-    case One                 => "U"
-    case Complement(xs)      => show"$xs′"
-    case Intersect(lhs, rhs) => show"$lhs ∩ $rhs"
-    case Union(lhs, rhs)     => show"$lhs ∪ $rhs"
-    case Diff(lhs, rhs)      => show"$lhs ∖ $rhs"
-    case Pure(f: ShowDirect) => f.to_s
-    case _                   => "{ ... }"
+  def doc[A](xs: InSet[A]): Doc = xs match {
+    case Zero                => "∅".s
+    case One                 => "U".s
+    case Complement(xs)      => doc"$xs′"
+    case Intersect(lhs, rhs) => doc"$lhs ∩ $rhs"
+    case Union(lhs, rhs)     => doc"$lhs ∪ $rhs"
+    case Diff(lhs, rhs)      => doc"$lhs ∖ $rhs"
+    case Pure(f: ShowDirect) => doc"$f" // f.to_s
+    case _                   => "{ ... }".s
   }
 
-  abstract class Impl[A](p: ToBool[A])                        extends InSet[A] with ToBool[A] { def apply(x: A) = p(x) ; override def toString = show(this) }
+  abstract class Impl[A](p: ToBool[A])                        extends InSet[A] with ToBool[A] { def apply(x: A) = p(x) ; override def toString = doc(this).render }
   final case class Complement[A](lhs: InSet[A])               extends Impl[A](x => !lhs(x))
   final case class Intersect[A](lhs: InSet[A], rhs: InSet[A]) extends Impl[A](x => lhs(x) && rhs(x))
   final case class Union[A](lhs: InSet[A], rhs: InSet[A])     extends Impl[A](x => lhs(x) || rhs(x))
   final case class Diff[A](lhs: InSet[A], rhs: InSet[A])      extends Impl[A](x => lhs(x) && !rhs(x))
   final case class Pure[A](p: ToBool[A])                      extends Impl[A](p)
-
-  private def shower[A]: Show[InSet[A]] = Show(show[A])
 }

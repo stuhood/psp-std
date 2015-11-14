@@ -66,7 +66,7 @@ object ToScala {
   def empty[K, V] : ToScala[K, V]                          = apply(sciVector())
 
   implicit def showToScala[K: Show, V: Show] = Show[ToScala[K, V]] { map =>
-    def len(k: K) = k.to_s.stripAnsi.length
+    def len(k: K) = k.render.stripAnsi.length
     def fmt(pad: String, k: K, v: V): String = show"$pad$k: $v"
 
     val width = (map.keys map len).max

@@ -47,6 +47,7 @@ final class AnyOps[A](val x: A) extends AnyVal {
     case _             => any_s
   }
   def any_s: String = "" + x
+  def anydoc: Doc   = ("" + x).s
 }
 
 final class AnyRefOps[A <: AnyRef](val x: A) extends AnyVal {

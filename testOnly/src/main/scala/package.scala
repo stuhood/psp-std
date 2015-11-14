@@ -47,10 +47,10 @@ package object tests {
     def filter(p: ToBool[A]): Arb[A] = Arb(x.arbitrary filter p)
   }
 
-  implicit def arbSize: Arb[Size]                               = Arb(gen.size)
-  implicit def arbWord: Arb[String]                             = Arb(gen.text.word)
-  implicit def arbitraryInSet[A : Arb : HashEq] : Arb[InSet[A]] = arb[sciSet[A]] map (_.m.toExSet)
-  implicit def arbitraryPint: Arb[Pint]                         = Arb(Gen.choose(MinInt, MaxInt) map (x => Pint(x)))
+  implicit def arbSize: Arb[Size]                           = Arb(gen.size)
+  implicit def arbWord: Arb[String]                         = Arb(gen.text.word)
+  implicit def arbitraryInSet[A : Arb : Eq] : Arb[InSet[A]] = arb[sciSet[A]] map (_.m.toExSet)
+  implicit def arbitraryPint: Arb[Pint]                     = Arb(Gen.choose(MinInt, MaxInt) map (x => Pint(x)))
   implicit class LiftConverter[A](gen: Gen[A]) {
     def to[B](implicit f: A => B): Gen[B] = gen map f
   }

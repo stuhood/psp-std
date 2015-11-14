@@ -2,25 +2,15 @@ package psp
 package impl
 
 import api._, std._
-import HashEq.natural
 
 trait PrimitiveInstances {
-  implicit def boolEq: HashEq[Bool]     = natural()
-  implicit def byteEq: HashEq[Byte]     = natural()
-  implicit def charEq: HashEq[Char]     = natural()
-  implicit def doubleEq: HashEq[Double] = natural()
-  implicit def floatEq: HashEq[Float]   = natural()
-  implicit def intEq: HashEq[Int]       = natural()
-  implicit def longEq: HashEq[Long]     = natural()
-  implicit def shortEq: HashEq[Short]   = natural()
-  implicit def unitEq: HashEq[Unit]     = natural()
-
   implicit def boolOrder: Order[Bool]   = orderBy[Bool](x => if (x) 1 else 0)
   implicit def byteOrder: Order[Byte]   = Order.fromInt(_ - _)
   implicit def charOrder: Order[Char]   = Order.fromInt[Char](_ - _)
+  implicit def shortOrder: Order[Short] = Order.fromInt[Short](_ - _)
   implicit def intOrder: Order[Int]     = Order.fromInt[Int](_ - _)
   implicit def longOrder: Order[Long]   = Order.fromLong[Long](_ - _)
-  implicit def shortOrder: Order[Short] = Order.fromInt[Short](_ - _)
+  implicit def unitOrder: Order[Unit]   = Order.fromInt[Unit]((x, y) => 0)
 }
 
 trait AlgebraInstances {
@@ -48,7 +38,7 @@ trait OrderInstances extends OrderInstancesLow {
   implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A] = orderBy[A](_.ordinal) // Order.fromInt[A](_.ordinal - _.ordinal)
 
   implicit def indexOrder: Order[Index]                                     = orderBy[Index](_.get)
-  implicit def preciseOrder[A <: Precise] : Order[A]                        = orderBy[A](_.value)
+  implicit def preciseOrder[A <: Precise]: Order[A]                         = orderBy[Precise](_.longValue)
   implicit def stringOrder: Order[String]                                   = Order.fromLong[String](_ compareTo _)
   implicit def tuple2Order[A: Order, B: Order] : Order[(A, B)]              = orderBy[(A, B)](fst) | snd
   implicit def tuple3Order[A: Order, B: Order, C: Order] : Order[(A, B, C)] = orderBy[(A, B, C)](_._1) | (_._2) | (_._3)
@@ -62,8 +52,8 @@ trait EmptyInstances extends EmptyInstances0 {
   implicit def emptyBaseView[A, Repr] : Empty[BaseView[A, Repr]]    = Empty(new DirectView(Direct()))
   implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]   = Empty(z build Each.empty)
   implicit def emptyCacheBuilder[K, V] : Empty[cache.Builder[K, V]] = Empty(cache.newBuilder[K, V]())
-  implicit def emptyExMap[K: HashEq, V] : Empty[ExMap[K, V]]        = Empty(exMap[K, V]())
-  implicit def emptyExSet[A: HashEq] : Empty[ExSet[A]]              = Empty(exSet[A]())
+  implicit def emptyExMap[K: Eq, V] : Empty[ExMap[K, V]]            = Empty(exMap[K, V]())
+  implicit def emptyExSet[A: Eq] : Empty[ExSet[A]]                  = Empty(exSet[A]())
   implicit def emptyInMap[K, V] : Empty[InMap[K, V]]                = Empty(inMap[K, V](false, _ => noSuchElementException("empty map")))
   implicit def emptyInSet[A] : Empty[InSet[A]]                      = Empty(inSet[A](false))
   implicit def emptyJavaList[A] : Empty[jList[A]]                   = Empty(jList[A]())
@@ -77,18 +67,16 @@ trait EmptyInstances extends EmptyInstances0 {
   implicit def emptyIndex: Empty[Index]           = Empty(NoIndex)
   implicit def emptyIndexRange: Empty[IndexRange] = Empty(indexRange(0, 0))
   implicit def emptyPath: Empty[Path]             = Empty(NoPath)
-  implicit def emptyShown: Empty[Shown]           = Empty(Shown.empty)
+  implicit def emptyDoc: Empty[Doc]               = Empty(Doc.NoDoc)
   implicit def emptyString: Empty[String]         = Empty("")
 }
 
-trait EqInstances {
-  implicit def indexEq: HashEq[Index]           = natural()
-  implicit def jTypeEq: HashEq[jType]           = natural()
-  implicit def offsetEq: HashEq[Offset]         = natural()
-  implicit def pathEq: HashEq[Path]             = hashEqBy[Path](_.toString)
-  implicit def policyClassEq: HashEq[JavaClass] = natural()
-  implicit def sizeEq: HashEq[Size]             = HashEq(Size.equiv, Size.hash)
-  implicit def stringEq: HashEq[String]         = natural()
+trait EqInstances extends OrderInstances {
+  implicit def jTypeEq: Eq[jType]           = NaturalEq
+  implicit def offsetEq: Eq[Offset]         = NaturalEq
+  implicit def pathEq: Eq[Path]             = eqBy[Path](_.any_s)
+  implicit def policyClassEq: Eq[JavaClass] = NaturalEq
+  implicit def sizeEq: Eq[Size]             = Eq(Size.equiv)
 
   /** The throwableEq defined above conveniently conflicts with the actual
    *  implicit parameter to the method. W... T... F. On top of this the error
@@ -102,13 +90,12 @@ trait EqInstances {
 
   // Since Sets are created with their own notion of equality, you can't pass
   // an Eq instance. Map keys are also a set.
-  implicit def arrayHashEq[A: HashEq] : HashEq[Array[A]]       = hashEqBy[Array[A]](_.toDirect)
-  implicit def vectorHashEq[A: Eq] : HashEq[Direct[A]]         = HashEq((xs, ys) => (xs.toScalaVector corresponds ys.toScalaVector)(_ === _), _.toScalaVector.##)
-  implicit def exSetEq[A] : Eq[ExSet[A]]                       = Eq(symmetrically[ExSet[A]](_ isSubsetOf _))
-  implicit def exMapEq[K, V: Eq] : Eq[ExMap[K, V]]             = Eq((xs, ys) => xs.domain === ys.domain && (equalizer(xs.apply, ys.apply) forall xs.domain))
-  implicit def tuple2Eq[A: HashEq, B: HashEq] : HashEq[(A, B)] = HashEq[(A, B)]({ case ((x1, y1), (x2, y2)) => x1 === x2 && y1 === y2 }, x => x._1.hash + x._2.hash)
+  implicit def arrayEq[A: Eq] : Eq[Array[A]]       = eqBy[Array[A]](_.toDirect)
+  implicit def vectorEq[A: Eq] : Eq[Direct[A]]     = Eq(_ zip _ corresponds (_ === _))
+  // implicit def exSetEq[A] : Eq[ExSet[A]]           = Eq(symmetrically[ExSet[A]](_ isSubsetOf _))
+  // implicit def exMapEq[K, V: Eq] : Eq[ExMap[K, V]] = Eq((xs, ys) => xs.domain === ys.domain && (equalizer(xs.apply, ys.apply) forall xs.domain))
 
-  implicit def equivFromOrder[A: Order] : Eq[A] = Eq[A](_ compare _ eq Cmp.EQ)
+  // implicit def tuple2Eq[A: Eq, B: Eq] : Eq[(A, B)] = Eq[(A, B)]((l, r) => fst(l) === fst(r) && snd(l) === snd(r))
 
   def equalizer[A, B: Eq](f: A => B, g: A => B): FunctionEqualizer[A, B] = new FunctionEqualizer(f, g)
   def symmetrically[A](f: Relation[A]): Relation[A]                      = (x, y) => f(x, y) && f(y, x)

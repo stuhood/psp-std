@@ -1,14 +1,17 @@
 package psp
 package std
 
-import api._
+import api._, StdEq._
 
 sealed abstract class CollectionSizeException(msg: String) extends RuntimeException(msg)
 final class InfiniteSizeException(msg: String) extends CollectionSizeException(msg)
 final class LongSizeException(msg: String) extends CollectionSizeException(msg)
 
 object Each {
-  def builder[A] : Builds[A, Each[A]] = Builds(identity)
+  final case class WrapJavaMap[K, V](xs: jMap[K, V]) extends AnyVal with Each[K -> V] {
+    def size = xs.size.size
+    @inline def foreach(f: ToUnit[K -> V]): Unit = xs.keySet foreach (k => f(k -> (xs get k)))
+  }
 
   final case class WrapJava[A](xs: jIterable[A]) extends AnyVal with Each[A] {
     def size = impl.Size(xs)
@@ -52,6 +55,9 @@ object Each {
   }
 
   final case class Sized[A](underlying: Each[A], override val size: Precise) extends Each[A] with HasPreciseSize {
+
+    // implicitly[Order[Precise]]
+
     def isEmpty = size.isZero
     @inline def foreach(f: A => Unit): Unit = {
       var count: Precise = 0.size
@@ -83,6 +89,7 @@ object Each {
   def continually[A](elem: => A): Continually[A]             = Continually[A](() => elem)
   def elems[A](xs: A*): Each[A]                              = apply[A](xs foreach _)
   def empty[A] : Each[A]                                     = Direct.Empty
+  def fromJavaMap[K, V](xs: jMap[K, V]): Each[K -> V]        = WrapJavaMap(xs)
   def fromJava[A](xs: jIterable[A]): Each[A]                 = WrapJava(xs)
   def fromScala[A](xs: sCollection[A]): Each[A]              = WrapScala(xs)
   def join[A](xs: Each[A], ys: Each[A]): Each[A]             = Joined[A](xs, ys)

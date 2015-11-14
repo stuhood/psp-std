@@ -1,7 +1,7 @@
 package psp
 package tests
 
-import psp._, std._, api._
+import psp._, std._, api._, StdShow._
 
 abstract class TestRunnerCommon {
   def scalaVersion: String
@@ -27,13 +27,13 @@ abstract class TestRunnerCommon {
   )
 
   def wrapRun(b: Bundle): Boolean = Try(b.run) fold (
-    t => andFalse(println(s"Caught $t running $b"), t.printStackTrace),
+    t => andFalse(println(show"Caught $t running $b"), t.printStackTrace),
     identity
   )
 
   def main(args: Array[String]): Unit = {
     (bundles filter shouldRun).byEquals mapOnto wrapRun filterValues (x => !x) match {
-      case ExMap()        => println("\nAll tests passed.")
+      case ExMap()        => println(pp"\nAll tests passed.")
       case ExMap(ks @ _*) => println("Some tests failed in bundles: " + ks.mkString(", ")) ; throw new Exception
     }
   }

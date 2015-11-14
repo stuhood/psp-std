@@ -38,14 +38,14 @@ object RgbMap {
     val pairs = palette.indices map { idx =>
       val rgb = palette(idx)
       def dist(key: ColorName) = lookup(key) distanceTo rgb
-      val k = "%3s %s".format(idx, rgb.hex_s.to_s)
+      val k = "%3s %s".format(idx, rgb.hex_s.render)
       val v = keys.toScalaVector sortBy dist take 5 map { k =>
         val s = Ansi(38, 5, idx.getInt)(k.name)
         "%8s  %s%s".format("%.3f" format dist(k), s, " " * (20 - k.name.length))
       }
       k -> (v mkString "  ")
     }
-    pairs.toExMap.to_s
+    pairs.toExMap.render
   }
 
   def ShowRgbMap2: Show[RgbMap] = Show[RgbMap] { x =>
@@ -58,7 +58,7 @@ object RgbMap {
 
       k -> show"#$v1 => $index $v2 ($distance)"
     }
-    pairs.toExMap.to_s
+    pairs.toExMap.render
   }
 }
 
@@ -67,7 +67,7 @@ object RGB {
 
   def hexN(value: Int, digits: Int): String = value.hex |> (s => "%s%s".format("0" * (digits - s.length), s))
 
-  implicit def ShowRGB: Show[RGB] = Show[RGB](_.hex_s.to_s)
+  implicit def ShowRGB: Show[RGB] = Show[RGB](_.hex_s.render)
   implicit def ReadRGB: Read[RGB] = Read[RGB](s => if (s.words.length == 1) ReadRGBHex1 read s else ReadRGBDec3 read s)
 
   def ReadRGBHex1: Read[RGB] = Read[RGB](s => fromBits(("0x" + s).toInt))

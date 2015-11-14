@@ -4,11 +4,20 @@ package std
 import api._, Lookup._
 
 object ExMap {
-  type BuildsMap[K, V] = Builds[K -> V, ExMap[K, V]]
-
-  def builder[K : HashEq, V] : BuildsMap[K, V]              = Direct.builder[K -> V] map (kvs => new Impl(kvs.zipView.lefts.toExSet, Lookup(kvs.toPartial)))
   def apply[K, V](keys: ExSet[K], pf: K ?=> V): ExMap[K, V] = new Impl(keys, Lookup(pf))
-  def unapplySeq[K, V](map: ExMap[K, V]): Some[sciSeq[K]]   = Some(map.keyVector.toScalaSeq)
+  def fromJava[K, V](xs: jMap[K, V]): ExMap[K, V]           = new Impl(xs.keySet.toEqualsSet, Lookup.total(xs get _))
+  def fromScala[K, V](xs: scMap[K, V]): ExMap[K, V]         = xs.toMap |> (xs => new Impl(xs.keys.toEqualsSet, Lookup(xs)))
+
+  // def fromGuava[K, V](xs: gMap[K, V]): ExMap[K, V]         = new FromGuava(xs)
+
+  // final class FromGuava[K, V](xs: gMap[K, V]) extends ExMap[K, V] {
+  //   val domain: ExSet.FromGuava[K]       = ExSet fromGuava xs.keySet
+  //   def apply(x: K): V                   = xs get x
+  //   def foreach(f: ToUnit[K -> V]): Unit = domain foreach (k => f(k -> (xs get k)))
+  //   def size: Precise                    = domain.size
+  // }
+
+  def unapplySeq[K, V](map: ExMap[K, V]): Some[sciSeq[K]] = Some(map.keyVector.toScalaSeq)
   def impl[K, V](xs: ExMap[K, V]): Impl[K, V] = xs match {
     case xs: Impl[K, V] => xs
     case _              => new Impl(xs.domain, Lookup(xs))
@@ -18,10 +27,10 @@ object ExMap {
     type Entry          = K -> V
     type NewMap[K1, V1] = ExMap[K1, V1]
 
-    protected[this] def newDomain(p: ToBool[K])                                              = domain filter p
+    protected[this] def newDomain(p: ToBool[K])                                                 = domain filter p
     protected[this] def newMap[K1, V1](domain: ExSet[K1], lookup: Lookup[K1, V1]): Impl[K1, V1] = new Impl(domain, lookup)
 
-    def +(key: K, value: V): This             = newMap(domain + key, lookup.put(key, value)(domain.hashEq))
+    def +(key: K, value: V): This             = newMap(domain + key, lookup.put(key, value)(domain.eqs))
     def entries: View[Entry]                  = keys mapZip lookup
     def foreach(f: (K -> V) => Unit): Unit    = foreachKey(k => f(k -> apply(k)))
     def foreachEntry(f: (K, V) => Unit): Unit = foreachKey(k => f(k, apply(k)))
@@ -66,7 +75,7 @@ object InMap {
   final class Impl[K, V](domain: InSet[K], lookup: Lookup[K, V]) extends InMapImpl[InSet, K, V](domain, lookup) with InMap[K, V] {
     type NewMap[K1, V1] = InMap[K1, V1]
 
-    protected[this] def newDomain(p: ToBool[K])                                              = domain filter p
+    protected[this] def newDomain(p: ToBool[K])                                                 = domain filter p
     protected[this] def newMap[K1, V1](domain: InSet[K1], lookup: Lookup[K1, V1]): Impl[K1, V1] = new Impl(domain, lookup)
   }
 }

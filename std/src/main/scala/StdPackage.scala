@@ -14,8 +14,7 @@ import psp.dmz.PolicyDmz
  *  like inheritance, specificity, method dispatch, and so forth.
  */
 abstract class StdPackage
-      extends impl.OrderInstances
-         with impl.EmptyInstances
+      extends impl.EmptyInstances
          with impl.PrimitiveInstances
          with StdProperties
          with impl.AlgebraInstances
@@ -29,6 +28,8 @@ abstract class StdPackage
   // Higher than Direct.
   implicit def arraySpecificOps[A](xs: Array[A]): ops.ArraySpecificOps[A] = new ops.ArraySpecificOps[A](xs)
 
+  implicit def pairedCollectionOps0[R, A, B](xs: View[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B] = new Paired[R, A, B](xs.toEach)
+  implicit def pairedCollectionOps[R, A, B](xs: Each[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B]  = new Paired[R, A, B](xs)
   // implicit class JavaMap[K, V](val xs: jMap[K, V]) {
   //   def apply(k: K): V = xs get k
   // }
@@ -43,7 +44,7 @@ abstract class StdPackage
   implicit class ApiOrderOps[A](val ord: Order[A]) {
     def |[B: Order](f: A => B): Order[A] = Order((x, y) => ord.compare(x, y) || ?[Order[B]].compare(f(x), f(y)))
     def toEq: Eq[A]                      = Eq[A]((x, y) => ord.compare(x, y) == Cmp.EQ)
-    def toHashEq: HashEq[A]              = HashEq natural toEq
+    // def toHashEq: HashEq[A]              = HashEq natural toEq
     def reverse: Order[A]                = Order[A]((x, y) => ord.compare(x, y).flip)
     def on[B](f: B => A): Order[B]       = Order[B]((x, y) => ord.compare(f(x), f(y)))
   }
@@ -63,7 +64,7 @@ abstract class StdPackage
   implicit class SameTuple2Ops[A](val x: (A, A)) {
     def seq: Direct[A] = Direct(x._1, x._2)
   }
-  implicit class AnyTargetSeqOps[A: HashEq](root: A) {
+  implicit class AnyTargetSeqOps[A: Eq](root: A) {
     def transitiveClosure(expand: A => View[A]): View[A] = inView { f =>
       var seen = exSet[A]()
       def loop(root: A, f: A => Unit): Unit = if (!seen(root)) {

@@ -104,8 +104,8 @@ trait JavaLibrary extends Any {
   type jClass                                  = java.lang.Class[_]
   type jClassLoader                            = java.lang.ClassLoader
   type jCollection[A]                          = java.util.Collection[A]
-  type jConcurrentMap[K, V]                    = java.util.concurrent.ConcurrentMap[K, V]
   type jConcurrentHashMap[K, V]                = java.util.concurrent.ConcurrentHashMap[K, V]
+  type jConcurrentMap[K, V]                    = java.util.concurrent.ConcurrentMap[K, V]
   type jDate                                   = java.util.Date
   type jEnum[E <: jEnum[E]]                    = java.lang.Enum[E]
   type jEnumeration[A]                         = java.util.Enumeration[A]
@@ -125,6 +125,7 @@ trait JavaLibrary extends Any {
   type jList[A]                                = java.util.List[A]
   type jLocale                                 = java.util.Locale
   type jManifest                               = java.util.jar.Manifest
+  type jMapEntry[K, V]                         = java.util.Map.Entry[K, V]
   type jMap[K, V]                              = java.util.Map[K, V]
   type jMethod                                 = java.lang.reflect.Method
   type jPackage                                = java.lang.Package
@@ -132,6 +133,10 @@ trait JavaLibrary extends Any {
   type jProperties                             = java.util.Properties
   type jReader                                 = java.io.Reader
   type jSet[A]                                 = java.util.Set[A]
+  type jSortedMap[K, V]                        = java.util.SortedMap[K, V]
+  type jSortedSet[A]                           = java.util.SortedSet[A]
+  type jTreeMap[K, V]                          = java.util.TreeMap[K, V]
+  type jTreeSet[A]                             = java.util.TreeSet[A]
   type jType                                   = java.lang.reflect.Type
   type jTypeVar                                = jTypeVariable[_] // <: jGenericDeclaration]
   type jTypeVariable[D <: jGenericDeclaration] = java.lang.reflect.TypeVariable[D]

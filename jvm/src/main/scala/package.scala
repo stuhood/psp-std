@@ -3,7 +3,7 @@ package std
 
 import api._
 import javax.tools._, Diagnostic.Kind, JavaFileManager.Location
-import StdShow._
+import StdShow._, StdEq._
 import psp.std.token.Keyword
 
 package jvm {

@@ -7,13 +7,8 @@ import Api._
 
 /** The classic type classes for encoding value equivalence and hash codes.
  */
-trait Eq[-A]     extends Any                         { def equiv(x: A, y: A): Boolean }
-trait Hash[-A]   extends Any                         { def hash(x: A): Int            }
-trait HashEq[-A] extends Any with Hash[A] with Eq[A]
-
-/** The classic type class for turning typed values into string representations.
- */
-trait Show[-A] extends Any { def show(x: A): String }
+trait Eq[-A]   extends Any { def equiv(x: A, y: A): Boolean }
+trait Hash[-A] extends Any { def hash(x: A): Int            }
 
 /** The original type class for providing the "empty" value of a particular type.
  *  Suitable only for types with a unique (useful) definition of empty - but that's
@@ -21,16 +16,25 @@ trait Show[-A] extends Any { def show(x: A): String }
  */
 trait Empty[+A] extends Any { def empty: A }
 
-/** The collections builder type class. Not especially classic in this presentation.
+/** Back and forth between a Repr and an Each[A].
+ *  Not especially classic in this presentation.
  */
-trait Builds[-Elem, +To] extends Any { def build(xs: Each[Elem]): To }
+trait Builds[-Elem, +To]    extends Any { def build(xs: Each[Elem]): To     }
+trait Unbuilds[+Elem, Repr] extends Any { def unbuild(xs: Repr): Each[Elem] }
+
+/** Some monadic ops.
+ */
+trait Flatten[M[X]] extends Any { def flatten[A](xss: M[M[A]]): M[A] }
 
 /** Contravariance vs. implicits, the endless battle.
  *  We return a java three-value enum from compare in preference
  *  to a wild stab into the `2^32` states of an Int. This is a
  *  controversial thing to do, in the year 2014. Not joking.
  */
-trait Order[-A] extends Any { def compare(x: A, y: A): Cmp }
+trait Order[-A] extends Any with Eq[A] {
+  def compare(x: A, y: A): Cmp
+  def equiv(x: A, y: A): Boolean = compare(x, y) == Cmp.EQ
+}
 
 /** Type classes and extractors for composing and decomposing an R into A -> B.
  *  Somewhat conveniently for us, "cleave" is a word which has among its meanings

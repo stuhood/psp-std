@@ -2,7 +2,26 @@ package psp
 package std
 
 import api._
-import StdEq.stringEq
+import StdShow._
+
+class FullRenderer extends Renderer {
+  def minElements: Precise = 3.size
+  def maxElements: Precise = 10.size
+
+  def renderEach(xs: Each[Doc]): String = "[ " + (xs splitAt maxElements.lastIndex match {
+    case Split(xs, ys) if ys.isEmpty => xs map (_.render) mk_s ", "
+    case Split(xs, _)                => (xs take minElements map (_.render) mk_s ", ") + ", ..."
+  }) + " ]"
+
+
+  def render(x: Doc): String = x match {
+    case Doc.NoDoc           => ""
+    case Doc.Cat(l, r)       => render(l) + render(r)
+    case Doc.Group(xs)       => renderEach(xs)
+    case Doc.Shown(value, z) => z show value
+    case Doc.Literal(s)      => s
+  }
+}
 
 final class Label(val label: String) extends AnyVal {
   def matches(r: Regex)   = r isMatch label
@@ -21,57 +40,22 @@ object Label {
   def apply(s: String) = new Label(s)
 }
 
-/** When a type class is more trouble than it's worth.
- *  Not overriding toString here to leave open the possibility of
- *  using a synthetic toString, e.g. of case classes.
- */
-trait ShowDirect extends Any { def to_s: String }
-trait ForceShowDirect extends Any with ShowDirect {
-  override def toString = to_s
-}
-
-class TryShow[-A](shows: Show[A]) {
-  def show(x: A): String = if (shows == null) "" + x else shows show x
-}
-object TryShow {
-  implicit def apply[A](implicit z: Show[A] = Show.natural()): TryShow[A] = new TryShow[A](z)
-}
-final case class TryShown(__shown_rep: String) extends AnyVal {
-  override def toString = __shown_rep
-}
-
-/** Used to achieve type-safety in the show interpolator.
- *  It's the String resulting from passing a value through its Show instance.
- */
-final case class Shown(to_s: String) extends AnyVal with ForceShowDirect {
-  def ~ (that: Shown): Shown = new Shown(to_s + that.to_s)
-}
-
-object Shown {
-  def empty: Shown             = new Shown("")
-  def apply(ss: Shown*): Shown = ss.m zreduce (_ ~ _)
-}
-
-final class ShowDirectOps(val x: ShowDirect) extends AnyVal {
-  /** Java-style String addition without abandoning type safety.
-   */
-  def + (that: ShowDirect): ShowDirect                = Shown(x.to_s + that.to_s)
-  def + [A](that: A)(implicit z: Show[A]): ShowDirect = Shown(x.to_s + (z show that))
-}
-
 final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
+  def escapedParts    = stringContext.parts map (_.processEscapes)
+  def escaped: String = escapedParts mk_s ""
+
   /** The type of args forces all the interpolation variables to
-   *  be of a type which is implicitly convertible to Shown, which
-   *  means they have a Show[A] in scope.
+   *  be of a type which is implicitly convertible to Doc.
    */
-  def show(args: Shown*): String  = StringContext(stringContext.parts: _*).raw(args: _*)
-  def pp(args: TryShown*): String = StringContext(stringContext.parts: _*).raw(args: _*)
-  def shown(args: Shown*): Shown  = Shown(show(args: _*))
+
+  def show(args: Doc*): String  = StringContext(stringContext.parts: _*).raw(args.map(_.render): _*)
+  def pp(args: TryDoc*): String = show(args.map(_.doc): _*)
+  def doc(args: TryDoc*): Doc   = Doc.Literal(pp(args: _*))
 
   /** Can't see any way to reuse the standard (type-safe) f-interpolator, will
    *  apparently have to reimplement it entirely.
    */
-  def fshow(args: Shown*): String = (stringContext.parts map (_.processEscapes) mkString "").format(args: _*)
+  def fshow(args: Doc*): String = escaped.format(args.map(_.render): _*)
 
   final def sm(args: Any*): String = {
     def isLineBreak(c: Char) = c == '\n' || c == '\f' // compatible with StringLike#isLineBreak
@@ -86,45 +70,6 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
       case Nil          => Nil
     }
     (new StringContext(stripped: _*).raw(args: _*)).trim
-  }
-}
-
-trait ShowCollections {
-  def showZipped[A1: Show, A2: Show](xs: ZipView[A1, A2]): String
-  def showPair[A1: Show, A2: Show](x: A1 -> A2): String
-  def showEach[A: Show](xs: Each[A]): String
-  def showMap[K: Show, V: Show](xs: InMap[K, V]): String
-  def showSet[A: Show](xs: InSet[A]): String
-  def showJava[A: Show](xs: jIterable[A]): String
-  def showScala[A: Show](xs: sCollection[A]): String
-}
-object ShowCollections {
-  implicit object DefaultShowCollections extends DefaultShowCollections
-
-  class DefaultShowCollections extends ShowCollections {
-    def maxElements = Precise(10)
-    def minElements = Precise(3)
-
-    private def internalEach[A: Show](xs: Each[A]): String = Each.show[A](xs, minElements, maxElements)
-
-    def showZipped[A1: Show, A2: Show](xs: ZipView[A1, A2]): String =
-      showEach[String](xs.pairs map showPair[A1, A2])(Show.natural())
-
-    def showPair[A1: Show, A2: Show](x: A1 -> A2): String = fst(x).to_s + " -> " + snd(x).to_s
-    def showEach[A: Show](xs: Each[A]): String = xs match {
-      case xs: InSet[_] => showSet(xs.castTo[InSet[A]]) // not matching on InSet[A] due to lame patmat warning
-      case _            => "[ " ~ internalEach[A](xs) ~ " ]"
-    }
-    def showMap[K: Show, V: Show](xs: InMap[K, V]): String = xs match {
-      case xs: ExMap[K, V] => xs.entries.tabular(x => fst(x).to_s, _ => "->", x => snd(x).to_s)
-      case xs              => s"$xs"
-    }
-    def showSet[A: Show](xs: InSet[A]): String = xs match {
-      case xs: ExSet[A] => "{ " ~ internalEach[A](xs) ~ " }"
-      case _            => InSet show xs
-    }
-    def showJava[A: Show](xs: jIterable[A]): String    = "j[ " ~ internalEach(Each fromJava xs) ~ " ]"
-    def showScala[A: Show](xs: sCollection[A]): String = "s[ " ~ internalEach(Each fromScala xs) ~ " ]"
   }
 }
 
@@ -147,23 +92,29 @@ object Show {
  *  Not printing the way scala does.
  */
 trait ShowInstances extends ShowEach {
-  implicit def showAttributeName : Show[jAttributeName]       = Show.natural()
-  implicit def showBoolean: Show[Boolean]                     = Show.natural()
-  implicit def showChar: Show[Char]                           = Show.natural()
-  implicit def showDouble: Show[Double]                       = Show.natural()
-  implicit def showInt: Show[Int]                             = Show.natural()
-  implicit def showLong: Show[Long]                           = Show.natural()
-  implicit def showPath: Show[Path]                           = Show.natural()
-  implicit def showScalaNumber: Show[ScalaNumber]             = Show.natural()
-  implicit def showString: Show[String]                       = Show.natural()
+  // implicit def showDoc(implicit z: Renderer): Show[Doc] = Show(z render _)
+  implicit def showTryDoc : Show[TryDoc] = Show {
+    case TryDoc.NoDoc(value, _) => value.any_s
+    case TryDoc.HasDoc(x)       => x.render
+  }
+  implicit def showAttributeName : Show[jAttributeName] = Show.natural()
+  implicit def showBoolean: Show[Boolean]               = Show.natural()
+  implicit def showChar: Show[Char]                     = Show.natural()
+  implicit def showDouble: Show[Double]                 = Show.natural()
+  implicit def showInt: Show[Int]                       = Show.natural()
+  implicit def showLong: Show[Long]                     = Show.natural()
+  implicit def showPath: Show[Path]                     = Show.natural()
+  implicit def showScalaNumber: Show[ScalaNumber]       = Show.natural()
+  implicit def showString: Show[String]                 = Show.natural()
 
   implicit def showClass: Show[jClass]                        = Show(_.shortName)
   implicit def showDirect: Show[ShowDirect]                   = Show(_.to_s)
   implicit def showIndex: Show[Index]                         = showBy(_.get)
   implicit def showNth: Show[Nth]                             = showBy[Nth](_.nth)
-  implicit def showOption[A: Show] : Show[Option[A]]          = Show(_.fold("-")(_.to_s))
+  implicit def showOption[A: Show] : Show[Option[A]]          = Show(_.fold("-")(_.render))
   implicit def showStackTraceElement: Show[StackTraceElement] = Show("\tat" + _ + "\n")
-  implicit def showPair[A: Show, B: Show] : Show[A -> B]      = Show(x => x._1 ~ " -> " ~ x._2 to_s)
+  implicit def showPair[A: Show, B: Show] : Show[A -> B]      = Show(x => x._1 ~ " -> " ~ x._2 render)
+  implicit def showThrowable: Show[Throwable]                 = Show(x => "" + x)
 
   implicit def showSize: Show[Size] = Show[Size] {
     case IntSize(size)         => show"$size"
@@ -175,17 +126,17 @@ trait ShowInstances extends ShowEach {
 }
 
 trait ShowEach0 {
-  implicit def showView[A: Show](implicit z: ShowCollections): Show[View[A]] = Show(xs => z showEach xs.toEach)
-  implicit def showEach[A: Show](implicit z: ShowCollections): Show[Each[A]] = Show(xs => z showEach xs)
+  implicit def showView[A: Show](implicit z: FullRenderer): Show[View[A]] = showBy[View[A]](z renderEach _.toEach.map(_.doc))
 }
 trait ShowEach1 extends ShowEach0 {
-  implicit def showZipped[A1: Show, A2: Show](implicit z: ShowCollections): Show[ZipView[A1, A2]]              = Show(z.showZipped[A1, A2])
-  implicit def showMap[K: Show, V: Show, CC[X, Y] <: InMap[X, Y]](implicit z: ShowCollections): Show[CC[K, V]] = Show(z.showMap[K, V])
-  implicit def showSet[A: Show, CC[X] <: InSet[X]](implicit z: ShowCollections): Show[CC[A]]                   = Show(z.showSet[A])
-  implicit def showJava [A: Show, CC[X] <: jIterable[X]](implicit z: ShowCollections): Show[CC[A]]             = Show(z.showJava[A])
-  implicit def showScala[A: Show, CC[X] <: sCollection[X]](implicit z: ShowCollections): Show[CC[A]]           = Show(z.showScala[A])
+  implicit def showEach[A: Show](implicit z: FullRenderer): Show[Each[A]] = Show(xs => z renderEach (xs map (_.doc)))
 }
 trait ShowEach extends ShowEach1 {
-  implicit def showJavaEnum[A <: jEnum[A]] : Show[jEnum[A]]                    = Show.natural()
-  implicit def showArray[A: Show](implicit z: ShowCollections): Show[Array[A]] = showBy[Array[A]](Direct.fromArray)
+  implicit def showMap[K: Show, V: Show, CC[X, Y] <: InMap[X, Y]] : Show[CC[K, V]] = Show {
+    case xs: ExMap[K, V] => xs.entries.tabular(x => fst(x).render, _ => "->", x => snd(x).render)
+    case xs              => s"$xs"
+  }
+  implicit def showZipped[A1: Show, A2: Show] : Show[ZipView[A1, A2]] = showBy[ZipView[A1, A2]](_.pairs)
+  implicit def showArray[A: Show] : Show[Array[A]] = showBy[Array[A]](Direct.fromArray)
+  implicit def showJavaEnum[A <: jEnum[A]] : Show[jEnum[A]] = Show.natural()
 }

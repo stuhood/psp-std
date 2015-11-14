@@ -25,9 +25,9 @@ package object ansi extends BasicAtoms[Ansi] {
     new RgbMap(map.keyVector, x => map(x), palette)
   }
 
-  implicit def eqColorString: HashEq[ColorString]                 = HashEq.natural()
+  implicit def eqColorString: Eq[ColorString]                     = NaturalEq
   implicit def emptyColorString: Empty[ColorString]               = Empty(ColorString(""))
-  implicit def colorNameEq: HashEq[ColorName]                     = HashEq.natural()
+  implicit def colorNameEq: Eq[ColorName]                         = NaturalEq
   implicit def implicitStringOps(x: String): TextOps              = new TextOps(x)
   implicit def implicitColorStringOps(x: ColorString): ColoredOps = new ColoredOps(x)
   implicit def implicitLiftAnsiAtom(c: Atom): Ansi                = Ansi(c)

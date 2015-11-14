@@ -2,7 +2,7 @@ package psp
 package std
 package pio
 
-import api._, StdEq._
+import api._, StdEq._, StdShow._
 
 final class PolicyLoader(val classMap: ExMap[String, Bytes]) extends ClassLoader {
   private val keys        = classMap.domain.toDirect
@@ -26,7 +26,7 @@ final class PolicyLoader(val classMap: ExMap[String, Bytes]) extends ClassLoader
 
   private def doDefine(name: String): jClass = try define(name) catch {
     case t: LinkageError => errorMap(name) = t ; null
-    case t: Throwable    => println(s"Caught $t") ; null
+    case t: Throwable    => println(pp"Caught $t") ; null
   }
 
   override def findClass(name: String): jClass = instanceMap.getOrElse(name,

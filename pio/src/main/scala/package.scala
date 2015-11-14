@@ -42,7 +42,7 @@ package object pio {
   def installedProviders: View[FileSystemProvider]                           = java.nio.file.spi.FileSystemProvider.installedProviders.m
 
   object open extends Dynamic {
-    def applyDynamic(name: String)(args: TryShown*): String = Process(sciList("open", "-a", name) ++ args.map(_.try_s)).!!
+    def applyDynamic(name: String)(args: Doc*): String = Process(s"open -a $name".words.seq ++ args.map(_.render)).!!
   }
 
   implicit class JarOps(val jar: Jar) {
