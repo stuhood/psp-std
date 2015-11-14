@@ -1,9 +1,9 @@
 package psp
 package std
 
-import api._, Lookup._
+import api._
 
-trait MutableMap[K, V] extends Intensional[K, V] with AndThis {
+trait MutableMap[K, V] extends AndThis {
   def +=(kv: K -> V): this.type
   def -=(key: K): this.type
   def apply(key: K): V
@@ -23,10 +23,10 @@ trait MutableMap[K, V] extends Intensional[K, V] with AndThis {
 }
 
 object MutableMap {
-  def apply[K, V](jmap: jConcurrentMap[K, V]): WrapConcurrent[K, V]                         = apply[K, V](jmap, NoDefault)
-  def apply[K, V](jmap: jConcurrentMap[K, V], default: Default[K, V]): WrapConcurrent[K, V] = new WrapConcurrent(jmap, default)
+  def apply[K, V](jmap: jConcurrentMap[K, V]): WrapConcurrent[K, V]                     = apply[K, V](jmap, Fun.empty)
+  def apply[K, V](jmap: jConcurrentMap[K, V], default: Fun[K, V]): WrapConcurrent[K, V] = new WrapConcurrent(jmap, default)
 
-  final class WrapConcurrent[K, V](jmap: jConcurrentMap[K, V], default: Default[K, V]) extends MutableMap[K, V] {
+  final class WrapConcurrent[K, V](jmap: jConcurrentMap[K, V], default: Fun[K, V]) extends MutableMap[K, V] {
     def +=(kv: K -> V): this.type                        = andThis(jmap.put(kv._1, kv._2))
     def -=(key: K): this.type                            = andThis(jmap remove key)
     def apply(key: K): V                                 = get(key) | default(key)
@@ -41,7 +41,7 @@ object MutableMap {
     def replace(k: K, oldvalue: V, newvalue: V): Boolean = jmap.replace(k, oldvalue, newvalue)
     def replace(k: K, v: V): Option[V]                   = Option(jmap.replace(k, v))
     def update(key: K, value: V)                         = andThis(jmap.put(key, value))
-    def withDefaultFunction(f: K => V)                   = new WrapConcurrent(jmap, FunctionDefault(f))
-    def withDefaultValue(value: V)                       = new WrapConcurrent(jmap, ConstantDefault(value))
+    def withDefaultFunction(f: K => V)                   = new WrapConcurrent(jmap, Fun(f))
+    def withDefaultValue(value: V)                       = new WrapConcurrent(jmap, Fun const value)
   }
 }

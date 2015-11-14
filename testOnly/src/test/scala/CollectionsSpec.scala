@@ -20,7 +20,6 @@ class SizeSpec extends ScalacheckBundle {
 
 class FunSpec extends ScalacheckBundle {
   def bundle = "Fun laws"
-  implicit def convert[A, B](f: Fun[A, B]): A ?=> B = f.toPartial
 
   val f1 = Fun((_: Int) * 2)
   val f2 = f1 mapOut (_ * 3)
