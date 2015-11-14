@@ -119,7 +119,7 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] with ByOps[A] {
   def indexOf(x: A)(implicit z: Eq[A]): Index                 = indexWhere (_ === x)
   def indicesOf(x: A)(implicit z: Eq[A]): View[Index]         = indicesWhere (_ === x)
   def mapOnto[B](f: A => B)(implicit z: Eq[A]): ExMap[A, B]   = xs.toExSet mapOnto f
-  def toBag(implicit z: Eq[A]): Bag[A]                        = xs groupBy identity map (_.size) toExMap
+  def toBag(implicit z: Eq[A]): Bag[A]                        = xs groupBy identity map (_.size)
   def without(x: A)(implicit z: Eq[A]): View[A]               = xs filterNot (_ === x)
   def withoutEmpty(implicit z: Empty[A], eqs: Eq[A]): View[A] = xs without z.empty
 
@@ -245,7 +245,7 @@ class HasEq[A](xs: View[A])(implicit z: Eq[A]) {
   def indexOf(x: A): Index                        = xs indexWhere (_ === x)
   def indicesOf(x: A): View[Index]                = xs indicesWhere (_ === x)
   def mapOnto[B](f: A => B): ExMap[A, B]          = toSet mapOnto f
-  def toBag: Bag[A]                               = xs groupBy identity map (_.size) toExMap
+  def toBag: Bag[A]                               = xs groupBy identity map (_.size)
   def toSet: ExSet[A]                             = xs.toExSet
   def without(x: A): View[A]                      = xs filterNot (_ === x)
   def withoutEmpty(implicit z: Empty[A]): View[A] = this without z.empty
