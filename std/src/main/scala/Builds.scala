@@ -12,14 +12,6 @@ package std
  *  The rest of the time one should write it K -> V.
  */
 import api._
-import com.google.common.collect._
-
-object guavabuilder {
-  def mapBuilder[K, V](): ImmutableMap.Builder[K, V]                    = ImmutableMap.builder[K, V]
-  def setBuilder[A](): ImmutableSet.Builder[A]                          = ImmutableSet.builder[A]
-  def sortedMapBuilder[K: Order, V](): ImmutableSortedMap.Builder[K, V] = ImmutableSortedMap orderedBy ?[Order[K]].toComparator
-  def sortedSetBuilder[A: Order](): ImmutableSortedSet.Builder[A]       = ImmutableSortedSet orderedBy ?[Order[A]].toComparator
-}
 
 trait StdBuilds0 {
   implicit def buildsLinear[A] : Builds[A, Linear[A]]                                         = Builds.linear[A]
@@ -66,18 +58,13 @@ object Builds {
   def sMap[K, V, That](implicit z: CanBuild[scala.Tuple2[K, V], That]): Builds[K -> V, That] = apply(xs => z() doto (b => xs foreach (x => b += (fst(x) -> snd(x)))) result)
   def string(): Builds[Char, String]                                                         = apply(xs => new StringBuilder doto (b => xs foreach (c => b append c)) result)
 
-  def gSortedSet[A: Eq]: Builds[A, gSortedSet[A]]            = apply(gSetBuilder[A]() addAll _.iterator build)
-  def gSortedMap[K: Eq, V]: Builds[K -> V, gSortedMap[K, V]] = apply(xs => gMapBuilder[K, V]() doto (b => xs foreach (x => b.put(x._1, x._2))) build)
-
-  private def gMapBuilder[K: Eq, V](): ImmutableSortedMap.Builder[K, V]         = ImmutableSortedMap orderedBy Eq.eqComparator[K]()
-  private def gSetBuilder[A: Eq](): ImmutableSortedSet.Builder[A]               = ImmutableSortedSet orderedBy Eq.eqComparator[A]()
-  private def array[A](b: scmBuilder[A, Array[A]]): Builds[A, Array[A]]         = apply(b ++= _.trav result)
-  private def direct[A](b: scmBuilder[A, sciVector[A]]): Builds[A, Direct[A]]   = apply[A, sciVector[A]](xs => b doto (xs foreach _.+=) result) map Direct.fromScala
-  private def linear[A](b: scmBuilder[A, sciList[A]]): Builds[A, Linear[A]]     = apply[A, sciList[A]](xs => b doto (xs foreach _.+=) result) map Linear.fromScala
-  private def jList[A](js: jArrayList[A]): Builds[A, jList[A]]                  = apply(xs => js doto (js => xs foreach (js add _)))
-  private def jMap[K, V](js: jHashMap[K, V]): Builds[K -> V, jMap[K, V]]        = apply(xs => js doto (js => xs foreach (kv => js.put(fst(kv), snd(kv)))))
-  private def jSet[A](js: jHashSet[A]): Builds[A, jSet[A]]                      = apply(xs => js doto (js => xs foreach js.add))
-  private def jSortedSet[A](js: jTreeSet[A]): Builds[A, jSortedSet[A]]          = apply(xs => js doto (js => xs foreach js.add))
+  private def array[A](b: scmBuilder[A, Array[A]]): Builds[A, Array[A]]       = apply(b ++= _.trav result)
+  private def direct[A](b: scmBuilder[A, sciVector[A]]): Builds[A, Direct[A]] = apply[A, sciVector[A]](xs => b doto (xs foreach _.+=) result) map Direct.fromScala
+  private def linear[A](b: scmBuilder[A, sciList[A]]): Builds[A, Linear[A]]   = apply[A, sciList[A]](xs => b doto (xs foreach _.+=) result) map Linear.fromScala
+  private def jList[A](js: jArrayList[A]): Builds[A, jList[A]]                = apply(xs => js doto (js => xs foreach (js add _)))
+  private def jMap[K, V](js: jHashMap[K, V]): Builds[K -> V, jMap[K, V]]      = apply(xs => js doto (js => xs foreach (kv => js.put(fst(kv), snd(kv)))))
+  private def jSet[A](js: jHashSet[A]): Builds[A, jSet[A]]                    = apply(xs => js doto (js => xs foreach js.add))
+  private def jSortedSet[A](js: jTreeSet[A]): Builds[A, jSortedSet[A]]        = apply(xs => js doto (js => xs foreach js.add))
 
   private def jSortedMap[K, V](js: jTreeMap[K, V]): Builds[K -> V, jSortedMap[K, V]] =
     apply(xs => js doto (js => xs foreach (kv => js.put(fst(kv), snd(kv)))))
