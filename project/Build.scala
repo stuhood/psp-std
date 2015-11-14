@@ -4,7 +4,7 @@ package build
 import scala.Predef.{ conforms => _ }
 import sbt._, Keys._, psp.libsbt._, Deps._
 import psp.std._
-import scoverage.ScoverageKeys.coverageReport
+// import scoverage.ScoverageKeys.coverageReport
 
 object Build extends sbt.Build {
   // Assign settings logger here during initialization so it won't be garbage collected.
@@ -76,7 +76,7 @@ object Build extends sbt.Build {
   lazy val root = project.root.setup dependsOn (classpathDeps: _*) settings (
     initialize := { this.settingsLogger = (sLog in GlobalScope).value ; initialize.value },
     commands ++= Seq(
-      aggregateIn(coverageReport, compileOnly),
+      // aggregateIn(coverageReport, compileOnly),
       aggregateIn(clean, compileOnly),
       aggregateIn(compile in Compile, compileOnly),
       aggregateIn(test, testOnly),
