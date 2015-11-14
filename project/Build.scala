@@ -4,7 +4,7 @@ package build
 import scala.Predef.{ conforms => _ }
 import sbt._, Keys._, psp.libsbt._, Deps._
 import psp.std._
-import scoverage.ScoverageSbtPlugin.ScoverageKeys.coverageReport
+import scoverage.ScoverageKeys.coverageReport
 
 object Build extends sbt.Build {
   // Assign settings logger here during initialization so it won't be garbage collected.
