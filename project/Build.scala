@@ -90,10 +90,10 @@ object Build extends sbt.Build {
 
   lazy val api    = project setup "psp's non-standard api"
   lazy val dmz    = project setup "psp's non-standard dmz"
-  lazy val std    = project setup "psp's non-standard standard library" dependsOn (api, dmz) also (guava, spire, jsr305)
+  lazy val std    = project setup "psp's non-standard standard library" dependsOn (api, dmz) also (spire, jsr305)
   lazy val pio    = project setup "psp's non-standard io library" dependsOn std
   lazy val jvm    = project.usesCompiler.usesParsers setup "psp's non-standard jvm code" dependsOn pio
-  lazy val dev    = project setup "psp's non-standard unstable code" dependsOn std also (/*javaSysMon, */squants, okhttp)
+  lazy val dev    = project setup "psp's non-standard unstable code" dependsOn std also (guava, squants, okhttp)
   lazy val scalac = project.usesCompiler setup "psp's non-standard scalac-requiring code" dependsOn (pio, dev)
 
   lazy val publishOnly = project.helper.noSources aggregate (api, dmz, std, pio)
@@ -113,7 +113,7 @@ object Build extends sbt.Build {
     project.helper.usesCompiler.alsoToolsJar
     dependsOn (testOnly % "test->test")
     dependsOn (classpathDeps: _*)
-    also (guava, jsr305) settings (
+    also (jsr305) settings (
                       libraryDependencies <+=  scalaCompiler,
       scalacOptions in (Compile, console)  :=  replArgs,
          scalacOptions in (Test, console)  :=  replArgs,

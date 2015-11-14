@@ -22,10 +22,6 @@ package object std extends psp.std.StdPackage with psp.impl.CreateBy {
   type IndexRange            = Consecutive[Index]
   type IntRange              = Consecutive[Int]
   type BuildsMap[K, V]       = Builds[K -> V, ExMap[K, V]]
-  type gSet[A]               = com.google.common.collect.ImmutableSet[A]
-  type gMap[K, V]            = com.google.common.collect.ImmutableMap[K, V]
-  type gSortedSet[A]         = com.google.common.collect.ImmutableSortedSet[A]
-  type gSortedMap[K, V]      = com.google.common.collect.ImmutableSortedMap[K, V]
 
   val StringOrder   = orderBy[Any](_.any_s)
   val NaturalEq     = Eq[Any](_ == _)

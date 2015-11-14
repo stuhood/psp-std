@@ -1,6 +1,7 @@
 package psp
-package std
+package dev
 
+import std._
 import com.google.common.{ cache => guava }
 import guava.ForwardingLoadingCache.SimpleForwardingLoadingCache
 

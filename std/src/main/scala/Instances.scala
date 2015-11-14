@@ -51,7 +51,6 @@ trait EmptyInstances0 {
 trait EmptyInstances extends EmptyInstances0 {
   implicit def emptyBaseView[A, Repr] : Empty[BaseView[A, Repr]]    = Empty(new DirectView(Direct()))
   implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]   = Empty(z build Each.empty)
-  implicit def emptyCacheBuilder[K, V] : Empty[cache.Builder[K, V]] = Empty(cache.newBuilder[K, V]())
   implicit def emptyExMap[K: Eq, V] : Empty[ExMap[K, V]]            = Empty(exMap[K, V]())
   implicit def emptyExSet[A: Eq] : Empty[ExSet[A]]                  = Empty(exSet[A]())
   implicit def emptyInMap[K, V] : Empty[InMap[K, V]]                = Empty(inMap[K, V](false, _ => noSuchElementException("empty map")))

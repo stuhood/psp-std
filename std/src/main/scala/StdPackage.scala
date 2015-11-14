@@ -30,9 +30,7 @@ abstract class StdPackage
 
   implicit def pairedCollectionOps0[R, A, B](xs: View[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B] = new Paired[R, A, B](xs.toEach)
   implicit def pairedCollectionOps[R, A, B](xs: Each[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B]  = new Paired[R, A, B](xs)
-  // implicit class JavaMap[K, V](val xs: jMap[K, V]) {
-  //   def apply(k: K): V = xs get k
-  // }
+
   implicit class CleaveOps[R, A, B](xs: R)(implicit z: Pair.Cleave[R, A, B]) {
     def mapLeft(f: A => A): R  = z.join(f(z left xs), z right xs)
     def mapRight(f: B => B): R = z.join(z left xs, f(z right xs))
@@ -44,7 +42,6 @@ abstract class StdPackage
   implicit class ApiOrderOps[A](val ord: Order[A]) {
     def |[B: Order](f: A => B): Order[A] = Order((x, y) => ord.compare(x, y) || ?[Order[B]].compare(f(x), f(y)))
     def toEq: Eq[A]                      = Eq[A]((x, y) => ord.compare(x, y) == Cmp.EQ)
-    // def toHashEq: HashEq[A]              = HashEq natural toEq
     def reverse: Order[A]                = Order[A]((x, y) => ord.compare(x, y).flip)
     def on[B](f: B => A): Order[B]       = Order[B]((x, y) => ord.compare(f(x), f(y)))
   }

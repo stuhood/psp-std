@@ -15,7 +15,7 @@ the prefix where I can.
 
 The first four projects offer release artifacts on bintray. api and dmz each
 have no dependencies, but dmz is not intended for direct consumption: it's an
-implementation detail of std. std depends on api, dmz, spire and guava. pio
+implementation detail of std. std depends on api, dmz, spire. pio
 depends on std. None of the others is published for now.
 
 naming
