@@ -19,6 +19,7 @@ package object lowlevel {
       if (elem == last) return
     }
   }
+
   /** Here's the bytecode the above produces. We'd like a test which ensures it
    *  stays this way. There is some code in the scala distribution which verifies bytecode
    *  is as expected but it's still not the smoothest process. TODO: test.
@@ -67,8 +68,9 @@ package object lowlevel {
     res
   }
   final def foldRight[A, B](xs: Each[A], initial: B, f: (A, B) => B): B = {
-    var res = initial
-    xs foreachReverse (x => res = f(x, res))
+    val arr: Array[Ref[A]] = xs.toRefArray.inPlace.reverse.asInstanceOf[Array[Ref[A]]]
+    var res: B = initial
+    arr foreach (x => res = f(x, res))
     res
   }
 }

@@ -5,6 +5,7 @@ import api._
 import scala.{ collection => sc }
 import scala.Any
 import scala.math.Numeric
+import psp.std.{ lowlevel => ll }
 
 /** Implicits handling the way in and the way out of psp collections.
  */
@@ -118,12 +119,21 @@ trait StdOps extends StdOps3 {
 
 }
 
+
 trait StdUniversal0 {
   implicit def opsAny[A](x: A): ops.AnyOps[A] = new ops.AnyOps[A](x)
+  // Lower priority than the hand-specialized variations.
+  @inline final implicit def arrowAssocRef[A](x: A): ll.ArrowAssocRef[A] = new ll.ArrowAssocRef(x)
 }
 trait StdUniversal extends StdUniversal0 {
   // Prefer opsAnyRef over opsAny.
   implicit def opsAnyRef[A <: AnyRef](x: A): ops.AnyRefOps[A] = new ops.AnyRefOps[A](x)
+
+  @inline final implicit def arrowAssocInt(x: Int): ll.ArrowAssocInt             = new ll.ArrowAssocInt(x)
+  @inline final implicit def arrowAssocLong(x: Long): ll.ArrowAssocLong          = new ll.ArrowAssocLong(x)
+  @inline final implicit def arrowAssocDouble(x: Double): ll.ArrowAssocDouble    = new ll.ArrowAssocDouble(x)
+  @inline final implicit def arrowAssocChar(x: Char): ll.ArrowAssocChar          = new ll.ArrowAssocChar(x)
+  @inline final implicit def arrowAssocBoolean(x: Boolean): ll.ArrowAssocBoolean = new ll.ArrowAssocBoolean(x)
 }
 
 trait JavaBuilds0 {

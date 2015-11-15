@@ -53,10 +53,6 @@ final class DirectOps[A](val xs: Direct[A]) extends AnyVal {
 
   def apply(i: Index): A           = xs elemAt i
   def length: Int                  = xs.intSize
-  def reverse: Direct[A]  = xs match {
-    case Direct.Reversed(xs) => xs
-    case _                   => new Direct.Reversed(xs)
-  }
   def mapNow[B](f: A => B): Direct[B] = {
     val arr = newArray[Any](length)
     xs.indices foreach (i => arr(i.getInt) = f(xs(i)))

@@ -20,12 +20,7 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
   def elemAt(i: Index): A = f(startInt + i.getInt)
   def map[B](g: A => B)   = new Consecutive[B](startInt, lastInt, f andThen g)
 
-  def foreach(g: A => Unit): Unit        = if (!isEmpty) lowlevel.foreachConsecutive(startInt, lastInt, f andThen g)
-  def foreachReverse(g: A => Unit): Unit = if (!isEmpty) {
-    val h = f andThen g
-    lowlevel.foreachConsecutive(0, hops, i => h(lastInt - i))
-  }
-
+  def foreach(g: A => Unit): Unit             = if (!isEmpty) lowlevel.foreachConsecutive(startInt, lastInt, f andThen g)
   def asIndices: IndexRange                   = Consecutive.to(startInt, lastInt) map (i => Index(i))
   def tail: Consecutive[A]                    = drop(1.size)
   def init: Consecutive[A]                    = dropRight(1.size)
@@ -42,13 +37,15 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
 
   def toDrop: Precise = Precise(startInt)
   def toTake: Precise = size
-  def prefixLength(p: ToBool[A]): Int = {
-    var count = 0
-    while (count < size.getInt) {
-      if (!p(f(startInt + count))) return count
-      count += 1
-    }
-    count
+
+  private def prefixLength(p: ToBool[A]): Int = {
+    val max = size.getInt
+    @tailrec def loop(count: Int): Int = (
+      if (count >= max) max
+      else if (p(f(startInt + count))) loop(count + 1)
+      else count
+    )
+    loop(0)
   }
 
   override def toString = if (isEmpty) "[]" else s"[$startInt..$lastInt]"
