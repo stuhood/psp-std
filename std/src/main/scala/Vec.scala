@@ -1,10 +1,8 @@
 package psp
 package std
-package svec
 
-import api.{ Size, Precise, Direct, Index, ForceShowDirect }
+import api._, StdShow._
 import scala.compat.Platform.arraycopy
-import StdShow._
 
 /** Based on the scala library Vector by Tiark Rompf.
  *    https://issues.scala-lang.org/browse/SI-4442
@@ -12,23 +10,23 @@ import StdShow._
  *    https://github.com/scala/scala/pull/3498
  */
 
-object Vector {
+object Vec {
   def empty[A] = NIL
 
   def newBuilder[@spec A]()                        = new VectorBuilder[A]()
-  def apply[@spec A](xs: A*): Vector[A]            = newBuilder[A]() doto (b => xs foreach (b += _)) result
-  def unapplySeq[A](x: Vector[A]): Some[Vector[A]] = Some(x)
+  def apply[@spec A](xs: A*): Vec[A]            = newBuilder[A]() doto (b => xs foreach (b += _)) result
+  def unapplySeq[A](x: Vec[A]): Some[Vec[A]] = Some(x)
 
-  private[svec] val NIL = new Vector[Nothing](0, 0, 0)
+  private[std] val NIL = new Vec[Nothing](0, 0, 0)
   // Constants governing concat strategy for performance
-  private[svec] final val Log2ConcatFaster = 5
-  private[svec] final val TinyAppendFaster = 2
+  private[std] final val Log2ConcatFaster = 5
+  private[std] final val TinyAppendFaster = 2
 }
 
-final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) extends VectorPointer[A @uV] with Direct[A] with ForceShowDirect {
+final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) extends VectorPointer[A @uV] with Direct[A] with ForceShowDirect {
   self =>
 
-  private[svec] var dirty = false
+  private[std] var dirty = false
 
   def to_s = "[ " + (this map (_.any_s) mk_s ", ") + " ]"
 
@@ -39,11 +37,11 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
   def elemAt(i: Index): A         = apply(i.getInt)
   def isEmpty                     = length == 0
 
-  def :+[B >: A](elem: B): Vector[B]         = appendBack(elem)
-  def +:[B >: A](elem: B): Vector[B]         = appendFront(elem)
-  def ++[B >: A](that: Vector[B]): Vector[B] = that.foldl(this: Vector[B])(_ :+ _)
+  def :+[B >: A](elem: B): Vec[B]         = appendBack(elem)
+  def +:[B >: A](elem: B): Vec[B]         = appendFront(elem)
+  def ++[B >: A](that: Vec[B]): Vec[B] = that.foldl(this: Vec[B])(_ :+ _)
 
-  private[svec] final def initIterator[B >: A](s: VectorIterator[B]): VectorIterator[B] = {
+  private[std] final def initIterator[B >: A](s: VectorIterator[B]): VectorIterator[B] = {
     s.initFrom(this)
     if (dirty) s.stabilize(focus)
     if (s.depth > 1) s.gotoPos(startIndex, startIndex ^ focus)
@@ -55,7 +53,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
 
   // can still be improved
   def reverseIterator: scIterator[A] = new scIterator[A] {
-    private[svec] var i = self.length
+    private[std] var i = self.length
     def hasNext: Boolean = 0 < i
     def next(): A =
       if (0 < i) {
@@ -77,7 +75,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
     getElem(idx, idx ^ focus)
   }
 
-  private[svec] def checkRangeConvert(index: Int) = {
+  private[std] def checkRangeConvert(index: Int) = {
     val idx = index + startIndex
     if (0 <= index && idx < endIndex)
       idx
@@ -85,11 +83,11 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
       throw new java.lang.IndexOutOfBoundsException(index.toString)
   }
 
-  // semi-private[svec] api
+  // semi-private[std] api
 
-  private[svec] def updateAt[B >: A](index: Int, elem: B): Vector[B] = {
+  private[std] def updateAt[B >: A](index: Int, elem: B): Vec[B] = {
     val idx = checkRangeConvert(index)
-    val s = new Vector[B](startIndex, endIndex, idx)
+    val s = new Vec[B](startIndex, endIndex, idx)
     s.initFrom(this)
     s.dirty = dirty
     s.gotoPosWritable(focus, idx, focus ^ idx)  // if dirty commit changes; go to new pos and prepare for writing
@@ -98,14 +96,14 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
   }
 
 
-  private[svec] def gotoPosWritable(oldIndex: Int, newIndex: Int, xor: Int) = if (dirty) {
+  private[std] def gotoPosWritable(oldIndex: Int, newIndex: Int, xor: Int) = if (dirty) {
     gotoPosWritable1(oldIndex, newIndex, xor)
   } else {
     gotoPosWritable0(newIndex, xor)
     dirty = true
   }
 
-  private[svec] def gotoFreshPosWritable(oldIndex: Int, newIndex: Int, xor: Int) = {
+  private[std] def gotoFreshPosWritable(oldIndex: Int, newIndex: Int, xor: Int) = {
     val wasDirty = dirty
     if (wasDirty)
       stabilize(oldIndex)
@@ -116,13 +114,13 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
       dirty = true
   }
 
-  private[svec] def appendFront[B >: A](value: B): Vector[B] = {
+  private[std] def appendFront[B >: A](value: B): Vec[B] = {
     if (endIndex != startIndex) {
       val blockIndex = (startIndex - 1) & ~31
       val lo = (startIndex - 1) & 31
 
       if (startIndex != blockIndex + 32) {
-        val s = new Vector(startIndex - 1, endIndex, blockIndex)
+        val s = new Vec(startIndex - 1, endIndex, blockIndex)
         s.initFrom(this)
         s.dirty = dirty
         s.gotoPosWritable(focus, blockIndex, focus ^ blockIndex)
@@ -141,7 +139,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
           if (depth > 1) {
             val newBlockIndex = blockIndex + shift
             val newFocus = focus + shift
-            val s = new Vector(startIndex - 1 + shift, endIndex + shift, newBlockIndex)
+            val s = new Vec(startIndex - 1 + shift, endIndex + shift, newBlockIndex)
             s.initFrom(this)
             s.dirty = dirty
             s.shiftTopLevel(0, shiftBlocks) // shift right by n blocks
@@ -156,7 +154,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
             //assert(newBlockIndex == 0)
             //assert(newFocus == 0)
 
-            val s = new Vector(startIndex - 1 + shift, endIndex + shift, newBlockIndex)
+            val s = new Vec(startIndex - 1 + shift, endIndex + shift, newBlockIndex)
             s.initFrom(this)
             s.dirty = dirty
             s.shiftTopLevel(0, shiftBlocks) // shift right by n elements
@@ -172,7 +170,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
           val newFocus = focus + move
 
 
-          val s = new Vector(startIndex - 1 + move, endIndex + move, newBlockIndex)
+          val s = new Vec(startIndex - 1 + move, endIndex + move, newBlockIndex)
           s.initFrom(this)
           s.dirty = dirty
           s.gotoFreshPosWritable(newFocus, newBlockIndex, newFocus ^ newBlockIndex) // could optimize: we know it will create a whole branch
@@ -183,7 +181,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
           val newBlockIndex = blockIndex
           val newFocus = focus
 
-          val s = new Vector(startIndex - 1, endIndex, newBlockIndex)
+          val s = new Vec(startIndex - 1, endIndex, newBlockIndex)
           s.initFrom(this)
           s.dirty = dirty
           s.gotoFreshPosWritable(newFocus, newBlockIndex, newFocus ^ newBlockIndex)
@@ -197,20 +195,20 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
       // empty vector, just insert single element at the back
       val elems = new Array[AnyRef](32)
       elems(31) = value.asInstanceOf[AnyRef]
-      val s = new Vector(31,32,0)
+      val s = new Vec(31,32,0)
       s.depth = 1
       s.display0 = elems
       s
     }
   }
 
-  private[svec] def appendBack[B>:A](value: B): Vector[B] = {
+  private[std] def appendBack[B>:A](value: B): Vec[B] = {
     if (endIndex != startIndex) {
       val blockIndex = endIndex & ~31
       val lo = endIndex & 31
 
       if (endIndex != blockIndex) {
-        val s = new Vector(startIndex, endIndex + 1, blockIndex)
+        val s = new Vec(startIndex, endIndex + 1, blockIndex)
         s.initFrom(this)
         s.dirty = dirty
         s.gotoPosWritable(focus, blockIndex, focus ^ blockIndex)
@@ -225,7 +223,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
           if (depth > 1) {
             val newBlockIndex = blockIndex - shift
             val newFocus = focus - shift
-            val s = new Vector(startIndex - shift, endIndex + 1 - shift, newBlockIndex)
+            val s = new Vec(startIndex - shift, endIndex + 1 - shift, newBlockIndex)
             s.initFrom(this)
             s.dirty = dirty
             s.shiftTopLevel(shiftBlocks, 0) // shift left by n blocks
@@ -240,7 +238,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
             //assert(newBlockIndex == 0)
             //assert(newFocus == 0)
 
-            val s = new Vector(startIndex - shift, endIndex + 1 - shift, newBlockIndex)
+            val s = new Vec(startIndex - shift, endIndex + 1 - shift, newBlockIndex)
             s.initFrom(this)
             s.dirty = dirty
             s.shiftTopLevel(shiftBlocks, 0) // shift right by n elements
@@ -252,7 +250,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
           val newBlockIndex = blockIndex
           val newFocus = focus
 
-          val s = new Vector(startIndex, endIndex + 1, newBlockIndex)
+          val s = new Vec(startIndex, endIndex + 1, newBlockIndex)
           s.initFrom(this)
           s.dirty = dirty
           s.gotoFreshPosWritable(newFocus, newBlockIndex, newFocus ^ newBlockIndex)
@@ -264,7 +262,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
     } else {
       val elems = new Array[AnyRef](32)
       elems(0) = value.asInstanceOf[AnyRef]
-      val s = new Vector(0,1,0)
+      val s = new Vec(0,1,0)
       s.depth = 1
       s.display0 = elems
       s
@@ -274,7 +272,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
 
   // low-level implementation (needs cleanup, maybe move to util class)
 
-  private[svec] def shiftTopLevel(oldLeft: Int, newLeft: Int) = (depth - 1) match {
+  private[std] def shiftTopLevel(oldLeft: Int, newLeft: Int) = (depth - 1) match {
     case 0 => display0 = copyRange(display0, oldLeft, newLeft)
     case 1 => display1 = copyRange(display1, oldLeft, newLeft)
     case 2 => display2 = copyRange(display2, oldLeft, newLeft)
@@ -283,21 +281,21 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
     case 5 => display5 = copyRange(display5, oldLeft, newLeft)
   }
 
-  private[svec] def zeroLeft(array: Array[AnyRef], index: Int): Unit = {
+  private[std] def zeroLeft(array: Array[AnyRef], index: Int): Unit = {
     var i = 0; while (i < index) { array(i) = null; i+=1 }
   }
 
-  private[svec] def zeroRight(array: Array[AnyRef], index: Int): Unit = {
+  private[std] def zeroRight(array: Array[AnyRef], index: Int): Unit = {
     var i = index; while (i < array.length) { array(i) = null; i+=1 }
   }
 
-  private[svec] def copyLeft(array: Array[AnyRef], right: Int): Array[AnyRef] =
+  private[std] def copyLeft(array: Array[AnyRef], right: Int): Array[AnyRef] =
     new Array[AnyRef](array.length) doto (a2 => arraycopy(array, 0, a2, 0, right))
 
-  private[svec] def copyRight(array: Array[AnyRef], left: Int): Array[AnyRef] =
+  private[std] def copyRight(array: Array[AnyRef], left: Int): Array[AnyRef] =
     new Array[AnyRef](array.length) doto (a2 => arraycopy(array, left, a2, left, a2.length - left))
 
-  private[svec] def preClean(depth: Int) = {
+  private[std] def preClean(depth: Int) = {
     this.depth = depth
     (depth - 1) match {
       case 0 =>
@@ -325,7 +323,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
   }
 
   // requires structure is at index cutIndex and writable at level 0
-  private[svec] def cleanLeftEdge(cutIndex: Int) = {
+  private[std] def cleanLeftEdge(cutIndex: Int) = {
     if (cutIndex < (1 << 5)) {
       zeroLeft(display0, cutIndex)
     } else
@@ -364,7 +362,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
   }
 
   // requires structure is writable and at index cutIndex
-  private[svec] def cleanRightEdge(cutIndex: Int) = {
+  private[std] def cleanRightEdge(cutIndex: Int) = {
     // we're actually sitting one block left if cutIndex lies on a block boundary
     // this means that we'll end up erasing the whole block!!
 
@@ -405,7 +403,7 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
     }
   }
 
-  private[svec] def requiredDepth(xor: Int) = {
+  private[std] def requiredDepth(xor: Int) = {
     if (xor < (1 <<  5)) 1
     else if (xor < (1 << 10)) 2
     else if (xor < (1 << 15)) 3
@@ -415,14 +413,14 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
     else throw new IllegalArgumentException()
   }
 
-  private[svec] def dropFront0(cutIndex: Int): Vector[A] = {
+  private[std] def dropFront0(cutIndex: Int): Vec[A] = {
     val blockIndex = cutIndex & ~31
     val xor = cutIndex ^ (endIndex - 1)
     val d = requiredDepth(xor)
     val shift = (cutIndex & ~((1 << (5*d))-1))
 
     // need to init with full display iff going to cutIndex requires swapping block at level >= d
-    val s = new Vector(cutIndex-shift, endIndex-shift, blockIndex-shift)
+    val s = new Vec(cutIndex-shift, endIndex-shift, blockIndex-shift)
     s.initFrom(this)
     s.dirty = dirty
     s.gotoPosWritable(focus, blockIndex, focus ^ blockIndex)
@@ -431,12 +429,12 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
     s
   }
 
-  private[svec] def dropBack0(cutIndex: Int): Vector[A] = {
+  private[std] def dropBack0(cutIndex: Int): Vec[A] = {
     val blockIndex = (cutIndex - 1) & ~31
     val xor = startIndex ^ (cutIndex - 1)
     val d = requiredDepth(xor)
     val shift = (startIndex & ~((1 << (5*d))-1))
-    val s = new Vector(startIndex-shift, cutIndex-shift, blockIndex-shift)
+    val s = new Vec(startIndex-shift, cutIndex-shift, blockIndex-shift)
 
     s.initFrom(this)
     s.dirty = dirty
@@ -450,10 +448,10 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
 
 
 class VectorIterator[@spec +A](_startIndex: Int, endIndex: Int) extends scIterator[A] with VectorPointer[A @uV] {
-  private[svec] var blockIndex: Int = _startIndex & ~31
-  private[svec] var lo: Int         = _startIndex & 31
-  private[svec] var endLo           = math.min(endIndex - blockIndex, 32)
-  private[svec] var _hasNext        = blockIndex + lo < endIndex
+  private[std] var blockIndex: Int = _startIndex & ~31
+  private[std] var lo: Int         = _startIndex & 31
+  private[std] var endLo           = math.min(endIndex - blockIndex, 32)
+  private[std] var _hasNext        = blockIndex + lo < endIndex
 
   def hasNext = _hasNext
   def next(): A = {
@@ -478,13 +476,13 @@ class VectorIterator[@spec +A](_startIndex: Int, endIndex: Int) extends scIterat
     res
   }
 
-  private[svec] def remainingElementCount: Int = (endIndex - (blockIndex + lo)) max 0
+  private[std] def remainingElementCount: Int = (endIndex - (blockIndex + lo)) max 0
 
   /** Creates a new vector which consists of elements remaining in this iterator.
    *  Such a vector can then be split into several vectors using methods like `take` and `drop`.
    */
-  private[svec] def remainingVector: Vector[A] =
-    new Vector(blockIndex + lo, endIndex, blockIndex + lo) doto (_ initFrom this)
+  private[std] def remainingVector: Vec[A] =
+    new Vec(blockIndex + lo, endIndex, blockIndex + lo) doto (_ initFrom this)
 }
 
 final class VectorBuilder[@spec A]() extends scmBuilder[A, Vec[A]] with VectorPointer[A @uV] {
@@ -494,8 +492,8 @@ final class VectorBuilder[@spec A]() extends scmBuilder[A, Vec[A]] with VectorPo
   display0 = new Array[AnyRef](32)
   depth = 1
 
-  private[svec] var blockIndex = 0
-  private[svec] var lo = 0
+  private[std] var blockIndex = 0
+  private[std] var lo = 0
 
   def += (elem: A): this.type = {
     if (lo >= display0.length) {
@@ -509,12 +507,12 @@ final class VectorBuilder[@spec A]() extends scmBuilder[A, Vec[A]] with VectorPo
     this
   }
 
-  def result: Vector[A] = {
+  def result: Vec[A] = {
     val size = blockIndex + lo
     if (size == 0)
-      return Vector.empty
+      return Vec.empty
 
-    val s = new Vector[A](0, size, 0) // should focus front or back?
+    val s = new Vec[A](0, size, 0) // should focus front or back?
     s.initFrom(this)
     if (depth > 1) s.gotoPos(0, size - 1) // we're currently focused to size - 1, not size!
     s
@@ -528,19 +526,19 @@ final class VectorBuilder[@spec A]() extends scmBuilder[A, Vec[A]] with VectorPo
   }
 }
 
-private[svec] trait VectorPointer[@spec T] {
-    private[svec] var depth: Int              = _
-    private[svec] var display0: Array[AnyRef] = _
-    private[svec] var display1: Array[AnyRef] = _
-    private[svec] var display2: Array[AnyRef] = _
-    private[svec] var display3: Array[AnyRef] = _
-    private[svec] var display4: Array[AnyRef] = _
-    private[svec] var display5: Array[AnyRef] = _
+private[std] trait VectorPointer[@spec T] {
+    private[std] var depth: Int              = _
+    private[std] var display0: Array[AnyRef] = _
+    private[std] var display1: Array[AnyRef] = _
+    private[std] var display2: Array[AnyRef] = _
+    private[std] var display3: Array[AnyRef] = _
+    private[std] var display4: Array[AnyRef] = _
+    private[std] var display5: Array[AnyRef] = _
 
     // used
-    private[svec] final def initFrom[U](that: VectorPointer[U]): Unit = initFrom(that, that.depth)
+    private[std] final def initFrom[U](that: VectorPointer[U]): Unit = initFrom(that, that.depth)
 
-    private[svec] final def initFrom[U](that: VectorPointer[U], depth: Int) = {
+    private[std] final def initFrom[U](that: VectorPointer[U], depth: Int) = {
       this.depth = depth
       (depth - 1) match {
         case -1 =>
@@ -576,7 +574,7 @@ private[svec] trait VectorPointer[@spec T] {
 
 
     // requires structure is at pos oldIndex = xor ^ index
-    private[svec] final def getElem(index: Int, xor: Int): T = {
+    private[std] final def getElem(index: Int, xor: Int): T = {
       if (xor < (1 << 5)) { // level = 0
         display0(index & 31).asInstanceOf[T]
       } else
@@ -602,7 +600,7 @@ private[svec] trait VectorPointer[@spec T] {
     // go to specific position
     // requires structure is at pos oldIndex = xor ^ index,
     // ensures structure is at pos index
-    private[svec] final def gotoPos(index: Int, xor: Int): Unit = {
+    private[std] final def gotoPos(index: Int, xor: Int): Unit = {
       if (xor < (1 << 5)) { // level = 0 (could maybe removed)
       } else
       if (xor < (1 << 10)) { // level = 1
@@ -637,7 +635,7 @@ private[svec] trait VectorPointer[@spec T] {
     // USED BY ITERATOR
 
     // xor: oldIndex ^ index
-    private[svec] final def gotoNextBlockStart(index: Int, xor: Int): Unit = { // goto block start pos
+    private[std] final def gotoNextBlockStart(index: Int, xor: Int): Unit = { // goto block start pos
       if (xor < (1 << 10)) { // level = 1
         display0 = display1((index >> 5) & 31).asInstanceOf[Array[AnyRef]]
       } else
@@ -670,7 +668,7 @@ private[svec] trait VectorPointer[@spec T] {
     // USED BY BUILDER
 
     // xor: oldIndex ^ index
-    private[svec] final def gotoNextBlockStartWritable(index: Int, xor: Int): Unit = { // goto block start pos
+    private[std] final def gotoNextBlockStartWritable(index: Int, xor: Int): Unit = { // goto block start pos
       if (xor < (1 << 10)) { // level = 1
         if (depth == 1) { display1 = new Array(32); display1(0) = display0; depth+=1}
         display0 = new Array(32)
@@ -721,10 +719,10 @@ private[svec] trait VectorPointer[@spec T] {
     }
 
     // STUFF BELOW USED BY APPEND / UPDATE
-    private[svec] final def copyOf(a: Array[AnyRef]) =
+    private[std] final def copyOf(a: Array[AnyRef]) =
       new Array[AnyRef](a.length) doto (b => arraycopy(a, 0, b, 0, a.length))
 
-    private[svec] final def nullSlotAndCopy(array: Array[AnyRef], index: Int) = {
+    private[std] final def nullSlotAndCopy(array: Array[AnyRef], index: Int) = {
       val x = array(index)
       array(index) = null
       copyOf(x.asInstanceOf[Array[AnyRef]])
@@ -734,7 +732,7 @@ private[svec] trait VectorPointer[@spec T] {
     // requires structure is at pos index
     // ensures structure is clean and at pos index and writable at all levels except 0
 
-    private[svec] final def stabilize(index: Int) = (depth - 1) match {
+    private[std] final def stabilize(index: Int) = (depth - 1) match {
       case 5 =>
         display5 = copyOf(display5)
         display4 = copyOf(display4)
@@ -779,7 +777,7 @@ private[svec] trait VectorPointer[@spec T] {
 
     // requires structure is clean and at pos oldIndex = xor ^ newIndex,
     // ensures structure is dirty and at pos newIndex and writable at level 0
-    private[svec] final def gotoPosWritable0(newIndex: Int, xor: Int): Unit = (depth - 1) match {
+    private[std] final def gotoPosWritable0(newIndex: Int, xor: Int): Unit = (depth - 1) match {
       case 5 =>
         display5 = copyOf(display5)
         display4 = nullSlotAndCopy(display5, (newIndex >> 25) & 31).asInstanceOf[Array[AnyRef]]
@@ -812,7 +810,7 @@ private[svec] trait VectorPointer[@spec T] {
 
     // requires structure is dirty and at pos oldIndex,
     // ensures structure is dirty and at pos newIndex and writable at level 0
-    private[svec] final def gotoPosWritable1(oldIndex: Int, newIndex: Int, xor: Int): Unit = {
+    private[std] final def gotoPosWritable1(oldIndex: Int, newIndex: Int, xor: Int): Unit = {
       if (xor < (1 <<  5)) { // level = 0
         display0 = copyOf(display0)
       } else
@@ -878,7 +876,7 @@ private[svec] trait VectorPointer[@spec T] {
 
     // USED IN DROP
 
-    private[svec] final def copyRange(array: Array[AnyRef], oldLeft: Int, newLeft: Int) = {
+    private[std] final def copyRange(array: Array[AnyRef], oldLeft: Int, newLeft: Int) = {
       val elems = new Array[AnyRef](32)
       arraycopy(array, oldLeft, elems, newLeft, 32 - math.max(newLeft,oldLeft))
       elems
@@ -889,7 +887,7 @@ private[svec] trait VectorPointer[@spec T] {
 
     // requires structure is clean and at pos oldIndex,
     // ensures structure is dirty and at pos newIndex and writable at level 0
-    private[svec] final def gotoFreshPosWritable0(oldIndex: Int, newIndex: Int, xor: Int): Unit = { // goto block start pos
+    private[std] final def gotoFreshPosWritable0(oldIndex: Int, newIndex: Int, xor: Int): Unit = { // goto block start pos
       if (xor < (1 << 5)) { // level = 0
         //println("XXX clean with low xor")
       } else

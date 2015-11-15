@@ -21,10 +21,7 @@ package object std extends psp.std.StdPackage {
    type Each2D[+A]            = Each[Each[A]]
    type IndexRange            = Consecutive[Index]
    type IntRange              = Consecutive[Int]
-   type Vec[+A]               = psp.std.svec.Vector[A]
    type BuildsMap[K, V]       = Builds[K -> V, ExMap[K, V]]
-
-   val Vec = psp.std.svec.Vector
 
    val StringOrder = orderBy[Any](_.any_s)
 
