@@ -21,7 +21,10 @@ package object std extends psp.std.StdPackage {
    type Each2D[+A]            = Each[Each[A]]
    type IndexRange            = Consecutive[Index]
    type IntRange              = Consecutive[Int]
+   type Vec[+A]               = psp.std.svec.Vector[A]
    type BuildsMap[K, V]       = Builds[K -> V, ExMap[K, V]]
+
+   val Vec = psp.std.svec.Vector
 
    val StringOrder = orderBy[Any](_.any_s)
 
@@ -207,8 +210,9 @@ package object std extends psp.std.StdPackage {
   def fst[A, B](x: A -> B): A = x._1
   def snd[A, B](x: A -> B): B = x._2
 
+  def vec[@spec A](xs: A*): Vec[A]                      = Vec(xs: _*)
   def exMap[K: Eq, V](xs: (K -> V)*): ExMap[K, V]       = xs.m.toEach.toMap[ExMap]
-  def exSeq[A](xs: A*): Each[A]                         = xs.m.toEach
+  def exSeq[@spec A](xs: A*): Vec[A]                    = Vec(xs: _*)
   def exSet[A: Eq](xs: A*): ExSet[A]                    = xs.m.toExSet
   def exView[A](xs: A*): View[A]                        = Direct[A](xs: _*).m
   def inMap[K, V](p: ToBool[K], f: K => V): InMap[K, V] = InMap(inSet(p), f)

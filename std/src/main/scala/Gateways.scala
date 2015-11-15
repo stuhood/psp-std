@@ -173,7 +173,7 @@ trait PspBuilds1 extends PspBuilds0 {
   implicit def viewPspArray[A](xs: Array[A]): DirectView[A, Array[A]] = View direct (Direct fromArray xs)
 }
 trait PspBuilds2 extends PspBuilds1 {
-  implicit def buildPspDirect[A] : Builds[A, Direct[A]]                              = Builds.direct[A]
+  implicit def buildPspDirect[A] : Builds[A, Vec[A]]                                 = Builds.direct[A]
   implicit def viewPspDirect[A, CC[X] <: Direct[X]](xs: CC[A]): DirectView[A, CC[A]] = View direct xs
 }
 trait PspBuilds extends PspBuilds2 {
