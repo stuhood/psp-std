@@ -30,10 +30,10 @@ class Typecheck extends ScalacheckBundle {
    *  Will make this more robust. For now this makes it easy to put the expectation of
    *  success or failure next to the code in question.
    */
-  def divide(what: String, xs: sciVector[Typechecked]): NamedProp = divide(what, xs, xs count (_.code startsWith "/* ok */"))
+  def divide(what: String, xs: Vec[Typechecked]): NamedProp = divide(what, xs, xs count (_.code startsWith "/* ok */"))
 
-  def divide(what: String, xs: sciVector[Typechecked], expectedTypecheck: Int): NamedProp = {
-    val (good, bad) = xs partition (_.typechecks)
+  def divide(what: String, xs: Vec[Typechecked], expectedTypecheck: Int): NamedProp = {
+    val (good, bad) = xs.toScalaVector partition (_.typechecks)
     NamedProp(
       s"$expectedTypecheck/${xs.size} expressions from $what should typecheck",
       (Prop(expectedTypecheck == good.size) :|

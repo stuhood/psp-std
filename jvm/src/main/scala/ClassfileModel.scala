@@ -62,7 +62,7 @@ abstract class StreamingClassfileModel extends ClassfileModel {
     })
   }
 
-  def pool = if (entries eq null) sciVector() else entries.toScalaVector
+  def pool = if (entries eq null) vec() else entries.toDirect
 
   type Entry = PoolEntry
 

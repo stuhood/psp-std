@@ -32,7 +32,7 @@ object Indexed {
   final class Memo[+A](xs: Each[A]) extends Indexed[A] {
     @volatile private[this] var doneProducing = false
     @volatile private[this] var doneConsuming = false
-    @volatile private[this] var memo = sciVector[A]()
+    @volatile private[this] var memo = vec[A]()
     private[this] val handoff = new LinkedBlockingQueue[A](1)
 
     private[this] lazy val thread: Unit = spawn({ xs foreach handoff.put ; doneProducing = true })

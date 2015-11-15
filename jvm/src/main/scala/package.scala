@@ -199,12 +199,12 @@ package object jvm extends psp.std.jvm.StdClasses {
   }
   implicit class HasAttributesOps(val entity: HasAttributes) extends AnyVal {
     import entity._
-    // def signature: JvmSignature                 = attributes zfirst  { case attr.Signature(sig)                    => JvmSignature(sig) }
-    def innerClasses: Array[InnerClassInfo]     = attributes zfirst  { case attr.InnerClasses(xs)                  => xs                }
-    def annotations: Array[Lazy[JvmAnnotation]] = attributes zfirst  { case attr.RuntimeVisibleAnnotations(annots) => annots            }
-    def code: Code                              = attributes zfirst  { case attr.Code(x)                           => x                 }
-    def exceptions: sciVector[String]           = attributes zfirst  { case attr.Exceptions(xs)                    => xs.toScalaVector  }
-    def constantValue: Option[Any]              = attributes first   { case attr.ConstantValue(x)                  => x                 }
+    // def signature: JvmSignature              = attributes zfirst  { case attr.Signature(sig)                    => JvmSignature(sig) }
+    def innerClasses: Array[InnerClassInfo]     = attributes zfirst  { case attr.InnerClasses(xs)                  => xs        }
+    def annotations: Array[Lazy[JvmAnnotation]] = attributes zfirst  { case attr.RuntimeVisibleAnnotations(annots) => annots    }
+    def code: Code                              = attributes zfirst  { case attr.Code(x)                           => x         }
+    def exceptions: Vec[String]                 = attributes zfirst  { case attr.Exceptions(xs)                    => xs.toVec  }
+    def constantValue: Option[Any]              = attributes first   { case attr.ConstantValue(x)                  => x         }
   }
   implicit class ClassInfoOps(val info: ClassInfo) extends AnyVal {
     import info._

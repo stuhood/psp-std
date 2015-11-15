@@ -12,9 +12,9 @@ object Ansi {
   final val SEMI      = ";"
   final val RESET     = apply(0)
 
-  val empty: Ansi = new Ansi(sciVector())
+  val empty: Ansi = new Ansi(vec[Atom]())
 
-  def apply(atom: Atom, atoms: Atom*): Ansi = new Ansi(atom +: atoms.toVector)
+  def apply(atom: Atom, atoms: Atom*): Ansi = new Ansi(atom +: atoms.toVec)
   def apply(codes: Int*): Ansi              = if (codes.isEmpty) empty else apply(Atom(codes.head), codes.tail map Atom: _*)
   def csi(codes: Int*): String              = codes.mkString(CSI, SEMI, CSI_FINAL)
 }
@@ -23,15 +23,15 @@ object Ansi {
  *  produces a String surrounded by the appropriate control
  *  characters.
  */
-final class Ansi private (val atoms: sciVector[Atom]) extends BasicAttributes[Ansi] with (String => String) {
+final class Ansi private (val atoms: Vec[Atom]) extends BasicAttributes[Ansi] with (String => String) {
   type Attribute = Ansi
 
-  protected def newAttribute(atom: Atom): Ansi = Ansi(atom, atoms: _*)
+  protected def newAttribute(atom: Atom): Ansi = Ansi(atom, atoms.seq: _*)
 
   def /(that: Atom) = new Ansi(atoms :+ that)
   def /(that: Ansi) = new Ansi(atoms ++ that.atoms)
 
-  private def prefix = csi(atoms map (_.code): _*)
+  private def prefix = csi(atoms map (_.code) seq: _*)
   private def suffix = csi(0)
 
   def apply(s: String): String = prefix ~ s ~ suffix
