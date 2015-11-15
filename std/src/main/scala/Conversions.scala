@@ -54,7 +54,6 @@ trait ConversionsImpl[A] extends Any {
   def toScalaList: sciList[A]                  = to[sciList]
   def toScalaSeq: sciSeq[A]                    = to[sciSeq]
   def toScalaSet: sciSet[A]                    = to[sciSet]
-  def toScalaStream: sciStream[A]              = to[sciStream]
   def toScalaVector: sciVector[A]              = to[sciVector]
   def toVec: Vec[A]                            = to[Vec]
 

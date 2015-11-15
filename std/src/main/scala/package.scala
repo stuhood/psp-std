@@ -135,7 +135,7 @@ package object std extends psp.std.StdPackage {
   def printResultIf[A: Show : Eq](x: A, msg: String)(result: A): A = result doto (r => if (r === x) println(show"$msg: $r"))
   def print[A: Show](x: A): Unit                                   = Console putOut show"$x"
   def println[A: Show](x: A): Unit                                 = Console echoOut show"$x"
-  def anyprintln(x: Any): Unit                                     = Console echoOut x.anydoc
+  def anyprintln(x: Any): Unit                                     = Console echoOut x.any_s
 
   // Operations involving classes, classpaths, and classloaders.
   def classLoaderOf[A: CTag](): ClassLoader = classOf[A].getClassLoader

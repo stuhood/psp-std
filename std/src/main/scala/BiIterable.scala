@@ -104,7 +104,7 @@ object BiIterable {
     case xs: Direct[A]  => apply[A](xs)
     case xs: Indexed[A] => apply[A](xs)
     case xs: Linear[A]  => apply[A](xs)
-    case _              => apply[A](xs.toScalaStream)
+    case _              => apply[A](xs.to[sciStream])
   }
   def apply[A](xs: Linear[A]): BiIterable[A]     = new LinearBased(xs)
   def apply[A](xs: Direct[A]): BiIterable[A]     = new DirectBased(xs)

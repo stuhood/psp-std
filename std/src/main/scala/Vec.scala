@@ -46,10 +46,8 @@ final class Vec[@spec A](val startIndex: Int, val endIndex: Int, focus: Int) ext
     s
   }
 
-  def iterator: VectorIterator[A] =
-    initIterator(new VectorIterator[A](startIndex, endIndex))
-
-  def reverseIterator: scIterator[A] = BiIterator direct this reverseIterator
+  def iterator: VectorIterator[A]                          = initIterator(new VectorIterator[A](startIndex, endIndex))
+  def reverseIterator: BiIterator.ReverseDirectIterator[A] = BiIterator direct this reverseIterator
 
   // TODO: reverse
   // TODO: check performance of foreach/map etc. should override or not?
