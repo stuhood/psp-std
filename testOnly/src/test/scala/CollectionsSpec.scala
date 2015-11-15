@@ -149,7 +149,7 @@ class ViewBasic extends ScalacheckBundle {
     showsAs("[ 1, 2, 3 ]", parray),
     showsAs("[ 1, 2, 3, 1, 2, 3 ]", plist ++ plist force),
     showsAs("[ 1, 2, 3, 1, 2, 3 ]", pvector ++ pvector force),
-    showsAs("[ 1, 2, 3, 1, 2, 3 ]", parray ++ parray force),
+    showsAs("[ 1, 2, 3, 1, 2, 3 ]", parray.m ++ parray force),
     // showsAs("[ 1, 2, 3, ... ]", punfold),
     // showsAs("[ 1, 2, 3 ], [ 1, 2 ], [ 1 ], [  ], [ 2 ], [ 2, 3 ], [ 3 ]", closure mk_s ", "),
     // showsAs("1 -> 3, 2 -> 4, 3 -> 3", closureBag.entries mk_s ", "),
@@ -211,6 +211,7 @@ class CollectionsSpec extends ScalacheckBundle {
     ),
     expectTypes[Array[Int]](
       arr.inPlace map identity,
+      arr.inPlace.reverse,
       arr.m.build,
       arr.m flatMap (x => Direct(x)) build,
       arr.flatMap(x => Direct(x)).force[Array[Int]]

@@ -12,15 +12,15 @@ class Typecheck extends ScalacheckBundle {
    */
   private val _ = {
     opsDirectString _
-    directStringIs _
+    viewPspString _
   }
 
   // We don't want to protect scala library from itself so let's unmask augmentString etc.
   def checkScala() = {
     // These two definitions are here to shadow implicits
     val opsDirectString = null
-    val directStringIs = null
-    identity(opsDirectString) ; identity(directStringIs) // suppress "never used" warnings
+    val viewPspString = null
+    identity(opsDirectString) ; identity(viewPspString) // suppress "never used" warnings
     // This import is actually used in the test below
     import scala.Predef._
     divide("scala-library", typecheckedLines(scalaLibraryCode), expectedTypecheck = 24)

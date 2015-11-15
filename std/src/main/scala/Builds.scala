@@ -13,33 +13,6 @@ package std
  */
 import api._
 
-trait StdBuilds0 {
-  implicit def buildsLinear[A] : Builds[A, Linear[A]]                                         = Builds.linear[A]
-  implicit def buildsJavaList[A]: Builds[A, jList[A]]                                         = Builds.jList[A]
-  implicit def buildsJavaSet[A]: Builds[A, jSet[A]]                                           = Builds.jSet[A]
-  implicit def buildsJavaSortedSet[A: Order]: Builds[A, jSortedSet[A]]                        = Builds.jSortedSet[A]
-  implicit def buildsJavaMap[K, V]: Builds[K -> V, jMap[K, V]]                                = Builds.jMap[K, V]
-  implicit def buildsScalaCollection[A, That](implicit z: CanBuild[A, That]): Builds[A, That] = Builds.sCollection[A, That]
-  implicit def buildsArray[A: CTag]: Builds[A, Array[A]]                                      = Builds.array[A]
-}
-trait StdBuilds1 extends StdBuilds0 {
-  implicit def buildsScalaMap[K, V, That](implicit z: CanBuild[scala.Tuple2[K, V], That]): Builds[K -> V, That] = Builds.sMap[K, V, That]
-  implicit def buildsExSet[A: Eq]: Builds[A, ExSet[A]]                                                          = Builds.exSet[A]
-  implicit def buildsExMap[K: Eq, V]: Builds[K -> V, ExMap[K, V]]                                               = Builds.exMap[K, V]
-}
-trait StdBuilds2 extends StdBuilds1 { implicit def buildsDirect[A] : Builds[A, Direct[A]] = Builds.direct[A] }
-trait StdBuilds extends StdBuilds2  { implicit def buildsString: Builds[Char, String]     = Builds.string    }
-
-trait StdUnbuilds {
-  implicit def unbuildsEach[A, CC[X] <: Each[X]] : Unbuilds[A, CC[A]]                       = Unbuilds[A, CC[A]](xs => xs)
-  implicit def unbuildsScalaCollection[A, CC[X] <: sCollection[X]] : Unbuilds[A, CC[A]]     = Unbuilds[A, CC[A]](Each fromScala _)
-  implicit def unbuildsJavaCollection[A, CC[X] <: jIterable[X]] : Unbuilds[A, CC[A]]        = Unbuilds[A, CC[A]](Each fromJava _)
-  implicit def unbuildsJavaMap[K, V, CC[K, V] <: jMap[K, V]] : Unbuilds[K -> V, CC[K, V]]   = Unbuilds[K -> V, CC[K, V]](Each fromJavaMap _)
-  implicit def unbuildsArray[A] : Unbuilds[A, Array[A]]                                     = Unbuilds[A, Array[A]](Direct fromArray _)
-  implicit def unbuildsString: Unbuilds[Char, String]                                       = Unbuilds[Char, String](Direct fromString _)
-  implicit def unbuildsScalaMap[K, V, CC[X, Y] <: scMap[X, Y]] : Unbuilds[K -> V, CC[K, V]] = Unbuilds[K -> V, CC[K, V]](Each fromScala _)
-}
-
 object Builds {
   def apply[Elem, To](f: Each[Elem] => To): Builds[Elem, To] = new Impl(f)
 
@@ -74,17 +47,4 @@ object Builds {
     def apply(mf: Suspended[Elem]): To = build(Each(mf))
   }
 }
-object Unbuilds {
-  def apply[A, Repr](f: Repr => Each[A]): Unbuilds[A, Repr] = new Impl(f)
 
-  final class Impl[A, Repr](val f: Repr => Each[A]) extends AnyVal with Unbuilds[A, Repr] {
-    def unbuild(xs: Repr): Each[A] = f(xs)
-  }
-  final class Create[A, Repr](repr: Repr)(implicit z: Unbuilds[A, Repr]) extends ops.ByOps[A] {
-    def xs = m
-    def m: AtomicView[A, Repr] = z unbuild repr match {
-      case xs: Direct[A] => new DirectView[A, Repr](xs)
-      case xs            => new LinearView[A, Repr](xs)
-    }
-  }
-}

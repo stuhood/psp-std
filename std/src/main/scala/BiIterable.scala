@@ -105,5 +105,5 @@ object BiIterable {
   def apply[A](xs: Array[A]): BiIterable[A]      = new ArrayBased(xs)
   def apply[A](xs: jIterable[A]): BiIterable[A]  = new JavaBased(xs)
   def apply[A](xs: scIterable[A]): BiIterable[A] = new ScalaBased(xs)
-  def elems[A](xs: A*): BiIterable[A]            = new DirectBased(xs.m.toDirect)
+  def elems[A](xs: A*): BiIterable[A]            = new DirectBased(xs.toDirect)
 }
