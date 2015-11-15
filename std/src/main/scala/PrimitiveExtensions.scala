@@ -18,23 +18,19 @@ final class AnyOps[A](val x: A) extends AnyVal {
   def shortClass: String   = NameTransformer decode lastOf(x.getClass.getName split "[.]")
   def shortPackage: String = x.getClass.getPackage.toString
 
-  // "Maybe we can enforce good programming practice with annoyingly long method names."
-  def isClass[A: CTag] = classOf[A] isAssignableFrom x.getClass
-  def castTo[U] : U    = x.asInstanceOf[U]
-  def toRef: Ref[A]    = castTo[Ref[A]]
-  def isNull: Boolean  = toRef eq null
+  def isClass[A: CTag]        = classOf[A] isAssignableFrom x.getClass
 
-  def reflect[B](m: jMethod)(args: Any*): B = m.invoke(x, args.map(_.castTo[AnyRef]): _*).castTo[B]
-
-  // The famed forward pipe.
+  @inline def castTo[U] : U                    = x.asInstanceOf[U]
   @inline def doto(f: A => Unit): A            = sideEffect(f(x))
+  @inline def isNull: Boolean                  = toRef eq null
   @inline def isOr(p: ToBool[A])(alt: => A): A = if (p(x)) x else alt
   @inline def sideEffect(body: Unit): A        = x
-  @inline def |>[B](f: A => B): B              = f(x)
+  @inline def toRef: Ref[A]                    = castTo[Ref[A]]
+  @inline def |>[B](f: A => B): B              = f(x)  // The famed forward pipe.
+  @inline def id_==(y: Any): Boolean           = x.asInstanceOf[AnyRef] eq y.asInstanceOf[AnyRef]  // Calling eq on Anys.
+  @inline def id_## : Int                      = identityHashCode(x)
 
-  // Calling eq on Anys.
-  def id_==(y: Any): Boolean = (toRef: AnyRef) eq y.toRef
-  def id_## : Int            = identityHashCode(x)
+  def reflect[B](m: jMethod)(args: Any*): B = m.invoke(x, args.map(_.castTo[AnyRef]): _*).castTo[B]
 
   def fix[R]: FixType[A, R] = new FixType[A, R](x)
   def same: FixType[A, A]   = new FixType[A, A](x)

@@ -26,10 +26,10 @@ trait HasPreciseSize extends Any with HasAtomicSize        { def size: Precise  
 trait IsEmpty extends Any              { def isEmpty: Boolean }
 trait Opt[+A] extends Any with IsEmpty { def get: A           }
 
-trait Each[+A]      extends Any with HasSize                        { def foreach(f: A => Unit): Unit    }
-trait Indexed[+A]   extends Any with Each[A]                        { def elemAt(i: Index): A            }
-trait Direct[+A]    extends Any with Indexed[A] with HasPreciseSize
-trait Linear[+A]    extends Any with Each[A]    with IsEmpty        { def head: A ; def tail: Linear[A]  }
+trait Each[@spec(SpecTypes) +A]      extends Any with HasSize                        { def foreach(f: A => Unit): Unit    }
+trait Indexed[@spec(SpecTypes) +A]   extends Any with Each[A]                        { def elemAt(i: Index): A            }
+trait Direct[@spec(SpecTypes) +A]    extends Any with Indexed[A] with HasPreciseSize
+trait Linear[@spec(SpecTypes) +A]    extends Any with Each[A]    with IsEmpty        { def head: A ; def tail: Linear[A]  }
 
 trait InSet[-A]     extends Any                            { def apply(x: A): Boolean       }
 trait InMap[-K, +V] extends Any                            { def lookup: Fun[K, V]          }
@@ -41,7 +41,7 @@ trait ExMap[K, +V]  extends Any with InMap[K, V]           { def domain: ExSet[K
 // final case class IntIndex(x: Int) extends AnyVal with Index   { def isEmpty = x < 0 ; def get: Long = x }
 trait Index extends Any with Opt[Long]
 
-trait AnyView[+A] extends Any with HasSize {
+trait AnyView[@spec(SpecTypes) +A] extends Any with HasSize {
   type MapTo[+X] <: AnyView[X]
 
   def foreach(f: A => Unit): Unit
@@ -51,7 +51,7 @@ trait AnyView[+A] extends Any with HasSize {
  *  a (possibly empty) uninterrupted subsequence of the elements of the
  *  target collection.
  */
-trait ContiguousViewOps[+A] extends Any with AnyView[A] {
+trait ContiguousViewOps[@spec(SpecTypes) +A] extends Any with AnyView[A] {
   type Contiguous[+X] <: View[X]
 
   // TODO:
@@ -68,19 +68,19 @@ trait ContiguousViewOps[+A] extends Any with AnyView[A] {
   def takeWhile(p: ToBool[A]): Contiguous[A]
 }
 
-trait NonContiguousViewOps[+A] extends Any with AnyView[A] {
+trait NonContiguousViewOps[@spec(SpecTypes) +A] extends Any with AnyView[A] {
   def collect[B](pf: A ?=> B): MapTo[B]
   def map[B](f: A => B): MapTo[B]
   def flatMap[B](f: A => Each[B]): MapTo[B]
   def withFilter(p: ToBool[A]): MapTo[A]
 }
 
-trait View[+A] extends Any with ContiguousViewOps[A] with NonContiguousViewOps[A] {
+trait View[@spec(SpecTypes) +A] extends Any with ContiguousViewOps[A] with NonContiguousViewOps[A] {
   type MapTo[+X] <: View[X]
   def viewOps: Direct[Doc]
 }
 
-trait ContiguousView[+A] extends Any with View[A] {
+trait ContiguousView[@spec(SpecTypes) +A] extends Any with View[A] {
   type Contiguous[+X] <: ContiguousView[X]
 }
 
@@ -103,19 +103,26 @@ trait InMapView[-K, +V] extends Any with AnyView[V] with InMap[K, V] {
 /** When a View is split into two disjoint views.
  *  Notably, that's span, partition, and splitAt.
  */
-trait SplitView[+A] {
-  def left: View[A]   // the elements in the left-hand view.
-  def right: View[A]  // the elements in the right-hand view.
-  def rejoin: View[A] // Moral equivalent of left ++ right.
+trait SplitView[@spec(SpecTypes) +A] extends Any with SplitM[View, A]
+trait SplitInvariantView[@spec(SpecTypes) A] extends Any with SplitInvariantM[View, A]
+
+trait SplitM[M[+X], @spec(SpecTypes) +A] extends Any {
+  def left: M[A]   // the elements in the left-hand M.
+  def right: M[A]  // the elements in the right-hand M.
+  def rejoin: M[A] // Moral equivalent of left ++ right.
 }
-trait SplitInvariantView[A] extends SplitView[A] {
-  def mapLeft(f: View[A] => View[A]): SplitView[A]
-  def mapRight(f: View[A] => View[A]): SplitView[A]
+trait SplitInvariantM[M[X], @spec(SpecTypes) A] extends Any {
+  def left: M[A]   // the elements in the left-hand M.
+  def right: M[A]  // the elements in the right-hand M.
+  def rejoin: M[A] // Moral equivalent of left ++ right.
+  def mapLeft(f: ToSelf[M[A]]): SplitInvariantM[M, A]
+  def mapRight(f: ToSelf[M[A]]): SplitInvariantM[M, A]
 }
+
 /** When a View presents as a sequence of pairs.
  *  There may be two underlying views being zipped, or one view holding pairs.
  */
-trait ZipView[+A1, +A2] {
+trait ZipView[@spec(SpecTypes) +A1, @spec(SpecTypes) +A2] {
   def lefts: View[A1]        // the left element of each pair. Moral equivalent of pairs map fst.
   def rights: View[A2]       // the right element of each pair. Moral equivalent of pairs map snd.
   def pairs: View[A1 -> A2]  // the pairs. Moral equivalent of lefts zip rights.

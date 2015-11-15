@@ -12,7 +12,7 @@ abstract class TestRunnerCommon {
     case _       => true
   }
 
-  def commonBundles = Direct[Bundle](
+  def commonBundles = vec[Bundle](
     new StringExtensions,
     new GridSpec,
     new ViewBasic,

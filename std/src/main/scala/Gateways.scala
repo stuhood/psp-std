@@ -20,6 +20,7 @@ trait StdGateways extends scala.AnyRef
   implicit def typeclassTupleCleave[A, B] : Pair.Cleave[A -> B, A, B]        = Pair.Cleave[A -> B, A, B](_ -> _, fst, snd)
   implicit def typeclassLinearSplit[A] : Pair.Split[Linear[A], A, Linear[A]] = Pair.Split(_.head, _.tail)
 
+
   implicit def opsPspDirect[A](xs: Direct[A]): ops.DirectOps[A]                                = new ops.DirectOps(xs)
   implicit def opsPspLinear[A](xs: Linear[A]): ops.LinearOps[A]                                = new ops.LinearOps(xs)
   implicit def convertViewEach[A](xs: View[A]): Each[A]                                        = Each(xs foreach _)
@@ -32,7 +33,8 @@ trait GlobalShow0 {
   implicit def convertHasClassTagTryDoc[A](x: A)(implicit z: CTag[A]): TryDoc = TryDoc.NoDoc(x, z)
 }
 trait GlobalShow extends GlobalShow0 {
-  implicit def convertHasShowDoc[A](x: A)(implicit z: Show[A]): Doc = x.doc
+  implicit def convertHasShowDocOps[A: Show](x: A): DocOps          = new DocOps(Doc(x))
+  implicit def convertHasShowDoc[A](x: A)(implicit z: Show[A]): Doc = Doc(x)
 }
 
 trait SetAndMapOps1 {
@@ -56,8 +58,7 @@ trait StdOps2 extends Any with StdOps1 {
   implicit def opsDirectString(s: String): ops.DirectOps[Char]   = new ops.DirectOps(Direct fromString s)
 
   // We buried Predef's {un,}augmentString in favor of these.
-  @inline final implicit def pspAugmentString(x: String): PspStringOps   = new PspStringOps(x)
-
+  implicit def pspAugmentString(x: String): PspStringOps           = new PspStringOps(x)
   implicit def opsAtomicView[A](x: View[A]): ops.ViewOpsImpl[A]    = new ops.ViewOpsImpl(x)
   implicit def opsHasOrderInfix[A: Order](x: A): infix.OrderOps[A] = new infix.OrderOps[A](x)
 }
@@ -69,8 +70,9 @@ trait StdOps3 extends StdOps2 {
   implicit def opsHasAlgebraInfix[A: BooleanAlgebra](x: A): infix.AlgebraOps[A] = new infix.AlgebraOps[A](x)
   implicit def opsHasEqInfix[A: Eq](x: A): infix.EqOps[A]                       = new infix.EqOps[A](x)
   implicit def opsHasHashInfix[A: Hash](x: A): infix.HashOps[A]                 = new infix.HashOps[A](x)
-  implicit def opsHasShowEach[A: Show](x: Each[A]): ops.ShowableSeqOps[A]       = new ops.ShowableSeqOps(x)
-  implicit def opsHasShowView[A: Show](x: View[A]): ops.ShowableSeqOps[A]       = opsHasShowEach(x.toEach)
+
+  implicit def opsHasShowEach[A: Show](x: Each[A]): ops.DocSeqOps = new ops.DocSeqOps(x.toVec map (_.doc))
+  implicit def opsHasShowView[A: Show](x: View[A]): ops.DocSeqOps = opsHasShowEach(x.toEach)
 
   implicit def opsBoolean(x: Boolean): ops.BooleanOps                                 = new ops.BooleanOps(x)
   implicit def opsBooleanAlgebra[A](x: BooleanAlgebra[A]): ops.BooleanAlgebraOps[A]   = new ops.BooleanAlgebraOps[A](x)
@@ -123,17 +125,17 @@ trait StdOps extends StdOps3 {
 trait StdUniversal0 {
   implicit def opsAny[A](x: A): ops.AnyOps[A] = new ops.AnyOps[A](x)
   // Lower priority than the hand-specialized variations.
-  @inline final implicit def arrowAssocRef[A](x: A): ll.ArrowAssocRef[A] = new ll.ArrowAssocRef(x)
+  final implicit def arrowAssocRef[A](x: A): ll.ArrowAssocRef[A] = new ll.ArrowAssocRef(x)
 }
 trait StdUniversal extends StdUniversal0 {
   // Prefer opsAnyRef over opsAny.
   implicit def opsAnyRef[A <: AnyRef](x: A): ops.AnyRefOps[A] = new ops.AnyRefOps[A](x)
 
-  @inline final implicit def arrowAssocInt(x: Int): ll.ArrowAssocInt             = new ll.ArrowAssocInt(x)
-  @inline final implicit def arrowAssocLong(x: Long): ll.ArrowAssocLong          = new ll.ArrowAssocLong(x)
-  @inline final implicit def arrowAssocDouble(x: Double): ll.ArrowAssocDouble    = new ll.ArrowAssocDouble(x)
-  @inline final implicit def arrowAssocChar(x: Char): ll.ArrowAssocChar          = new ll.ArrowAssocChar(x)
-  @inline final implicit def arrowAssocBoolean(x: Boolean): ll.ArrowAssocBoolean = new ll.ArrowAssocBoolean(x)
+  final implicit def arrowAssocInt(x: Int): ll.ArrowAssocInt             = new ll.ArrowAssocInt(x)
+  final implicit def arrowAssocLong(x: Long): ll.ArrowAssocLong          = new ll.ArrowAssocLong(x)
+  final implicit def arrowAssocDouble(x: Double): ll.ArrowAssocDouble    = new ll.ArrowAssocDouble(x)
+  final implicit def arrowAssocChar(x: Char): ll.ArrowAssocChar          = new ll.ArrowAssocChar(x)
+  final implicit def arrowAssocBoolean(x: Boolean): ll.ArrowAssocBoolean = new ll.ArrowAssocBoolean(x)
 }
 
 trait JavaBuilds0 {

@@ -32,4 +32,6 @@ object Doc {
   final case class Cat(left: Doc, right: Doc)         extends Doc
   final case class Shown[A](value: A, shows: Show[A]) extends Doc
   final case class Literal(value: String)             extends Doc
+
+  def apply[A](x: A)(implicit z: Show[A]): Shown[A] = Shown[A](x, z)
 }

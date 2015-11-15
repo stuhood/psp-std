@@ -34,7 +34,7 @@ final class Ansi private (val atoms: Vec[Atom]) extends BasicAttributes[Ansi] wi
   private def prefix = csi(atoms map (_.code) seq: _*)
   private def suffix = csi(0)
 
-  def apply(s: String): String = prefix ~ s ~ suffix
+  def apply(s: String): String = prefix append s append suffix
 
   override def toString = atoms mk_s ";"
 }

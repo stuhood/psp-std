@@ -64,7 +64,6 @@ abstract class StdPackage
     def comap[Prev](f: Prev => Elem): Builds[Prev, To] = Builds(xs => z build (xs map f))
     def map[Next](f: To => Next): Builds[Elem, Next]   = Builds(xs => f(z build xs))
     def direct: Suspended[Elem] => To                  = mf => z build Each(mf)
-    def scalaBuilder: scmBuilder[Elem, To]             = Vec.newBuilder[Elem] mapResult (z build _)
   }
   implicit class Tuple2Ops[A, B](val lhs: (A, B)) {
     def fold[C, D](rhs: (A, B))(f: (A, A) => C, g: (B, B) => C)(h: (C, C) => D): D =

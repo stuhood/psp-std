@@ -4,14 +4,15 @@ package ops
 
 import api._, StdEq._
 
-final class ShowableSeqOps[A: Show](xs: Each[A]) {
+final class DocSeqOps(xs: Direct[Doc]) {
   private def strs: Direct[String]       = xs mapNow (_.render)
   private def nonEmpties: Direct[String] = strs filterNot (_.isEmpty) mapNow (_.trim)
-  def inParens: String                   = "(" ~ joinComma ~ ")"
-  def joinLines: String                  = strs mkString EOL
-  def joinComma: String                  = nonEmpties mkString ", "
-  def joinParents: String                = nonEmpties mkString " with "
-  def joinWords: String                  = nonEmpties mkString " "
+
+  def inParens: String    = "(" append joinComma append ")"
+  def joinLines: String   = strs mkString EOL
+  def joinComma: String   = nonEmpties mkString ", "
+  def joinParents: String = nonEmpties mkString " with "
+  def joinWords: String   = nonEmpties mkString " "
 }
 
 final class InMapOps[K, V](xs: InMap[K, V]) {
@@ -111,7 +112,7 @@ final class PreciseOps(val size: Precise) extends AnyRef with HasPreciseSizeMeth
   def timesEval[A](body: => A): Each[A] = Each continually body take size
 
   def toIntRange                           = intRange(0, intSize)
-  def padLeft(s: String, ch: Char): String = if (s.length >= longSize) s else (this - s.length timesConst ch mkString "") ~ s
+  def padLeft(s: String, ch: Char): String = if (s.length >= longSize) s else (this - s.length timesConst ch mkString "") append s
 
   def leftFormatString  = if (size.isZero) "%s" else "%%-%ds" format intSize
   def rightFormatString = if (size.isZero) "%s" else "%%%ds" format intSize

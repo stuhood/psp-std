@@ -4,6 +4,7 @@ package ops
 
 import api._
 import scala.compat.Platform.arraycopy
+import Api.SpecTypes
 
 final class InPlace[A](val xs: Array[A]) extends AnyVal {
   private def andThis(op: Unit): Array[A] = xs
@@ -46,9 +47,6 @@ final class ArraySpecificOps[A](val xs: Array[A]) extends AnyVal with HasPrecise
 }
 
 final class ForeachOps[A](val xs: Each[A]) extends AnyVal {
-  // def +:(elem: A): Each[A] = Each.join(Direct(elem), xs)
-  // def :+(elem: A): Each[A] = Each.join(xs, Direct(elem))
-
   def sized(size: Precise): Each[A] = new Each.Sized(xs, size)
   def memo: Indexed.Memo[A] = xs match {
     case xs: Indexed.Memo[A] => xs
@@ -57,11 +55,6 @@ final class ForeachOps[A](val xs: Each[A]) extends AnyVal {
 }
 
 final class DirectOps[A](val xs: Direct[A]) extends AnyVal {
-  // def +:(x: A): Direct[A]          = Direct.prepend(x, xs)
-  // def :+(x: A): Direct[A]          = Direct.append(xs, x)
-
-  def ++(ys: Direct[A]): Direct[A] = Direct.join(xs, ys)
-
   def containsIndex(i: Index): Boolean = 0 <= i.getInt && i.getInt < xs.intSize
   def apply(i: Index): A               = xs elemAt i
   def length: Int                      = xs.intSize

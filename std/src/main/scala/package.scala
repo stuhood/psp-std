@@ -5,6 +5,7 @@ import java.nio.file.{ attribute => jnfa }
 import scala.{ collection => sc }
 import sc.{ mutable => scm, immutable => sci }
 import psp.api._
+import Api.SpecTypes
 
 package object std extends psp.std.StdPackage {
   import Unsafe.inheritedShow
@@ -101,7 +102,6 @@ package object std extends psp.std.StdPackage {
 
   implicit val defaultRenderer: FullRenderer              = new FullRenderer
   implicit def docOrder(implicit z: Renderer): Order[Doc] = orderBy[Doc](z render _)
-  implicit def showableDocOps[A: Show](x: A): DocOps      = new DocOps(Doc.Shown(x, ?[Show[A]]))
 
   implicit class DocOps(val lhs: Doc) {
     def doc: Doc                             = lhs
@@ -162,7 +162,13 @@ package object std extends psp.std.StdPackage {
   def formattedDate(format: String)(date: jDate): String = new java.text.SimpleDateFormat(format) format date
   def dateTime(): String                                 = formattedDate("yyyyMMdd-HH-mm-ss")(new jDate)
   def now(): FileTime                                    = jnfa.FileTime fromMillis milliTime
-  def timed[A](body: => A): A                            = nanoTime |> (start => try body finally echoErr("Elapsed: %.3f ms" format (nanoTime - start) / 1e6))
+
+  @inline def timed[A](elapsed: Long => Unit)(body: => A): A = {
+    val start = nanoTime
+    val result = body
+    elapsed(nanoTime - start)
+    result
+  }
 
   // Operations involving Null, Nothing, and casts.
   def abortTrace(msg: String): Nothing     = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
@@ -207,9 +213,9 @@ package object std extends psp.std.StdPackage {
   def fst[A, B](x: A -> B): A = x._1
   def snd[A, B](x: A -> B): B = x._2
 
-  def vec[@spec A](xs: A*): Vec[A]                      = Vec(xs: _*)
+  def vec[@spec(SpecTypes) A](xs: A*): Vec[A]           = Vec(xs: _*)
   def exMap[K: Eq, V](xs: (K -> V)*): ExMap[K, V]       = xs.m.toEach.toMap[ExMap]
-  def exSeq[@spec A](xs: A*): Vec[A]                    = Vec(xs: _*)
+  def exSeq[@spec(SpecTypes) A](xs: A*): Vec[A]         = Vec(xs: _*)
   def exSet[A: Eq](xs: A*): ExSet[A]                    = xs.m.toExSet
   def exView[A](xs: A*): View[A]                        = Direct[A](xs: _*).m
   def inMap[K, V](p: ToBool[K], f: K => V): InMap[K, V] = InMap(inSet(p), f)

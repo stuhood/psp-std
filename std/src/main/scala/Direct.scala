@@ -6,10 +6,7 @@ import api._
 object Direct {
   final val Empty: Direct[Nothing] = Pure(Precise(0), _ => sys error "<empty>")
 
-  final case class WrapVector[A](xs: sciVector[A]) extends AnyVal with DirectImpl[A] {
-    def +:(x: A): WrapVector[A]             = WrapVector(x +: xs)
-    def :+(x: A): WrapVector[A]             = WrapVector(xs :+ x)
-    def ++(ys: Direct[A]): WrapVector[A]    = WrapVector(xs ++ ys.seq)
+  final case class WrapSeq[A](xs: scSeq[A]) extends AnyVal with DirectImpl[A] {
     def size: Precise                       = Precise(xs.size)
     def elemAt(i: Index): A                 = xs(i.getInt)
     @inline def foreach(f: A => Unit): Unit = xs foreach f
@@ -38,27 +35,20 @@ object Direct {
     def isEmpty = size.isZero
   }
 
+  def fromScala[A](xs: sCollection[A]): Direct[A] = xs match {
+    case xs: scSeq[A] => WrapSeq(xs)
+    case _            => WrapSeq(xs.toSeq.seq)
+  }
+
   def empty[A] : Direct[A]                             = Empty
-  def fromScala[A](xs: sCollection[A]): Direct[A]      = WrapVector(xs.toVector)
   def fromJava[A](xs: jList[A]): Direct[A]             = WrapJava(xs)
   def fromString(xs: String): Direct[Char]             = WrapString(xs)
   def fromArray[A](xs: Array[A]): Direct[A]            = WrapArray[A](xs)
   def wrapArray[A](xs: Array[_]): Direct[A]            = WrapArray[A](xs)
   def pure[A](size: Precise, f: Index => A): Direct[A] = Pure(size, f)
-  def apply[A](xs: A*): Direct[A]                      = xs match {
+
+  def apply[A](xs: A*): Direct[A] = xs match {
     case xs: scmWrappedArray[_] => fromArray[A](xs.array.castTo[Array[A]])
-    case _                      => fromScala(xs.toVector)
-  }
-  def join[A](xs: Direct[A], ys: Direct[A]): Direct[A] = xs match {
-    case xs: WrapVector[A] => xs ++ ys
-    case _                 => WrapVector(xs.toScalaVector) ++ ys
-  }
-  def append[A](xs: Direct[A], x: A): Direct[A] = xs match {
-    case xs: WrapVector[A] => xs :+ x
-    case _                 => WrapVector(xs.toScalaVector) :+ x
-  }
-  def prepend[A](x: A, xs: Direct[A]): Direct[A] = xs match {
-    case xs: WrapVector[A] => x +: xs
-    case _                 => x +: WrapVector(xs.toScalaVector)
+    case _                      => fromScala(xs)
   }
 }

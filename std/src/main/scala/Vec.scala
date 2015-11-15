@@ -3,6 +3,7 @@ package std
 
 import api._, StdShow._
 import scala.compat.Platform.arraycopy
+import Api.SpecTypes
 
 /** Based on the scala library Vector by Tiark Rompf.
  *    https://issues.scala-lang.org/browse/SI-4442
@@ -11,28 +12,75 @@ import scala.compat.Platform.arraycopy
  */
 
 object Vec {
-  def empty[A] : Vec[A]                        = NIL.castTo[Vec[A]]
-  def newBuilder[@spec A]()                    = new VectorBuilder[A]()
-  def apply[@spec A](xs: A*): Vec[A]           = newBuilder[A]() doto (b => xs foreach (b += _)) result
-  def unapplySeq[A](x: Vec[A]): Some[scSeq[A]] = Some(x.seq)
+  def empty[@spec(SpecTypes) A] : Vec[A]                        = NIL.castTo[Vec[A]]
+  def apply[@spec(SpecTypes) A](xs: A*): Vec[A]                 = newBuilder[A] build (Direct fromScala xs)
+  def unapplySeq[@spec(SpecTypes) A](x: Vec[A]): Some[scSeq[A]] = Some(x.seq)
+  def newBuilder[@spec(SpecTypes) A](): Builder[A]              = new Builder[A]()
 
   private[std] val NIL = new Vec[Any](0, 0, 0)
   // Constants governing concat strategy for performance
   private[std] final val Log2ConcatFaster = 5
   private[std] final val TinyAppendFaster = 2
+
+  def levelOf(index: Int): Int = (
+    if (index < 32) 0
+    else if ((index >> 5) < 32) 1
+    else if ((index >> 10) < 32) 2
+    else if ((index >> 15) < 32) 3
+    else if ((index >> 20) < 32) 4
+    else if ((index >> 25) < 32) 5
+    else 6
+  )
+
+  final case class Split[@spec(SpecTypes) A](left: Vec[A], right: Vec[A]) extends api.SplitInvariantM[Vec, A] {
+    def mapLeft(f: ToSelf[Vec[A]]): Split[A]  = Split(f(left), right)
+    def mapRight(f: ToSelf[Vec[A]]): Split[A] = Split(left, f(right))
+    def rejoin: Vec[A]                        = left ++ right
+  }
+
+  final class Builder[@spec(SpecTypes) A]() extends Builds[A, Vec[A]] with VectorPointer[A @uV] {
+    // possible alternative: start with display0 = null, blockIndex = -32, lo = 32
+    // to avoid allocating initial array if the result will be empty anyways
+    this.display0 = new Array[AnyRef](32)
+    this.depth    = 1
+
+    private[this] var blockIndex = 0
+    private[this] var lo = 0
+
+    def build(xs: Each[A]): Vec[A] = {
+      xs foreach add
+      result
+    }
+    def add(elem: A): Unit = {
+      if (lo >= display0.length) {
+        val newBlockIndex = blockIndex+32
+        gotoNextBlockStartWritable(newBlockIndex, blockIndex ^ newBlockIndex)
+        blockIndex = newBlockIndex
+        lo = 0
+      }
+      display0(lo) = elem.asInstanceOf[AnyRef]
+      lo += 1
+    }
+    def result(): Vec[A] = {
+      val size = blockIndex + lo
+      if (size == 0)
+        return Vec.empty
+
+      val s = new Vec[A](0, size, 0) // should focus front or back?
+      s initFrom this
+      if (depth > 1) s.gotoPos(0, size - 1) // we're currently focused to size - 1, not size!
+      s
+    }
+  }
 }
 
-final class Vec[@spec A](val startIndex: Int, val endIndex: Int, focus: Int) extends VectorPointer[A @uV] with Direct[A] with ForceShowDirect {
+final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focus: Int) extends VectorPointer[A @uV] with Direct[A] with ForceShowDirect {
   self =>
 
-  private def preStartIndex = startIndex - 1
+  @inline private def preStartIndex = startIndex - 1
 
   private def nextVec(s: Int, e: Int, f: Int): Vec[A] = new Vec[A](s, e, f)
-  private def newVec(s: Int, e: Int, f: Int): Vec[A] = {
-    val next = nextVec(s, e, f)
-    next initFrom this
-    next
-  }
+  private def newVec(s: Int, e: Int, f: Int): Vec[A]  = nextVec(s, e, f) doto (_ initFrom this)
 
   private def updateDirty(s: Vec[A]): Vec[A] = { s.dirty = this.dirty ; s }
 
@@ -46,23 +94,71 @@ final class Vec[@spec A](val startIndex: Int, val endIndex: Int, focus: Int) ext
 
   def to_s = "[ " + (this map (_.any_s) mk_s ", ") + " ]"
 
-  def length = endIndex - startIndex
+  def lastIntIndex        = length - 1
+  def length              = endIndex - startIndex
+  def size: Precise       = Precise(length)
+  def elemAt(i: Index): A = apply(i.getInt)
+  def isEmpty: Boolean    = length == 0
+  def nonEmpty: Boolean   = length > 0
 
-  def foreach(f: A => Unit): Unit = iterator foreach f
-  def size: Precise               = Precise(length)
-  def elemAt(i: Index): A         = apply(i.getInt)
-  def isEmpty: Boolean            = length == 0
-  def take(n: Int): Vec[A]        = dropBack0(length - n)
-  def drop(n: Int): Vec[A]        = dropFront0(n)
+  @inline def foreach(f: A => Unit): Unit = {
+    if (nonEmpty)
+      lowlevel.ll.foreachConsecutive(0, lastIntIndex, i => f(apply(i)))
+  }
+
+  def take(n: Int): Vec[A] =
+    if (n <= 0) Vec.empty
+    else if (n >= length) this
+    else dropBack0(startIndex + n)
+
+  def drop(n: Int): Vec[A] =
+    if (n <= 0) this
+    else if (n >= length) Vec.empty
+    else dropFront0(startIndex + n)
+
+  def takeRight(n: Int): Vec[A] =
+    if (n <= 0) Vec.empty
+    else if (n >= length) this
+    else dropFront0(endIndex - n)
+
+  def dropRight(n: Int): Vec[A] =
+    if (n <= 0) this
+    else if (endIndex - n > startIndex) dropBack0(endIndex - n)
+    else Vec.empty
+
+  def head: A      = if (nonEmpty) apply(0) else unsupportedOperationException("empty.head")
+  def tail: Vec[A] = if (nonEmpty) drop(1) else unsupportedOperationException("empty.tail")
+  def last: A      = if (nonEmpty) apply(length - 1) else unsupportedOperationException("empty.last")
+  def init: Vec[A] = if (nonEmpty) dropRight(1) else unsupportedOperationException("empty.init")
+
+  def slice(start: Int, end: Int): Vec[A]  = this take end drop start
+  def splitAt(n: Int):  Vec.Split[A]       = Vec.Split(this take n, this drop n)
+  def span(p: ToBool[A]): Vec.Split[A]     = splitAt(iterator count p)
+  def takeWhile(p: ToBool[A]): Vec[A]      = take(iterator count p)
+  def dropWhile(p: ToBool[A]): Vec[A]      = drop(iterator count p)
+  def takeRightWhile(p: ToBool[A]): Vec[A] = takeRight(reverseIterator count p)
+  def dropRightWhile(p: ToBool[A]): Vec[A] = dropRight(reverseIterator count p)
+
+  @inline def foldl[@spec(SpecTypes) B](zero: B)(f: (B, A) => B): B = {
+    var res = zero
+    if (length > 0)
+      lowlevel.ll.foreachConsecutive(0, lastIntIndex, i => res = f(res, apply(i)))
+    res
+  }
 
   def updated(i: Index, elem: A): Vec[A] = updateAt(i.getInt, elem)
-  def :+(elem: A): Vec[A]                = appendBack(elem)
-  def +:(elem: A): Vec[A]                = appendFront(elem)
+  def :+(elem: A): Vec[A] = appendBack(elem)
+  def +:(elem: A): Vec[A] = appendFront(elem)
 
-  // Fold the smaller vector into the larger for maximum sharing.
   def ++(that: Vec[A]): Vec[A] = (
-    if (length <= that.length) that.foldl(this)(_ :+ _)
-    else this.foldr(that)(_ +: _)
+    if (that.isEmpty) this
+    else if (this.isEmpty) that
+    else {
+      val b = Vec.newBuilder[A]
+      this foreach b.add
+      that foreach b.add
+      b.result
+    }
   )
 
   private[std] final def initIterator(s: VectorIterator[A]): VectorIterator[A] = {
@@ -74,16 +170,14 @@ final class Vec[@spec A](val startIndex: Int, val endIndex: Int, focus: Int) ext
 
   def iterator: VectorIterator[A]                          = initIterator(new VectorIterator[A](startIndex, endIndex))
   def reverseIterator: BiIterator.ReverseDirectIterator[A] = BiIterator direct this reverseIterator
+  def reverse: Vec[A]                                      = reverseIterator.toVec
   def apply(index: Int): A                                 = getElemWithFocus(checkRangeConvert(index))
 
   private def getElemWithFocus(idx: Int): A = getElem(idx, idx ^ focus)
-  private[std] def checkRangeConvert(index: Int): Int = {
-    val idx = index + startIndex
-    if (0 <= index && idx < endIndex)
-      idx
-    else
-      throw new java.lang.IndexOutOfBoundsException(index.toString)
-  }
+  private[std] def checkRangeConvert(index: Int): Int = (
+    if (0 <= index && index < length) index + startIndex
+    else indexOutOfBoundsException(index)
+  )
 
   // semi-private[std] api
 
@@ -185,23 +279,17 @@ final class Vec[@spec A](val startIndex: Int, val endIndex: Int, focus: Int) ext
     }
   }
 
-  // empty vector, just insert single element at the back
-  private def makeSingletonAtBack(value: A): Vec[A] = {
+  private def newSingleArray(startIndex: Int, endIndex: Int, elem: A): Vec[A] = {
     val elems = allocateArray(32)
-    elems(31) = value.asInstanceOf[AnyRef]
-    val s = nextVec(31, 32, 0)
+    elems(startIndex) = elem.asInstanceOf[AnyRef]
+    val s = nextVec(startIndex, endIndex, 0)
     s.depth = 1
     s.display0 = elems
     s
   }
-  private def makeSingletonAtFront(value: A): Vec[A] = {
-    val elems = allocateArray(32)
-    elems(0) = value.asInstanceOf[AnyRef]
-    val s = nextVec(0, 1, 0)
-    s.depth = 1
-    s.display0 = elems
-    s
-  }
+
+  private def makeSingletonAtBack(value: A): Vec[A]  = newSingleArray(31, 32, value)
+  private def makeSingletonAtFront(value: A): Vec[A] = newSingleArray(0, 1, value)
 
   private[std] def appendBack(value: A): Vec[A] = {
     if (endIndex == startIndex)
@@ -407,7 +495,6 @@ final class Vec[@spec A](val startIndex: Int, val endIndex: Int, focus: Int) ext
 
     // need to init with full display iff going to cutIndex requires swapping block at level >= d
     val s = newVec(cutIndex-shift, endIndex-shift, blockIndex-shift)
-    // s.initFrom(this)
     s.dirty = dirty
     s.gotoPosWritable(focus, blockIndex)
     s.preClean(d)
@@ -421,8 +508,6 @@ final class Vec[@spec A](val startIndex: Int, val endIndex: Int, focus: Int) ext
     val d = requiredDepth(xor)
     val shift = (startIndex & ~((1 << (5*d))-1))
     val s = newVec(startIndex-shift, cutIndex-shift, blockIndex-shift)
-
-    // s.initFrom(this)
     s.dirty = dirty
     s.gotoPosWritable(focus, blockIndex)
     s.preClean(d)
@@ -432,7 +517,7 @@ final class Vec[@spec A](val startIndex: Int, val endIndex: Int, focus: Int) ext
 }
 
 
-final class VectorIterator[@spec A](_startIndex: Int, endIndex: Int) extends scIterator[A] with VectorPointer[A @uV] {
+final class VectorIterator[@spec(SpecTypes) A](_startIndex: Int, endIndex: Int) extends scIterator[A] with VectorPointer[A @uV] {
   private[std] var blockIndex: Int = _startIndex & ~31
   private[std] var lo: Int         = _startIndex & 31
   private[std] var endLo           = math.min(endIndex - blockIndex, 32)
@@ -440,7 +525,7 @@ final class VectorIterator[@spec A](_startIndex: Int, endIndex: Int) extends scI
 
   def hasNext = _hasNext
   def next(): A = {
-    if (!_hasNext) throw new NoSuchElementException("reached iterator end")
+    if (!_hasNext) noSuchElementException("reached iterator end")
 
     val res = display0(lo).asInstanceOf[A]
     lo += 1
@@ -462,98 +547,40 @@ final class VectorIterator[@spec A](_startIndex: Int, endIndex: Int) extends scI
   }
 }
 
-final class VectorBuilder[@spec A]() extends scmBuilder[A, Vec[A]] with VectorPointer[A @uV] {
-  // possible alternative: start with display0 = null, blockIndex = -32, lo = 32
-  // to avoid allocating initial array if the result will be empty anyways
-
-  display0 = new Array[AnyRef](32)
-  depth = 1
-
-  private[std] var blockIndex = 0
-  private[std] var lo = 0
-
-  def += (elem: A): this.type = {
-    if (lo >= display0.length) {
-      val newBlockIndex = blockIndex+32
-      gotoNextBlockStartWritable(newBlockIndex, blockIndex ^ newBlockIndex)
-      blockIndex = newBlockIndex
-      lo = 0
-    }
-    display0(lo) = elem.asInstanceOf[AnyRef]
-    lo += 1
-    this
-  }
-
-  def result: Vec[A] = {
-    val size = blockIndex + lo
-    if (size == 0)
-      return Vec.empty
-
-    val s = new Vec[A](0, size, 0) // should focus front or back?
-    s initFrom this
-    if (depth > 1) s.gotoPos(0, size - 1) // we're currently focused to size - 1, not size!
-    s
-  }
-
-  def clear(): Unit = {
-    display0 = new Array[AnyRef](32)
-    depth = 1
-    blockIndex = 0
-    lo = 0
-  }
-}
-
-sealed trait VectorPointer[@spec T] {
+sealed trait VectorPointer[@spec(SpecTypes) T] {
   def allocateArray(len: Int): Array[AnyRef] = newArray[AnyRef](len)
-  def alllocate32(): Array[AnyRef]           = allocateArray(32)
 
-  private[std] var depth: Int              = _
-  private[std] var display0: Array[AnyRef] = _
-  private[std] var display1: Array[AnyRef] = _
-  private[std] var display2: Array[AnyRef] = _
-  private[std] var display3: Array[AnyRef] = _
-  private[std] var display4: Array[AnyRef] = _
-  private[std] var display5: Array[AnyRef] = _
+  val displays: Displays = new Displays()
 
-  // used
-  private[std] final def initFrom[U](that: VectorPointer[U]): Unit = initFrom(that, that.depth)
+  def depth: Int            = displays.depth
+  def depth_=(x: Int): Unit = displays.depth = x
 
-  private[std] final def initFrom[U](that: VectorPointer[U], depth: Int) = {
-    this.depth = depth
-    (depth - 1) match {
-      case -1 =>
-      case 0 =>
-        display0 = that.display0
-      case 1 =>
-        display1 = that.display1
-        display0 = that.display0
-      case 2 =>
-        display2 = that.display2
-        display1 = that.display1
-        display0 = that.display0
-      case 3 =>
-        display3 = that.display3
-        display2 = that.display2
-        display1 = that.display1
-        display0 = that.display0
-      case 4 =>
-        display4 = that.display4
-        display3 = that.display3
-        display2 = that.display2
-        display1 = that.display1
-        display0 = that.display0
-      case 5 =>
-        display5 = that.display5
-        display4 = that.display4
-        display3 = that.display3
-        display2 = that.display2
-        display1 = that.display1
-        display0 = that.display0
-    }
+  def display0: Array[AnyRef] = displays getDisplay 0
+  def display1: Array[AnyRef] = displays getDisplay 1
+  def display2: Array[AnyRef] = displays getDisplay 2
+  def display3: Array[AnyRef] = displays getDisplay 3
+  def display4: Array[AnyRef] = displays getDisplay 4
+  def display5: Array[AnyRef] = displays getDisplay 5
+
+  def display0_=(xs: Array[AnyRef]): Unit = displays.setDisplay(0, xs)
+  def display1_=(xs: Array[AnyRef]): Unit = displays.setDisplay(1, xs)
+  def display2_=(xs: Array[AnyRef]): Unit = displays.setDisplay(2, xs)
+  def display3_=(xs: Array[AnyRef]): Unit = displays.setDisplay(3, xs)
+  def display4_=(xs: Array[AnyRef]): Unit = displays.setDisplay(4, xs)
+  def display5_=(xs: Array[AnyRef]): Unit = displays.setDisplay(5, xs)
+
+  private[std] final def initFrom(that: VectorPointer[T]): VectorPointer[T] = {
+    this.depth = that.depth
+    displays initFrom that.displays
+    this
   }
 
   // requires structure is at pos oldIndex = xor ^ index
   private[std] final def getElem(index: Int, xor: Int): T = {
+    // Should be replaceable with
+    //   (displays getElem new Base32(index).asInstanceOf[T]
+    // But doesn't quite work somewhere (NPE in Resources test.)
+
     if (xor < (1 << 5)) { // level = 0
       display0(index & 31).asInstanceOf[T]
     } else
