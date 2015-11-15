@@ -74,8 +74,8 @@ trait HasPreciseSizeMethods extends Any {
 
   def containsIndex(index: Index): Boolean = indices.m contains index
 
-  @inline def foreachIndex(f: Index => Unit): Unit     = if (isPositive) lowlevel.foreachConsecutive(0, lastIntIndex, i => f(Index(i)))
-  @inline def foreachIntIndex(f: Int => Unit): Unit    = if (isPositive) lowlevel.foreachConsecutive(0, lastIntIndex, f)
+  @inline def foreachIndex(f: Index => Unit): Unit     = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIntIndex, i => f(Index(i)))
+  @inline def foreachIntIndex(f: Int => Unit): Unit    = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIntIndex, f)
   @inline def mapIndices[A](f: Index => A): Direct[A]  = indices mapNow f
 }
 

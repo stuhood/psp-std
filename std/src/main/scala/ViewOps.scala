@@ -202,11 +202,11 @@ final class HasOrder[A](xs: View[A])(implicit z: Order[A]) extends HasEq[A](xs) 
   def max: A                = xs reducel (_ max2 _)
   def min: A                = xs reducel (_ min2 _)
   def sortDistinct: View[A] = sorted.distinct
-  def sorted: View[A]       = xs.toRefArray.inPlace.sort(z.castTo).toVec.castTo
+  def sorted: View[A]       = xs.toRefArray.inPlace.sort
 }
 
 final class HasInitialValue[+A, B](xs: View[A], initial: B) {
-  def indexed(f: (B, A, Index) => B): B = lowlevel.foldLeftIndexed(xs, initial, f)
-  def left(f: (B, A) => B): B           = lowlevel.foldLeft(xs, initial, f)
-  def right(f: (A, B) => B): B          = lowlevel.foldRight(xs, initial, f)
+  def indexed(f: (B, A, Index) => B): B = lowlevel.ll.foldLeftIndexed(xs, initial, f)
+  def left(f: (B, A) => B): B           = lowlevel.ll.foldLeft(xs, initial, f)
+  def right(f: (A, B) => B): B          = lowlevel.ll.foldRight(xs, initial, f)
 }
