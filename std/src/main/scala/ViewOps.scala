@@ -101,15 +101,7 @@ trait ApiViewOps[+A] extends Any {
   def foldFrom[B](zero: B): HasInitialValue[A, B]          = new HasInitialValue(xs, zero)
 }
 
-trait ByOps[A] extends Any {
-  def xs: View[A]
-
-  def byEquals: HasEq[A]   = new HasEq[A](xs)(inheritEq)
-  def byRef: HasEq[Ref[A]] = new HasEq[Ref[A]](xs.toRefs)(referenceEq)
-  def byString: HasEq[A]   = new HasEq[A](xs)(stringEq)
-}
-
-trait InvariantViewOps[A] extends Any with ApiViewOps[A] with ByOps[A] {
+trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
   def +:(elem: A): View[A] = exView(elem) ++ xs
   def :+(elem: A): View[A] = xs ++ exView(elem)
 
@@ -180,7 +172,8 @@ private class Grouped[A](n: Precise) extends HeadAndTail[A, View[A]] {
   def tail(xs: View[A]): View[A]   = xs drop n
 }
 
-final class EachApiViewOps[A](val xs: View[A]) extends AnyVal with InvariantViewOps[A] { }
+final class ViewOpsImpl[A](val xs: View[A]) extends InvariantViewOps[A]
+
 final class InvariantApiViewOps[A](val xs: InvariantView[A]) extends AnyVal with InvariantViewOps[A] { }
 
 /** A ZipView has similar operations to a View, but with the benefit of
