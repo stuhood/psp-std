@@ -38,29 +38,29 @@ trait JavaClass extends Any {
   def isPrimitive      = clazz.isPrimitive
   def isSynthetic      = clazz.isSynthetic
 
-  def ancestorNames: Direct[String]         = ancestors mapNow (_.rawName)
-  def ancestors: Direct[JavaClass]          = this transitiveClosure (_.parents) toDirect
-  def exists: Boolean                       = clazz != null
-  def fields: Direct[jField]                = clazz.getFields.toDirect
-  def getCanonicalName: String              = clazz.getCanonicalName
-  def getClassLoader: ClassLoader           = clazz.getClassLoader
-  def getClasses: Direct[JavaClass]         = clazz.getClasses.toDirect mapNow toPolicy
-  def getComponentType: JavaClass           = clazz.getComponentType
-  def getDeclaredClasses: Direct[JavaClass] = clazz.getDeclaredClasses.toDirect mapNow toPolicy
-  def getDeclaringClass: JavaClass          = clazz.getDeclaringClass
-  def getEnclosingClass: JavaClass          = clazz.getEnclosingClass
-  def getInterfaces: Direct[JavaClass]      = clazz.getInterfaces.toDirect mapNow toPolicy
-  def getSuperclass: Option[JavaClass]      = Option(clazz.getSuperclass) map toPolicy
-  def hasModuleName: Boolean                = rawName endsWith "$"
-  def methods: Direct[jMethod]              = clazz.getMethods.toDirect
-  def nameSegments: Direct[String]          = rawName.dottedSegments
-  def parentInterfaces: Direct[JavaClass]   = clazz.getInterfaces.toDirect mapNow toPolicy
-  def parents: Direct[JavaClass]            = getSuperclass.toDirect ++ parentInterfaces
-  def qualifiedName: String                 = rawName.mapSplit('.')(decodeName)
-  def rawName: String                       = clazz.getName
-  def shortName: String                     = unqualifiedName
-  def to_s: String                          = s"$clazz"
-  def unqualifiedName: String               = decodeName(nameSegments.last)
+  def ancestorNames: Vec[String]         = ancestors mapNow (_.rawName)
+  def ancestors: Vec[JavaClass]          = this transitiveClosure (_.parents) toVec
+  def exists: Boolean                    = clazz != null
+  def fields: Vec[jField]                = clazz.getFields.toVec
+  def getCanonicalName: String           = clazz.getCanonicalName
+  def getClassLoader: ClassLoader        = clazz.getClassLoader
+  def getClasses: Vec[JavaClass]         = clazz.getClasses.toVec mapNow toPolicy
+  def getComponentType: JavaClass        = clazz.getComponentType
+  def getDeclaredClasses: Vec[JavaClass] = clazz.getDeclaredClasses.toVec mapNow toPolicy
+  def getDeclaringClass: JavaClass       = clazz.getDeclaringClass
+  def getEnclosingClass: JavaClass       = clazz.getEnclosingClass
+  def getInterfaces: Vec[JavaClass]      = clazz.getInterfaces.toVec mapNow toPolicy
+  def getSuperclass: Option[JavaClass]   = Option(clazz.getSuperclass) map toPolicy
+  def hasModuleName: Boolean             = rawName endsWith "$"
+  def methods: Vec[jMethod]              = clazz.getMethods.toVec
+  def nameSegments: Vec[String]          = rawName.dottedSegments
+  def parentInterfaces: Vec[JavaClass]   = clazz.getInterfaces.toVec mapNow toPolicy
+  def parents: Vec[JavaClass]            = getSuperclass.toVec ++ parentInterfaces
+  def qualifiedName: String              = rawName.mapSplit('.')(decodeName)
+  def rawName: String                    = clazz.getName
+  def shortName: String                  = unqualifiedName
+  def to_s: String                       = s"$clazz"
+  def unqualifiedName: String            = decodeName(nameSegments.last)
 }
 
 trait JavaClassLoader extends Any {

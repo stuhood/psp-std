@@ -3,17 +3,16 @@ package dev
 package ansi
 
 import std._, api._
+import StdShow._, StdEq._
 import RGB._
-import StdShow._
-import StdEq._
 
 final case class ColorName(name: String)
 
 object ColorName {
   def empty = ColorName("<none>")
 
-  implicit def ReadColorNames: Read[Direct[ColorName]] = Read(readAs[RGB] andThen colorMap.namesOf)
-  implicit def ShowColorName: Show[ColorName]          = Show[ColorName](x => (colorMap get x).fold(x.name)(idx => Ansi(38, 5, idx.getInt)(x.name)))
+  implicit def ReadColorNames: Read[Vec[ColorName]] = Read(readAs[RGB] andThen colorMap.namesOf)
+  implicit def ShowColorName: Show[ColorName]       = Show[ColorName](x => (colorMap get x).fold(x.name)(idx => Ansi(38, 5, idx.getInt)(x.name)))
 }
 
 final class RGB private (val bits: Int) extends AnyVal {
@@ -21,13 +20,13 @@ final class RGB private (val bits: Int) extends AnyVal {
   override def toString  = s"RGB($bits)"
 }
 
-final class RgbMap(val keys: Direct[ColorName], val lookup: ColorName => RGB, val palette: Direct[RGB]) {
-  def grouped                              = keys clusterBy nearestIndex sortBy (x => (x.length, x.head.name.length)) map (_.joinWords)
-  def get(key: ColorName): Option[Index]   = Try(nearestIndex(key)).toOption
-  def namesOf(rgb: RGB): Direct[ColorName] = keys filter (k => nearest(rgb) == nearest(lookup(k)))
-  def nearestIndex(key: ColorName): Index  = nearestIndex(lookup(key))
-  def nearest(rgb: RGB): RGB               = palette.toScalaVector minBy rgb.distanceTo
-  def nearestIndex(rgb: RGB): Index        = palette.indices.toScalaVector minBy (i => rgb distanceTo palette(i))
+final class RgbMap(val keys: Vec[ColorName], val lookup: ColorName => RGB, val palette: Vec[RGB]) {
+  def grouped: Vec[String]                = keys.m clusterBy nearestIndex sortBy (x => (x.length, x.head.name.length)) map (_.joinWords)
+  def get(key: ColorName): Option[Index]  = Try(nearestIndex(key)).toOption
+  def namesOf(rgb: RGB): Vec[ColorName]   = keys filter (k => nearest(rgb) == nearest(lookup(k)))
+  def nearestIndex(key: ColorName): Index = nearestIndex(lookup(key))
+  def nearest(rgb: RGB): RGB              = palette.toScalaVector minBy rgb.distanceTo
+  def nearestIndex(rgb: RGB): Index       = palette.indices.toScalaVector minBy (i => rgb distanceTo palette(i))
 
   override def toString = "RgbMap(%s color names, _, %s in palette)".format(keys.length, palette.length)
 }
@@ -71,7 +70,7 @@ object RGB {
   implicit def ReadRGB: Read[RGB] = Read[RGB](s => if (s.words.length == 1) ReadRGBHex1 read s else ReadRGBDec3 read s)
 
   def ReadRGBHex1: Read[RGB] = Read[RGB](s => fromBits(("0x" + s).toInt))
-  def ReadRGBDec3: Read[RGB] = Read[RGB](s => s.words.toDirect match { case Vec(r, g, b) => RGB(r.toInt, g.toInt, b.toInt) })
+  def ReadRGBDec3: Read[RGB] = Read[RGB](s => s.words.toVec match { case Vec(r, g, b) => RGB(r.toInt, g.toInt, b.toInt) })
 
   implicit class RGBOps(val rgb: RGB) {
     def redValue    = (rgb.bits >> 16) & 0xFF

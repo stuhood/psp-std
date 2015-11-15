@@ -60,7 +60,7 @@ final class OptionOps[A](val x: Option[A]) extends AnyVal {
   def orEmpty(implicit z: Empty[A]): A = x getOrElse emptyValue[A]
   def or(alt: => A): A                 = x getOrElse alt
   def orFail(msg: String): A           = x getOrElse abort(msg)
-  def toDirect: Direct[A]              = Direct fromScala x.toVector
+  def toVec: Vec[A]                    = x.fold[Vec[A]](vec())(vec(_))
 }
 
 final class TryOps[A](val x: Try[A]) extends AnyVal {

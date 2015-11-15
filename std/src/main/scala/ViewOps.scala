@@ -28,25 +28,14 @@ trait ApiViewOps[+A] extends Any {
   def mkString(sep: String): String                      = stringed(sep)(_.any_s)
   def mk_s(sep: String)(implicit z: Show[A]): String     = stringed(sep)(_.render)
   def nonEmpty: Boolean                                  = xs.size.isNonZero || !directIsEmpty
-  def tabular(columns: ToString[A]*): String             = if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toDirect, columns.m).render else ""
+  def tabular(columns: ToString[A]*): String             = if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toVec, columns.m).render else ""
   def toRefs: View[Ref[A]]                               = xs map (_.toRef)
   def zfirst[B](pf: A ?=> B)(implicit z: Empty[B]): B    = find(pf.isDefinedAt).fold(z.empty)(pf)
   def zfoldl[B](f: (B, A) => B)(implicit z: Empty[B]): B = foldl(z.empty)(f)
   def zfoldr[B](f: (A, B) => B)(implicit z: Empty[B]): B = foldr(z.empty)(f)
 
   def tee(f: A => String): View[A] = xs map (_ doto (x => echoOut(f(x))))
-  def mapNow[B](f: A => B): Direct[B] = xs map f toDirect
-
-  /** Not especially efficient while we're sorting this out.
-   *                                       sorting this out.
-   *                                       sorting         .
-   */
-  private[this] def orderOps(implicit z: Order[A]): HasOrder[A] = new HasOrder(xs)
-  def max(implicit z: Order[A]): A                              = orderOps.max
-  def min(implicit z: Order[A]): A                              = orderOps.min
-  def sorted(implicit z: Order[A]): Direct[A]                   = orderOps.sorted
-  def sortDistinct(implicit z: Order[A]): Direct[A]             = orderOps.sortDistinct
-  def sortBy[B](f: A => B)(implicit z: Order[B]): Direct[A]     = sorted(z on f)
+  def mapNow[B](f: A => B): Vec[B] = xs map f toVec
 
   def filter(p: ToBool[A]): View[A]                              = xs withFilter p
   def filterNot(p: ToBool[A]): View[A]                           = xs withFilter !p
@@ -54,7 +43,7 @@ trait ApiViewOps[+A] extends Any {
   def gatherClass[B: CTag] : View[B]                             = xs collect classFilter[B]
   def grep(regex: Regex)(implicit z: Show[A]): View[A]           = xs filter (x => regex isMatch x)
   def init: View[A]                                              = xs dropRight 1.size
-  def labelOp[B](label: String)(f: View[A] => View[B]): View[B]  = new LabeledView(f(xs), xs.viewOps :+ label)
+  def labelOp[B](label: String)(f: View[A] => View[B]): View[B]  = new LabeledView(f(xs), xs.viewOps.castTo[Vec[Doc]] :+ label)
   def mapApply[B, C](x: B)(implicit ev: A <:< (B => C)): View[C] = xs map (f => ev(f)(x))
   def mapWithIndex[B](f: (A, Index) => B): View[B]               = inView[B](mf => foldWithIndex(())((res, x, i) => mf(f(x, i))))
   def mapZip[B](f: A => B): View[A -> B]                         = xs map (x => x -> f(x))
@@ -70,27 +59,6 @@ trait ApiViewOps[+A] extends Any {
   def ofClass[B: CTag] : View[B]         = xs collect classFilter[B]
   def takeToFirst(p: ToBool[A]): View[A] = xs.toEach span !p mapRight (_ take 1.size) rejoin
   def dropIndex(index: Index): View[A]   = xs.toEach splitAt index mapRight (_ drop 1.size) rejoin
-
-  def clusterBy[B: Eq](f: A => B): Direct[Direct[A]] = groupBy[B](f).values
-
-  /** This is kind of horrific but has the advantage of not being as busted.
-   *  We need to not be using scala's map because it will always compare keys based
-   *  on the inherited equals.
-   */
-  def groupBy[B: Eq](f: A => B): ExMap[B, Direct[A]] = {
-    var seen: Direct[B] = Direct()
-    val buf = bufferMap[Index, Direct[A]]()
-    xs foreach { x =>
-      val fx: B = f(x)
-      val idx: Index = seen indexWhere (fx === _) match {
-        case NoIndex => seen = seen :+ fx ; seen.lastIndex
-        case idx     => idx
-      }
-      buf(idx) :+= x
-    }
-    val res = buf.toMap map { case (k, v) => seen(k) -> v }
-    res.m.toMap[ExMap]
-  }
 
   def foldWithIndex[B](zero: B)(f: (B, A, Index) => B): B  = foldFrom(zero) indexed f
   def foldl[B](zero: B)(f: (B, A) => B): B                 = foldFrom(zero) left f
@@ -112,6 +80,38 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
   def toBag(implicit z: Eq[A]): Bag[A]                        = xs groupBy identity map (_.size)
   def without(x: A)(implicit z: Eq[A]): View[A]               = xs filterNot (_ === x)
   def withoutEmpty(implicit z: Empty[A], eqs: Eq[A]): View[A] = xs without z.empty
+  def clusterBy[B: Eq](f: A => B): View[Vec[A]]               = groupBy[B](f).values
+
+  /** This is kind of horrific but has the advantage of not being as busted.
+   *  We need to not be using scala's map because it will always compare keys based
+   *  on the inherited equals.
+   */
+  def groupBy[B: Eq](f: A => B): ExMap[B, Vec[A]] = {
+    var seen: Vec[B] = vec()
+    val buf = bufferMap[Index, Vec[A]]()
+    xs foreach { x =>
+      val fx: B = f(x)
+      val idx: Index = seen indexWhere (fx === _) match {
+        case NoIndex => seen = seen :+ fx ; seen.lastIndex
+        case idx     => idx
+      }
+      buf(idx) :+= x
+    }
+    val res = buf.toMap map { case (k, v) => seen(k) -> v }
+    res.m.toMap[ExMap]
+  }
+
+  /** Not especially efficient while we're sorting this out.
+   *                                       sorting this out.
+   *                                       sorting         .
+   */
+  private[this] def orderOps(implicit z: Order[A]): HasOrder[A] = new HasOrder(xs)
+
+  def max(implicit z: Order[A]): A                       = orderOps.max
+  def min(implicit z: Order[A]): A                       = orderOps.min
+  def sorted(implicit z: Order[A]): Vec[A]               = orderOps.sorted
+  def sortDistinct(implicit z: Order[A]): Vec[A]         = orderOps.sortDistinct
+  def sortBy[B](f: A => B)(implicit z: Order[B]): Vec[A] = sorted(z on f)
 
   def findOr(p: ToBool[A], alt: => A): A            = find(p) | alt
   def reducel(f: BinOp[A]): A                       = tail.foldl(head)(f)
@@ -125,15 +125,15 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
   def ztail: View[A]                    = if (isEmpty) emptyValue[View[A]] else tail
   def prepend(x: A): View[A]            = exView(x) ++ xs
   def append(x: A): View[A]             = xs ++ exView(x)
-  def intersperse(ys: View[A]): View[A] = xs zip ys flatMap ((x, y) => Direct(x, y))
+  def intersperse(ys: View[A]): View[A] = xs zip ys flatMap ((x, y) => vec(x, y))
 
-  def transpose[B](implicit ev: A <:< View[B]): View[View[B]] = {
+  def transpose[B](implicit ev: A <:< View[B]): View2D[B] = {
     val grid = xs map ev
     def col(n: Index) = grid map (_ drop n.sizeExcluding head)
     Each.indices map col
   }
 
-  def mpartition(p: View[A] => ToBool[A]): View[View[A]] = (
+  def mpartition(p: View[A] => ToBool[A]): View2D[A] = (
     inView[View[A]](mf => xs.toEach partition p(xs.toEach.memo) match {
       case Split(xs, ys) =>
         mf(xs)
@@ -145,9 +145,9 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
     zfoldl[ExSet[B]]((seen, x) => f(x) |> (y => try seen add y finally seen(y) || mf(x)))
   }
 
-  def grouped(n: Precise): View[View[A]] = new Grouped[A](n) apply xs
+  def grouped(n: Precise): View2D[A] = new Grouped[A](n) apply xs
 
-  private def iteratively[B](xs: View[A], head: View[A] => B, tail: View[A] => View[A]): View[B] = xs match {
+  private def iteratively[B](xs: View[A], head: View[A] => B, tail: ToSelf[View[A]]): View[B] = xs match {
     case _ if xs.isEmpty => emptyValue
     case _               => head(xs) +: iteratively(tail(xs), head, tail)
   }
@@ -202,7 +202,7 @@ final class HasOrder[A](xs: View[A])(implicit z: Order[A]) extends HasEq[A](xs) 
   def max: A                = xs reducel (_ max2 _)
   def min: A                = xs reducel (_ min2 _)
   def sortDistinct: View[A] = sorted.distinct
-  def sorted: View[A]       = xs.toRefArray.inPlace.sort(z.castTo).toDirect.castTo
+  def sorted: View[A]       = xs.toRefArray.inPlace.sort(z.castTo).toVec.castTo
 }
 
 final class HasInitialValue[+A, B](xs: View[A], initial: B) {

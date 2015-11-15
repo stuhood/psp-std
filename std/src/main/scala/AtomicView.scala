@@ -30,7 +30,7 @@ object FlattenSlice {
 
 final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr] {
   type This   = LinearView[A, Repr]
-  def viewOps = Direct("<list>".s)
+  def viewOps = vec("<list>".s)
   def size    = underlying.size
 
   @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, fullIndexRange, f)
@@ -40,7 +40,7 @@ final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr]
 final class IndexedView[A, Repr](val underlying: Indexed[A]) extends AtomicView[A, Repr] with Indexed[A] {
   type This = IndexedView[A, Repr]
 
-  def viewOps                                                   = Direct("<indexed>".s)
+  def viewOps                                                   = vec("<indexed>".s)
   def size: Size                                                = underlying.size
   def elemAt(i: Index): A                                       = underlying elemAt i
   def foreach(f: A => Unit): Unit                               = underlying foreach f
@@ -50,14 +50,14 @@ final class IndexedView[A, Repr](val underlying: Indexed[A]) extends AtomicView[
 final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Repr] with Direct[A] with ops.HasPreciseSizeMethods {
   type This = DirectView[A, Repr]
 
-  def viewOps                                                   = Direct("<vector>".s)
+  def viewOps                                                   = vec("<vector>".s)
   def size: Precise                                             = underlying.size
   def elemAt(i: Index): A                                       = underlying(i)
   def foreach(f: A => Unit): Unit                               = directlySlice(underlying, size.indices, f)
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = directlySlice(underlying, range, f)
 }
 
-final case class LabeledView[A, Repr](prev: BaseView[A, Repr], val viewOps: Direct[Doc]) extends BaseView[A, Repr] {
+final case class LabeledView[A, Repr](prev: BaseView[A, Repr], val viewOps: Vec[Doc]) extends BaseView[A, Repr] {
   type This = LabeledView[A, Repr]
   def foreach(f: A => Unit): Unit = prev foreach f
   def description                 = viewOps.last
@@ -122,7 +122,7 @@ sealed trait InvariantBaseView[A, Repr] extends BaseView[A, Repr] with Invariant
 sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEffect: ToSelf[Size]) extends InvariantBaseView[B, Repr] {
   def prev: View[A]
   def size    = sizeEffect(prev.size)
-  def viewOps = prev.viewOps :+ description
+  def viewOps = prev.viewOps.castTo[Vec[Doc]] :+ description
 
   final def foreach(f: B => Unit): Unit = {
     def loop[C](xs: View[C])(f: C => Unit): Unit = {

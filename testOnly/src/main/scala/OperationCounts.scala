@@ -28,7 +28,7 @@ class OperationCounts extends ScalacheckBundle {
   def minSuccessful: Precise = 1000.size
   def maxDisplay: Precise    = 20.size
   def numComposite           = 2 upTo 4
-  def collections            = Direct[RecorderCounter => ViewClass](
+  def collections            = vec[RecorderCounter => ViewClass](
     c => PolicyViewClass("p/linear", Probe.Linear(1 to max, c).view),
     c => ScalaViewClass("s/linear",  Probe.ScalaLinear(1 to max, c).view),
     c => PolicyViewClass("p/direct", Probe.Direct(1 to max, c).view),
@@ -69,10 +69,10 @@ class OperationCounts extends ScalacheckBundle {
   case class CompositeOp(ops: Direct[ViewClass.Op]) {
     lazy val Each(usLinear, themLinear, usDirect, themDirect) = outcomes
 
-    lazy val viewOp: ViewClass.Op               = xs => ops.foldl(xs)((res, f) => f(res))
-    lazy val outcomes: Direct[CollectionResult] = collections map (f => new CollectionResult(viewOp, f))
-    lazy val counts: String                     = "%s  %s".format(compare(usLinear.calls, themLinear.calls), compare(usDirect.calls, themDirect.calls))
-    lazy val results: Direct[String]            = outcomes mapNow (_.result)
+    lazy val viewOp: ViewClass.Op            = xs => ops.foldl(xs)((res, f) => f(res))
+    lazy val outcomes: Vec[CollectionResult] = collections map (f => new CollectionResult(viewOp, f))
+    lazy val counts: String                  = "%s  %s".format(compare(usLinear.calls, themLinear.calls), compare(usDirect.calls, themDirect.calls))
+    lazy val results: Vec[String]            = outcomes mapNow (_.result)
 
     lazy val failed = (
          results.m.distinct.size != 1.size
@@ -97,11 +97,11 @@ class OperationCounts extends ScalacheckBundle {
     def description       = if (passed) passString else failString
     def passString        = show"| $ops_s  $counts  // ${results.head}"
     def failString        = show"Inconsistent results for $ops_s:\n  ${outcomes mk_s "\n  "}" mapLines ("| " + _)
-    def distinctCounts    = outcomes.map(_.calls).byEquals.distinct.toDirect
+    def distinctCounts    = outcomes.map(_.calls).byEquals.distinct.toVec
     override def toString = description
   }
 
-  def props() = Direct[NamedProp](
+  def props() = Vec[NamedProp](
     NamedProp(s"Generating $minSuccessful view combinations, displaying at most $maxDisplay", Prop(true)),
     NamedProp("%-60s %-12s %s".format("", "Linear", "Direct"), Prop(true)),
     NamedProp("policy never performs more operations than scala", compositeProp)

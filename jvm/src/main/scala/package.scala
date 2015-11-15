@@ -8,9 +8,9 @@ import psp.std.token.Keyword
 
 package jvm {
   object opcodes {
-    private def codes(p: ToBool[Opcode]): Direct[Opcode] = Opcode.values filter p toDirect
+    private def codes(p: ToBool[Opcode]): Vec[Opcode] = Opcode.values filter p toVec
 
-    def all        = Opcode.values.toDirect
+    def all        = Opcode.values.toVec
     def constant   = codes(_.isConstant)
     def load       = codes(_.isLoad)
     def store      = codes(_.isStore)
@@ -25,15 +25,15 @@ package jvm {
   }
 
   trait StdClasses {
-    def internalNameOf[A: CTag](): String                = javaNameOf[A].replace('.', '/')
-    def javaNameOf[A: CTag](): String                    = classOf[A].getName
-    def methodsOf[A: CTag](): Direct[jMethod]            = classOf[A].getMethods.toDirect filterNot objectMethods
-    def declsOf[A: CTag](): Direct[jMethod]              = classOf[A].getDeclaredMethods.toDirect
-    def bridgeMethodsOf[A: CTag](): Direct[jMethod]      = methodsOf[A] filter (_.isBridge)
-    def specializedMethodsOf[A: CTag](): Direct[jMethod] = methodsOf[A] filter (_.isSpecialized)
-    def publicMethodsOf[A: CTag](): Direct[jMethod]      = methodsOf[A] filter (x => x.isPublic && !x.isBridge && !x.isSpecialized)
-    def staticMethodsOf[A: CTag](): Direct[jMethod]      = publicMethodsOf[A] filter (_.isStatic)
-    def instanceMethodsOf[A: CTag](): Direct[jMethod]    = publicMethodsOf[A] filterNot (_.isStatic)
+    def internalNameOf[A: CTag](): String             = javaNameOf[A].replace('.', '/')
+    def javaNameOf[A: CTag](): String                 = classOf[A].getName
+    def methodsOf[A: CTag](): Vec[jMethod]            = classOf[A].getMethods.toVec filterNot objectMethods
+    def declsOf[A: CTag](): Vec[jMethod]              = classOf[A].getDeclaredMethods.toVec
+    def bridgeMethodsOf[A: CTag](): Vec[jMethod]      = methodsOf[A] filter (_.isBridge)
+    def specializedMethodsOf[A: CTag](): Vec[jMethod] = methodsOf[A] filter (_.isSpecialized)
+    def publicMethodsOf[A: CTag](): Vec[jMethod]      = methodsOf[A] filter (x => x.isPublic && !x.isBridge && !x.isSpecialized)
+    def staticMethodsOf[A: CTag](): Vec[jMethod]      = publicMethodsOf[A] filter (_.isStatic)
+    def instanceMethodsOf[A: CTag](): Vec[jMethod]    = publicMethodsOf[A] filterNot (_.isStatic)
 
     lazy val objectMethods: ToBool[jMethod] = classOf[Object].getMethods.byEquals.contains
 

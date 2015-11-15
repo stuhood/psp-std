@@ -82,7 +82,7 @@ package object tests {
 
     def collect[B](pf: A ?=> B): Gen[B]                                    = g suchThat pf.isDefinedAt map pf.apply
     def collectN[B](n: Int)(pf: Each[A] ?=> B)(implicit z: Arb[A]): Gen[B] = gen.eachOfN(n, g) collect pf
-    def stream: Each[A]                                                    = Each continually g.sample flatMap (_.toDirect)
+    def stream: Each[A]                                                    = Each continually g.sample flatMap (_.toVec)
     def take(n: Int): Direct[A]                                            = stream take n.size
   }
   implicit def chooseIndex: Choose[Index]  = Choose.xmap[Long, Index](_.index, _.index)

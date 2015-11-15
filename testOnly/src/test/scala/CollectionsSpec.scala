@@ -92,7 +92,7 @@ class GridSpec extends ScalacheckBundle {
   def primePartitionGrid_t(n: Int): View2D[Int] = primePartition.transpose take n.size map (_ take n.size)
   def showGrid(xss: View2D[Int]): String = {
     val yss = xss mmap (_.render)
-    val width = yss.flatMap(x => x).mapNow(_.length).max.size
+    val width = yss.flatMap(x => x).mapNow(_.length).m.max.size
     (yss mmap (x => width.leftFormatString format x) map (_ mk_s " ") mk_s "\n").trim.trimLines
   }
   def primePartition6 = sm"""
@@ -123,7 +123,7 @@ class ViewBasic extends ScalacheckBundle {
   def bundle = "Views, Basic"
 
   def plist   = Linear(1, 2, 3)
-  def pvector = Direct(1, 2, 3)
+  def pvector = vec(1, 2, 3)
   def parray  = Array(1, 2, 3)
   def pseq    = Each.elems(1, 2, 3)
   def punfold = Indexed from 1
@@ -155,7 +155,7 @@ class ViewBasic extends ScalacheckBundle {
     // showsAs("[ 1, 2, 3 ], [ 1, 2 ], [ 1 ], [  ], [ 2 ], [ 2, 3 ], [ 3 ]", closure mk_s ", "),
     // showsAs("1 -> 3, 2 -> 4, 3 -> 3", closureBag.entries mk_s ", "),
     seqShows("1 -> 0, 2 -> 1, 3 -> 2", pvector.m.mapWithIndex(_ -> _)),
-    seqShows("11, 22, 33, 44", indexRange(1, 50).toDirect.m grep """(.)\1""".r),
+    seqShows("11, 22, 33, 44", indexRange(1, 50) grep """(.)\1""".r),
     seqShows("99, 1010, 1111", xxNumbers slice (8 takeNext 3.size).asIndices),
     expectValue[Size](4.size)(strs.byRef.distinct.force.size),
     expectValue[Size](3.size)(strs.byEquals.distinct.force.size),
@@ -203,12 +203,14 @@ class CollectionsSpec extends ScalacheckBundle {
 
   def paired[A](x: A): (A, Int) = x -> ("" + x).length
 
-  def props: Direct[NamedProp] = policyProps ++ Direct(
+  def props: Vec[NamedProp] = policyProps ++ vec(
     expectTypes[String](
       "abc" map identity build,
       "abc" map (_.toInt.toChar) build,
-      "abc".m flatMap (_.toString * 3 m) build,
-      "abc" flatMap (_.toString * 3) build
+      "abc" map (_.toInt) map (_.toChar) build,
+      "abc" flatMap (_.toString * 3) build,
+      "abc" flatMap (_.toString * 3) build,
+      "abc" map identity flatMap ("" + _) build
     ),
     expectTypes[Array[Int]](
       arr.inPlace map identity,
@@ -263,21 +265,22 @@ class CollectionsSpec extends ScalacheckBundle {
     )
   )
 
-  def policyProps: Direct[NamedProp] = {
+  def policyProps: Vec[NamedProp] = {
     import StdEq._
     val pset = exSet("a" -> 1, "b" -> 2, "c" -> 3)
     val pvec = vec("a" -> 1, "b" -> 2, "c" -> 3)
 
-    Direct(
+    vec(
       expectTypes[ExSet[_]](
-        pset.m map identity build,
-        pset.m.build,
-        pset.m map identity build,
-        pset.m.map(_._1).map(paired).force[ExSet[_]]
+        pset.build,
+        pset map identity build,
+        pset map (_._1) map paired build,
+        pset union pset
       ),
       expectTypes[Vec[_]](
         pvec map identity,
         pvec ++ pvec,
+        pvec.m ++ pvec.m build,
         pvec.tail.force,
         pvec.m.build,
         pvec.m map identity build,
