@@ -7,10 +7,10 @@ package object ansi extends BasicAtoms[Ansi] {
   protected def newRep(atom: Atom): Ansi = Ansi(atom)
 
   object fg extends ExtendedColors[Ansi] {
-    def create(name: String, rgb: RGB): Ansi = (Atom(38) +: Atom(5) +: rgb.colorAtoms).foldLeft(Ansi.empty)(_ / _)
+    def create(name: String, rgb: RGB): Ansi = (Atom(38) +: Atom(5) +: rgb.colorAtoms).foldl(Ansi.empty)(_ / _)
   }
   object bg extends ExtendedColors[Ansi] {
-    def create(name: String, rgb: RGB): Ansi = (Atom(48) +: Atom(5) +: rgb.colorAtoms).foldLeft(Ansi.empty)(_ / _)
+    def create(name: String, rgb: RGB): Ansi = (Atom(48) +: Atom(5) +: rgb.colorAtoms).foldl(Ansi.empty)(_ / _)
   }
 
   private def actualLines(resource: String) = resourceString(resource).lineVector filterNot "^#".r

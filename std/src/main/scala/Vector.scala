@@ -15,9 +15,9 @@ import StdShow._
 object Vector {
   def empty[A] = NIL
 
-  def newBuilder[@spec A]() = new VectorBuilder[A]()
-  def apply[@spec A](xs: A*): Vector[A] =
-    newBuilder[A]() doto (b => xs foreach (b += _)) result
+  def newBuilder[@spec A]()                        = new VectorBuilder[A]()
+  def apply[@spec A](xs: A*): Vector[A]            = newBuilder[A]() doto (b => xs foreach (b += _)) result
+  def unapplySeq[A](x: Vector[A]): Some[Vector[A]] = Some(x)
 
   private[svec] val NIL = new Vector[Nothing](0, 0, 0)
   // Constants governing concat strategy for performance
@@ -38,6 +38,10 @@ final class Vector[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int)
   def size: Precise               = Precise(length)
   def elemAt(i: Index): A         = apply(i.getInt)
   def isEmpty                     = length == 0
+
+  def :+[B >: A](elem: B): Vector[B]         = appendBack(elem)
+  def +:[B >: A](elem: B): Vector[B]         = appendFront(elem)
+  def ++[B >: A](that: Vector[B]): Vector[B] = that.foldl(this: Vector[B])(_ :+ _)
 
   private[svec] final def initIterator[B >: A](s: VectorIterator[B]): VectorIterator[B] = {
     s.initFrom(this)

@@ -189,7 +189,7 @@ final class InvariantApiViewOps[A](val xs: InvariantView[A]) extends AnyVal with
  */
 class HasEq[A](xs: View[A])(implicit z: Eq[A]) {
   def contains(x: A): Boolean                     = xs exists (_ === x)
-  def distinct: View[A]                           = xs.foldl(sciVector[A]())((res, x) => if (res exists (_ === x)) res else res :+ x).m
+  def distinct: View[A]                           = xs.foldl(vec[A]())((res, x) => if (res exists (_ === x)) res else res :+ x).m
   def indexOf(x: A): Index                        = xs indexWhere (_ === x)
   def indicesOf(x: A): View[Index]                = xs indicesWhere (_ === x)
   def mapOnto[B](f: A => B): ExMap[A, B]          = toSet mapOnto f
