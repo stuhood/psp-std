@@ -15,8 +15,8 @@ import scala.collection.:+
 
 trait jGenericDeclarationOps[D <: jGenericDeclaration] extends Any {
   def declaration: D
-  def typeParams: Direct[jTypeVar] = declaration.getTypeParameters.toDirect
-  def isGeneric                    = typeParams.nonEmpty
+  def typeParams: Vec[jTypeVar] = declaration.getTypeParameters.toVec
+  def isGeneric                 = typeParams.nonEmpty
 }
 
 final class jTypeVariableOps[D <: jGenericDeclaration](val x: jTypeVariable[D]) extends AnyVal with jGenericDeclarationOps[D] {
@@ -33,15 +33,15 @@ final class jParameterizedTypeOps(val tp: jParameterizedType) extends AnyVal {
 }
 
 final class jTypeOps(val declaration: jType) extends AnyVal with jTypeAndClassOps {
-  def typeParams: Direct[jTypeVar] = declaration match {
-    case x: jGenericDeclaration => x.getTypeParameters.toDirect
+  def typeParams: Vec[jTypeVar] = declaration match {
+    case x: jGenericDeclaration => x.getTypeParameters.toVec
     case _                      => emptyValue
   }
 }
 
 trait jTypeAndClassOps extends Any {
   def declaration: jType
-  def typeParams: Direct[jTypeVar]
+  def typeParams: Vec[jTypeVar]
 
   def simpleName: String = declaration match {
     case c: jClass             => c.getName.dottedSegments.last
@@ -144,13 +144,13 @@ final class jMethodOps(val m: jMethod) extends AnyVal with jGenericDeclarationOp
   def name             = decodeName(m.getName)
   def declaration      = m
   def isSpecialized    = m.getName contains "$mc"
-  def paramTypes       = m.getGenericParameterTypes.toDirect
+  def paramTypes       = m.getGenericParameterTypes.toVec
   def returnType       = m.getGenericReturnType
   def enclosingClass   = m.getDeclaringClass
   def enclosingPackage = enclosingClass.getPackage
   def enclosingTag     = CTag(enclosingClass)
 
-  // def paramNames: Direct[String] = paramNamesOf(m)
+  // def paramNames: Vec[String] = paramNamesOf(m)
 
   // def paramNameMap[A: CTag](): sciMap[jMethod, sciVector[String]] =
   //   methodSourceMap[A] mapValues (_.getParameters.asScala.toVector.map(_.getName.toString))
@@ -200,7 +200,7 @@ final class jClassOps[A](val c: Class[A]) extends AnyVal with jGenericDeclaratio
   def internalName       = javaName.replace('.', '/')
   def javaName           = c.getName
   def classLoader        = c.getClassLoader
-  def methods            = c.getMethods.toDirect filterNot objectMethods
+  def methods            = c.getMethods.toVec filterNot objectMethods
   def bridgeMethods      = methods filter (_.isBridge)
   def specializedMethods = methods filter (_.isSpecialized)
   def publicMethods      = methods filter (x => x.isPublic && !x.isBridge && !x.isSpecialized)

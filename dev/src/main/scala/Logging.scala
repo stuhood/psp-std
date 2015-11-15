@@ -44,6 +44,6 @@ class DelayedLog {
     // }
   }
 
-  def record[A: Show](body: => A): Unit               = recordIf(body) { case x => x.render }
-  def recordIf[A](body: => A)(pf: A ?=> String): Unit = toLog :+= new Message[A](body, pf)
+  // def record[A: Show](body: => A): Unit               = recordIf(body) { case x => x.render }
+  // def recordIf[A](body: => A)(pf: A ?=> String): Unit = toLog :+= new Message[A](body, pf)
 }

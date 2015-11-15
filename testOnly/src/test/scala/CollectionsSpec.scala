@@ -92,7 +92,7 @@ class GridSpec extends ScalacheckBundle {
   def primePartitionGrid_t(n: Int): View2D[Int] = primePartition.transpose take n.size map (_ take n.size)
   def showGrid(xss: View2D[Int]): String = {
     val yss = xss mmap (_.render)
-    val width = yss.flatMap(x => x).mapNow(_.length).max.size
+    val width = yss.flatMap(x => x).mapNow(_.length).m.max.size
     (yss mmap (x => width.leftFormatString format x) map (_ mk_s " ") mk_s "\n").trim.trimLines
   }
   def primePartition6 = sm"""
@@ -123,7 +123,7 @@ class ViewBasic extends ScalacheckBundle {
   def bundle = "Views, Basic"
 
   def plist   = Linear(1, 2, 3)
-  def pvector = Direct(1, 2, 3)
+  def pvector = vec(1, 2, 3)
   def parray  = Array(1, 2, 3)
   def pseq    = Each.elems(1, 2, 3)
   def punfold = Indexed from 1

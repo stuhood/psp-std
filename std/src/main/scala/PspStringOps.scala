@@ -82,17 +82,17 @@ final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
   def format(args : Any*): String = java.lang.String.format(self, args map unwrapArg: _*)
   def length                      = self.length
 
-  def bytes: Array[Byte]             = self.getBytes
-  def chars: Array[Char]             = self.toCharArray
-  def lineVector: Direct[String]     = splitChar('\n')
-  def dollarSegments: Direct[String] = splitChar('$')
-  def dottedSegments: Direct[String] = splitChar('.')
-  def reverse: String                = new String(chars.inPlace.reverse)
+  def bytes: Array[Byte]          = self.getBytes
+  def chars: Array[Char]          = self.toCharArray
+  def lineVector: Vec[String]     = splitChar('\n')
+  def dollarSegments: Vec[String] = splitChar('$')
+  def dottedSegments: Vec[String] = splitChar('.')
+  def reverse: String             = new String(chars.inPlace.reverse)
 
-  def containsChar(ch: Char): Boolean      = chars.m contains ch
-  def splitChar(ch: Char): Direct[String]  = splitRegex(Regex quote ch.any_s)
-  def splitRegex(r: Regex): Direct[String] = r.pattern split self toDirect
-  def words: Direct[String]                = splitRegex(whitespace)
+  def containsChar(ch: Char): Boolean   = chars.m contains ch
+  def splitChar(ch: Char): Vec[String]  = splitRegex(Regex quote ch.any_s)
+  def splitRegex(r: Regex): Vec[String] = r.pattern split self toVec
+  def words: Vec[String]                = splitRegex(whitespace)
 
   def mapChars(pf: Char ?=> Char): String           = self map (c => if (pf isDefinedAt c) pf(c) else c) build
   def mapLines(f: ToSelf[String]): String           = mapSplit('\n')(f)

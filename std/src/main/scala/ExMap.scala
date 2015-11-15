@@ -28,7 +28,7 @@ object ExMap {
     def foreachKey(f: K => Unit): Unit        = keys foreach f
     def isEmpty: Boolean                      = domain.isEmpty
     def iterator: scIterator[Entry]           = keysIterator map (k => (k, lookup(k)))
-    def keyVector: Direct[K]                  = keys.toDirect
+    def keyVector: Vec[K]                     = keys.toVec
     def keys: View[K]                         = domain
     def keysIterator: scIterator[K]           = keys.iterator
     def seq: scSeq[Entry]                     = entries.seq

@@ -46,8 +46,8 @@ final class ArraySpecificOps[A](val xs: Array[A]) extends AnyVal with HasPrecise
 }
 
 final class ForeachOps[A](val xs: Each[A]) extends AnyVal {
-  def +:(elem: A): Each[A] = Each.join(Direct(elem), xs)
-  def :+(elem: A): Each[A] = Each.join(xs, Direct(elem))
+  // def +:(elem: A): Each[A] = Each.join(Direct(elem), xs)
+  // def :+(elem: A): Each[A] = Each.join(xs, Direct(elem))
 
   def sized(size: Precise): Each[A] = new Each.Sized(xs, size)
   def memo: Indexed.Memo[A] = xs match {
@@ -57,18 +57,15 @@ final class ForeachOps[A](val xs: Each[A]) extends AnyVal {
 }
 
 final class DirectOps[A](val xs: Direct[A]) extends AnyVal {
-  def +:(x: A): Direct[A]          = Direct.prepend(x, xs)
-  def :+(x: A): Direct[A]          = Direct.append(xs, x)
+  // def +:(x: A): Direct[A]          = Direct.prepend(x, xs)
+  // def :+(x: A): Direct[A]          = Direct.append(xs, x)
+
   def ++(ys: Direct[A]): Direct[A] = Direct.join(xs, ys)
 
   def containsIndex(i: Index): Boolean = 0 <= i.getInt && i.getInt < xs.intSize
   def apply(i: Index): A               = xs elemAt i
   def length: Int                      = xs.intSize
-  def mapNow[B](f: A => B): Direct[B] = {
-    val arr = newArray[Any](length)
-    xs.indices foreach (i => arr(i.getInt) = f(xs(i)))
-    Direct.wrapArray[B](arr)
-  }
+  def mapNow[B](f: A => B): Vec[B]     = xs.indices map (i => f(xs(i))) toVec
 }
 
 final class LinearOps[A](val xs: Linear[A]) extends AnyVal {

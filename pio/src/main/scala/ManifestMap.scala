@@ -12,7 +12,7 @@ object ManifestMap {
     Name.MANIFEST_VERSION -> "1.0",
     ScalaCompilerVersion  -> versionNumberString
   )
-  def apply(mainAttrs: (Name, String)*): ManifestMap = apply(new jManifest) ++= mainAttrs.toDirect
+  def apply(mainAttrs: (Name, String)*): ManifestMap = apply(new jManifest) ++= mainAttrs.toVec
   def apply(manifest: jManifest): ManifestMap        = new ManifestMap(manifest) ++= initialMainAttrs
 }
 
