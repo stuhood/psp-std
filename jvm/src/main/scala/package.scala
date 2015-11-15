@@ -213,7 +213,7 @@ package object jvm extends psp.std.jvm.StdClasses {
 
     def memberNamed(name: JvmName) = members find (_.name == name)
 
-    def members           = (fields ++ methods.m) // sortOrder (_.toString) XXX
+    def members           = fields ++ methods
     def memberDescriptors = members map (_.toErasedString)
     def memberSignatures  = members collect { case x if x.hasSignature => x.toGenericString }
     def memberCodes       = members collect { case x if x.hasCode      => x.codeString }

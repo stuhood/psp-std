@@ -77,7 +77,6 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
   def |:(label: String): MapTo[A] = new LabeledView(this, viewOps.init :+ label.s)
   def :|(label: String): MapTo[A] = new LabeledView(this, viewOps.init :+ label.s)
 
-  final def ++[A1 >: A](that: View[A1]): View[A1] = Joined(this, that)
   final def collect[B](pf: A ?=> B): MapTo[B]     = Collected(this, pf)
   final def drop(n: Precise): MapTo[A]            = Dropped(this, n)
   final def dropRight(n: Precise): MapTo[A]       = DroppedR(this, n)

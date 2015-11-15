@@ -69,7 +69,6 @@ trait ContiguousViewOps[+A] extends Any with AnyView[A] {
 }
 
 trait NonContiguousViewOps[+A] extends Any with AnyView[A] {
-  def ++[A1 >: A](that: View[A1]): View[A1]
   def collect[B](pf: A ?=> B): MapTo[B]
   def map[B](f: A => B): MapTo[B]
   def flatMap[B](f: A => Each[B]): MapTo[B]

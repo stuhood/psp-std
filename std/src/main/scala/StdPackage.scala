@@ -25,7 +25,8 @@ abstract class StdPackage
          with PolicyDmz {
 
   // Higher than Direct.
-  implicit def arraySpecificOps[A](xs: Array[A]): ops.ArraySpecificOps[A] = new ops.ArraySpecificOps[A](xs)
+  implicit def arraySpecificOps[A](xs: Array[A]): ops.ArraySpecificOps[A]       = new ops.ArraySpecificOps[A](xs)
+  implicit def arrayClassTagOps[A: CTag](xs: Array[A]): ops.ArrayClassTagOps[A] = new ops.ArrayClassTagOps[A](xs)
 
   implicit def pairedCollectionOps0[R, A, B](xs: View[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B] = new Paired[R, A, B](xs.toEach)
   implicit def pairedCollectionOps[R, A, B](xs: Each[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B]  = new Paired[R, A, B](xs)

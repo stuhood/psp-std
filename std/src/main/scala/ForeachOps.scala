@@ -3,6 +3,7 @@ package std
 package ops
 
 import api._
+import scala.compat.Platform.arraycopy
 
 final class InPlace[A](val xs: Array[A]) extends AnyVal {
   private def andThis(op: Unit): Array[A] = xs
@@ -24,6 +25,15 @@ final class InPlace[A](val xs: Array[A]) extends AnyVal {
   def sortBy[B: Order](f: A => B): Array[A] = sort(orderBy[A](f))
   def reverse(): Array[A]                   = andThis(0 until midpoint foreach (i => swap(i, lastIndex - i)))
   def shuffle(): Array[A]                   = andThis(0 until lastIndex foreach (i => swap(i, i + randomNat(lastIndex - i))))
+}
+
+final class ArrayClassTagOps[A: CTag](val xs: Array[A]) {
+  def ++(that: Array[A]): Array[A] = {
+    val arr = newArray[A](xs.length + that.length)
+    arraycopy(xs, 0, arr, 0, xs.length)
+    arraycopy(that, 0, arr, xs.length, that.length)
+    arr
+  }
 }
 
 final class ArraySpecificOps[A](val xs: Array[A]) extends AnyVal with HasPreciseSizeMethods {
@@ -62,5 +72,6 @@ final class DirectOps[A](val xs: Direct[A]) extends AnyVal {
 }
 
 final class LinearOps[A](val xs: Linear[A]) extends AnyVal {
-  def ::(x: A): Linear[A] = Linear.cons(x, xs)
+  def ::(x: A): Linear[A]            = Linear.cons(x, xs)
+  def ++(that: Linear[A]): Linear[A] = Linear.join(xs, that)
 }
