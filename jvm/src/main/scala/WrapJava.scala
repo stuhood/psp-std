@@ -56,7 +56,7 @@ trait jTypeAndClassOps extends Any {
   // }
 
   def ancestors: Array[jType] = declaration match {
-    case x: jClass => (x.parents.m ++ x.parents.m.flatMap(_.ancestors)).distinct.toArray
+    case x: jClass => (x.parents.m ++ x.parents.m.flatMap(_.ancestors)).byEquals.distinct.toArray
     case _         => Array()
   }
 

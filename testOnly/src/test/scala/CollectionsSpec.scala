@@ -149,7 +149,8 @@ class ViewBasic extends ScalacheckBundle {
     showsAs("[ 1, 2, 3 ]", parray),
     showsAs("[ 1, 2, 3, 1, 2, 3 ]", plist ++ plist force),
     showsAs("[ 1, 2, 3, 1, 2, 3 ]", pvector ++ pvector force),
-    showsAs("[ 1, 2, 3, 1, 2, 3 ]", parray.m ++ parray force),
+    showsAs("[ 1, 2, 3, 1, 2, 3 ]", parray ++ parray force),
+    showsAs("[ 1, 2, 3, 1, 2, 3 ]", parray.m ++ parray.m force),
     // showsAs("[ 1, 2, 3, ... ]", punfold),
     // showsAs("[ 1, 2, 3 ], [ 1, 2 ], [ 1 ], [  ], [ 2 ], [ 2, 3 ], [ 3 ]", closure mk_s ", "),
     // showsAs("1 -> 3, 2 -> 4, 3 -> 3", closureBag.entries mk_s ", "),
@@ -212,6 +213,8 @@ class CollectionsSpec extends ScalacheckBundle {
     expectTypes[Array[Int]](
       arr.inPlace map identity,
       arr.inPlace.reverse,
+      arr ++ arr,
+      arr.m ++ arr.m force,
       arr.m.build,
       arr.m flatMap (x => Direct(x)) build,
       arr.flatMap(x => Direct(x)).force[Array[Int]]
@@ -263,7 +266,7 @@ class CollectionsSpec extends ScalacheckBundle {
   def policyProps: Direct[NamedProp] = {
     import StdEq._
     val pset = exSet("a" -> 1, "b" -> 2, "c" -> 3)
-    val pseq = exSeq("a" -> 1, "b" -> 2, "c" -> 3)
+    val pvec = vec("a" -> 1, "b" -> 2, "c" -> 3)
 
     Direct(
       expectTypes[ExSet[_]](
@@ -272,13 +275,14 @@ class CollectionsSpec extends ScalacheckBundle {
         pset.m map identity build,
         pset.m.map(_._1).map(paired).force[ExSet[_]]
       ),
-      expectTypes[Each[_]](
-        pseq map identity,
-        pseq.m.build,
-        pseq.m map identity build,
-        pseq.m.map(_._1).map(paired).force[Each[_]]
+      expectTypes[Vec[_]](
+        pvec map identity,
+        pvec ++ pvec,
+        pvec.tail.force,
+        pvec.m.build,
+        pvec.m map identity build,
+        pvec.m.map(_._1).map(paired).force[Vec[_]]
       )
     )
   }
 }
-

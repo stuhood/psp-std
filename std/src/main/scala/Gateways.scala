@@ -151,7 +151,7 @@ trait JavaBuilds extends JavaBuilds0 {
   implicit def buildJavaSortedSet[A: Order]: Builds[A, jSortedSet[A]] = Builds.jSortedSet[A]
 }
 trait ScalaBuilds extends JavaBuilds {
-  implicit def unbuildScalaCollection[A, CC[X] <: sCollection[X]] : Unbuilds[A, CC[A]]          = Unbuilds[A, CC[A]](Each fromScala _)
+  implicit def unbuildScalaCollection[A, CC[X] <: GTOnce[X]] : Unbuilds[A, CC[A]]               = Unbuilds[A, CC[A]](Each fromScala _)
   implicit def buildScalaCollection[A, That](implicit z: CanBuild[A, That]): Builds[A, That]    = Builds.sCollection[A, That]
   implicit def viewScalaCollection[A, CC[X] <: sCollection[X]](xs: CC[A]): LinearView[A, CC[A]] = View linear (Linear fromScala xs)
 

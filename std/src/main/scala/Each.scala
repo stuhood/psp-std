@@ -12,7 +12,6 @@ object Each {
     def size = xs.size.size
     @inline def foreach(f: ToUnit[K -> V]): Unit = xs.keySet foreach (k => f(k -> (xs get k)))
   }
-
   final case class WrapJava[A](xs: jIterable[A]) extends AnyVal with Each[A] {
     def size = impl.Size(xs)
     @inline def foreach(f: A => Unit): Unit = xs.iterator foreach f
@@ -91,9 +90,14 @@ object Each {
   def empty[A] : Each[A]                                     = Direct.Empty
   def fromJavaMap[K, V](xs: jMap[K, V]): Each[K -> V]        = WrapJavaMap(xs)
   def fromJava[A](xs: jIterable[A]): Each[A]                 = WrapJava(xs)
-  def fromScala[A](xs: sCollection[A]): Each[A]              = WrapScala(xs)
   def join[A](xs: Each[A], ys: Each[A]): Each[A]             = Joined[A](xs, ys)
   def unfold[A](start: A)(next: ToSelf[A]): Unfold[A]        = Unfold[A](start)(next)
+
+  /** Memoizes iterators. */
+  def fromScala[A](xs: GTOnce[A]): Each[A] = xs match {
+    case xs: sCollection[_] => WrapScala(xs)
+    case _                  => WrapScala(xs.to[sciStream])
+  }
 
   def unapplySeq[A](xs: Each[A]): Some[scSeq[A]] = Some(xs.seq)
   def unapplySeq[A](xs: View[A]): Some[scSeq[A]] = Some(xs.seq)

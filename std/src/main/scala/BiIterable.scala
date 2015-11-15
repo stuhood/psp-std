@@ -27,7 +27,7 @@ object BiIterator {
   }
 
   def array[A](xs: Array[A]): BiIterator[A]                          = new ArrayIterator(xs)
-  def direct[A](xs: Direct[A]): BiIterator[A]                        = new DirectIterator(xs)
+  def direct[A](xs: Direct[A]): DirectIterator[A]                    = new DirectIterator(xs)
   def enumeration[A](enum: jEnumeration[A]): BiIterator[A]           = new EnumerationIterator(enum)
   def indexed[A](xs: Indexed[A]): BiIterator[A]                      = new IndexedIterator(xs)
   def joined[A](xs: BiIterator[A], ys: BiIterator[A]): BiIterator[A] = new Joined(xs, ys)
@@ -62,10 +62,17 @@ object BiIterator {
     def hasNext   = index < xs.length
     def next(): A = try xs(index) finally index += 1
   }
-  private class DirectIterator[A](xs: Direct[A]) extends BiIterator[A] {
+  final class DirectIterator[A](xs: Direct[A]) extends BiIterator[A] {
     private[this] var index: Index = 0.index
-    def hasNext   = xs.size containsIndex index
+    def hasNext   = xs containsIndex index
     def next(): A = try xs(index) finally index += 1
+    def reverseIterator(): ReverseDirectIterator[A] = new ReverseDirectIterator(xs)
+  }
+  final class ReverseDirectIterator[A](xs: Direct[A]) extends BiIterator[A] {
+    private[this] var index: Index = xs.lastIndex
+    def hasNext   = xs containsIndex index
+    def next(): A = try xs(index) finally index -= 1
+    def reverseIterator(): DirectIterator[A] = new DirectIterator(xs)
   }
   private class IndexedIterator[A](xs: Indexed[A]) extends BiIterator[A] {
     private[this] var index: Index = 0.index
@@ -97,7 +104,7 @@ object BiIterable {
     case xs: Direct[A]  => apply[A](xs)
     case xs: Indexed[A] => apply[A](xs)
     case xs: Linear[A]  => apply[A](xs)
-    case _              => apply[A](xs.toScalaStream)
+    case _              => apply[A](xs.to[sciStream])
   }
   def apply[A](xs: Linear[A]): BiIterable[A]     = new LinearBased(xs)
   def apply[A](xs: Direct[A]): BiIterable[A]     = new DirectBased(xs)

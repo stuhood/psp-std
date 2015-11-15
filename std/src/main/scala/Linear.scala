@@ -11,6 +11,21 @@ object Linear {
     def ::(x: A): This
   }
 
+  final case class Join[A](left: Linear[A], right: Linear[A]) extends LinearImpl[A] {
+    type This          = Join[A]
+    def ::(x: A): This = Join(x :: left, right)
+
+    def isEmpty         = false
+    def size: Size      = impl.Size(left) + impl.Size(right)
+    def head: A         = left.head
+    def tail: Linear[A] = left.tail |> (xs => if (xs.isEmpty) right else Join(xs, right))
+
+    @inline def foreach(f: A => Unit): Unit = {
+      left foreach f
+      right foreach f
+    }
+  }
+
   final case class WrapStream[A](xs: sciStream[A]) extends AnyVal with LinearImpl[A] {
     type This = WrapStream[A]
     def ::(x: A): This = WrapStream(sciStream.cons(x, xs))
@@ -46,4 +61,12 @@ object Linear {
     case xs: LinearImpl[A] => x :: xs
     case _                 => WrapList(x :: xs.toScalaList)
   }
+
+  def join[A](left: Linear[A], right: Linear[A]): Linear[A] = (
+    if (left.isEmpty) right
+    else if (right.isEmpty) left
+    else Join(left, right)
+  )
+
+  def unapplySeq[A](xs: Linear[A]): Some[scSeq[A]] = Some(xs.seq)
 }
