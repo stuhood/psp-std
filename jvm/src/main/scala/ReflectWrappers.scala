@@ -119,7 +119,7 @@ object jTypeParam {
 }
 object jTypeArg {
   def unapply(x: jType): Option[(scSeq[jType], scSeq[jType])] = x match {
-    case x: jWildcardType => Some((x.getLowerBounds.seq, x.getUpperBounds.m.byEquals without JavaObject seq))
+    case x: jWildcardType => Some((x.getLowerBounds.seq, x.getUpperBounds.byEquals without JavaObject seq))
     case _                => None
   }
 }

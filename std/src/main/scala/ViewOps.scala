@@ -28,7 +28,7 @@ trait ApiViewOps[+A] extends Any {
   def mkString(sep: String): String                      = stringed(sep)(_.any_s)
   def mk_s(sep: String)(implicit z: Show[A]): String     = stringed(sep)(_.render)
   def nonEmpty: Boolean                                  = xs.size.isNonZero || !directIsEmpty
-  def tabular(columns: ToString[A]*): String             = if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toDirect, columns.m).render else ""
+  def tabular(columns: ToString[A]*): String             = if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toVec, columns.m).render else ""
   def toRefs: View[Ref[A]]                               = xs map (_.toRef)
   def zfirst[B](pf: A ?=> B)(implicit z: Empty[B]): B    = find(pf.isDefinedAt).fold(z.empty)(pf)
   def zfoldl[B](f: (B, A) => B)(implicit z: Empty[B]): B = foldl(z.empty)(f)
@@ -125,15 +125,15 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
   def ztail: View[A]                    = if (isEmpty) emptyValue[View[A]] else tail
   def prepend(x: A): View[A]            = exView(x) ++ xs
   def append(x: A): View[A]             = xs ++ exView(x)
-  def intersperse(ys: View[A]): View[A] = xs zip ys flatMap ((x, y) => Direct(x, y))
+  def intersperse(ys: View[A]): View[A] = xs zip ys flatMap ((x, y) => vec(x, y))
 
-  def transpose[B](implicit ev: A <:< View[B]): View[View[B]] = {
+  def transpose[B](implicit ev: A <:< View[B]): View2D[B] = {
     val grid = xs map ev
     def col(n: Index) = grid map (_ drop n.sizeExcluding head)
     Each.indices map col
   }
 
-  def mpartition(p: View[A] => ToBool[A]): View[View[A]] = (
+  def mpartition(p: View[A] => ToBool[A]): View2D[A] = (
     inView[View[A]](mf => xs.toEach partition p(xs.toEach.memo) match {
       case Split(xs, ys) =>
         mf(xs)
@@ -145,9 +145,9 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
     zfoldl[ExSet[B]]((seen, x) => f(x) |> (y => try seen add y finally seen(y) || mf(x)))
   }
 
-  def grouped(n: Precise): View[View[A]] = new Grouped[A](n) apply xs
+  def grouped(n: Precise): View2D[A] = new Grouped[A](n) apply xs
 
-  private def iteratively[B](xs: View[A], head: View[A] => B, tail: View[A] => View[A]): View[B] = xs match {
+  private def iteratively[B](xs: View[A], head: View[A] => B, tail: ToSelf[View[A]]): View[B] = xs match {
     case _ if xs.isEmpty => emptyValue
     case _               => head(xs) +: iteratively(tail(xs), head, tail)
   }
@@ -202,7 +202,7 @@ final class HasOrder[A](xs: View[A])(implicit z: Order[A]) extends HasEq[A](xs) 
   def max: A                = xs reducel (_ max2 _)
   def min: A                = xs reducel (_ min2 _)
   def sortDistinct: View[A] = sorted.distinct
-  def sorted: View[A]       = xs.toRefArray.inPlace.sort(z.castTo).toDirect.castTo
+  def sorted: View[A]       = xs.toRefArray.inPlace.sort(z.castTo).toVec.castTo
 }
 
 final class HasInitialValue[+A, B](xs: View[A], initial: B) {

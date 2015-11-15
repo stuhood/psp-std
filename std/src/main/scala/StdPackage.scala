@@ -71,7 +71,7 @@ abstract class StdPackage
       h(f(lhs._1, rhs._1), g(lhs._2, rhs._2))
   }
   implicit class SameTuple2Ops[A](val x: (A, A)) {
-    def seq: Direct[A] = Direct(x._1, x._2)
+    def seq: Vec[A] = vec(x._1, x._2)
   }
   implicit class AnyTargetSeqOps[A: Eq](root: A) {
     def transitiveClosure(expand: A => View[A]): View[A] = inView { f =>
