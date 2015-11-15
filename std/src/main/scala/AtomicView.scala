@@ -5,7 +5,7 @@ import impl.Size._, api._
 import lowlevel.CircularBuffer
 import StdShow._
 
-sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] { // with ops.ByOps[A] {
+sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] {
   type This <: AtomicView[A, Repr]
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange
 }

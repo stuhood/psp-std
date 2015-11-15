@@ -7,8 +7,8 @@ import Api._
 
 /** The classic type classes for encoding value equivalence and hash codes.
  */
-trait Eq[-A]   extends Any { def equiv(x: A, y: A): Boolean }
-trait Hash[-A] extends Any { def hash(x: A): Int            }
+trait Eq[-A]   extends Any            { def equiv(x: A, y: A): Boolean }
+trait Hash[-A] extends Any with Eq[A] { def hash(x: A): Int            }
 
 /** The original type class for providing the "empty" value of a particular type.
  *  Suitable only for types with a unique (useful) definition of empty - but that's

@@ -16,7 +16,7 @@ final class ToScala[K, +V](override val keys: sciVector[K], override val values:
   private[this] type Pair = ((K, V))
   private[this] type Us   = ToScala[K, V]
 
-  implicit def ordering: Ordering[K] = orderBy[K](keyIndex).toScalaOrdering
+  implicit def ordering: Ordering[K] = orderBy[K](keyIndex).toOrdering
   override def empty: Us             = ToScala.empty[K, V]
 
   override protected[this] def newBuilder : scmBuilder[Pair, Us] = ToScala.newBuilder[K, V]

@@ -118,8 +118,9 @@ package object jvm extends psp.std.jvm.StdClasses {
   // def NoSignature = emptySignature.empty
   def NoCode: Code = ??? //      = emptyCode.empty
 
-  implicit def attributeInfoEq: Eq[AttributeInfo]  = Eq.natural()
-  implicit def ShowJvmMemberInfo: Show[MemberInfo] = Show(_.codeString)
+  implicit def attributeInfoEq: Hash[AttributeInfo] = Eq.inherit()
+  implicit def ShowJvmMemberInfo: Show[MemberInfo]  = Show(_.codeString)
+
   // implicit def showClassInfo: Show[ClassInfo]      = Show[ClassInfo] { info =>
   //   import info._
   //   def interfaces_s = interfaces.m opt (xs => "implements" <+> xs.joinComma)

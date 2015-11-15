@@ -57,6 +57,7 @@ trait Aliases extends scala.Any {
   type BinOp[A]             = (A, A) => A // binary operation
   type Predicate2[-A1, -A2] = (A1, A2) => Boolean
   type Relation[-A]         = (A, A) => Bool
+  type OrderRelation[-A]    = (A, A) => Cmp
   type Suspended[+A]        = ToUnit[ToUnit[A]]
   type ToBool[-A]           = A => Bool
   type ToInt[-A]            = A => Int

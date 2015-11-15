@@ -128,7 +128,16 @@ class ViewBasic extends ScalacheckBundle {
   def pseq    = Each.elems(1, 2, 3)
   def punfold = Indexed from 1
 
-  // implicitly[Eq[Int]]
+  case class Bippy(s: String, i: Int) {
+    override def toString = s
+  }
+
+  // Testing different kinds of "distinct" calls.
+  val s1 = new Bippy("abc", 1)
+  val s2 = new Bippy("abc", 2)
+  val s3 = new Bippy("def", 3)
+  val s4 = new Bippy("def", 3)
+  val strs = sciVector(s1, s2, s3, s4)
 
   def closure    = parray transitiveClosure (x => exView(x.init.force, x.tail.force))
   def closureBag = closure flatMap (x => x) toBag // That's my closure bag, baby
@@ -146,7 +155,10 @@ class ViewBasic extends ScalacheckBundle {
     // showsAs("1 -> 3, 2 -> 4, 3 -> 3", closureBag.entries mk_s ", "),
     seqShows("1 -> 0, 2 -> 1, 3 -> 2", pvector.m.mapWithIndex(_ -> _)),
     seqShows("11, 22, 33, 44", indexRange(1, 50).toDirect.m grep """(.)\1""".r),
-    seqShows("99, 1010, 1111", xxNumbers slice (8 takeNext 3.size).asIndices)
+    seqShows("99, 1010, 1111", xxNumbers slice (8 takeNext 3.size).asIndices),
+    expectValue[Size](4.size)(strs.byRef.distinct.force.size),
+    expectValue[Size](3.size)(strs.byEquals.distinct.force.size),
+    expectValue[Size](2.size)(strs.byString.distinct.force.size)
   )
 }
 
