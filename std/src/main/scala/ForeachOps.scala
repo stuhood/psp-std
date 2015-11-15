@@ -51,8 +51,9 @@ final class DirectOps[A](val xs: Direct[A]) extends AnyVal {
   def :+(x: A): Direct[A]          = Direct.append(xs, x)
   def ++(ys: Direct[A]): Direct[A] = Direct.join(xs, ys)
 
-  def apply(i: Index): A           = xs elemAt i
-  def length: Int                  = xs.intSize
+  def containsIndex(i: Index): Boolean = 0 <= i.getInt && i.getInt < xs.intSize
+  def apply(i: Index): A               = xs elemAt i
+  def length: Int                      = xs.intSize
   def mapNow[B](f: A => B): Direct[B] = {
     val arr = newArray[Any](length)
     xs.indices foreach (i => arr(i.getInt) = f(xs(i)))

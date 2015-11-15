@@ -11,11 +11,10 @@ import scala.compat.Platform.arraycopy
  */
 
 object Vec {
-  def empty[A] = NIL
-
-  def newBuilder[@spec A]()                        = new VectorBuilder[A]()
-  def apply[@spec A](xs: A*): Vec[A]            = newBuilder[A]() doto (b => xs foreach (b += _)) result
-  def unapplySeq[A](x: Vec[A]): Some[Vec[A]] = Some(x)
+  def empty[A] : Vec[A]                        = NIL.castTo[Vec[A]]
+  def newBuilder[@spec A]()                    = new VectorBuilder[A]()
+  def apply[@spec A](xs: A*): Vec[A]           = newBuilder[A]() doto (b => xs foreach (b += _)) result
+  def unapplySeq[A](x: Vec[A]): Some[scSeq[A]] = Some(x.seq)
 
   private[std] val NIL = new Vec[Nothing](0, 0, 0)
   // Constants governing concat strategy for performance
@@ -23,7 +22,7 @@ object Vec {
   private[std] final val TinyAppendFaster = 2
 }
 
-final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) extends VectorPointer[A @uV] with Direct[A] with ForceShowDirect {
+final class Vec[@spec A](val startIndex: Int, val endIndex: Int, focus: Int) extends VectorPointer[A @uV] with Direct[A] with ForceShowDirect {
   self =>
 
   private[std] var dirty = false
@@ -36,12 +35,11 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
   def size: Precise               = Precise(length)
   def elemAt(i: Index): A         = apply(i.getInt)
   def isEmpty                     = length == 0
+  def :+(elem: A): Vec[A]         = appendBack(elem)
+  def +:(elem: A): Vec[A]         = appendFront(elem)
+  def ++(that: Vec[A]): Vec[A]    = that.foldl(this)(_ :+ _)
 
-  def :+[B >: A](elem: B): Vec[B]         = appendBack(elem)
-  def +:[B >: A](elem: B): Vec[B]         = appendFront(elem)
-  def ++[B >: A](that: Vec[B]): Vec[B] = that.foldl(this: Vec[B])(_ :+ _)
-
-  private[std] final def initIterator[B >: A](s: VectorIterator[B]): VectorIterator[B] = {
+  private[std] final def initIterator(s: VectorIterator[A]): VectorIterator[A] = {
     s.initFrom(this)
     if (dirty) s.stabilize(focus)
     if (s.depth > 1) s.gotoPos(startIndex, startIndex ^ focus)
@@ -51,19 +49,9 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
   def iterator: VectorIterator[A] =
     initIterator(new VectorIterator[A](startIndex, endIndex))
 
-  // can still be improved
-  def reverseIterator: scIterator[A] = new scIterator[A] {
-    private[std] var i = self.length
-    def hasNext: Boolean = 0 < i
-    def next(): A =
-      if (0 < i) {
-        i -= 1
-        self(i)
-      } else scala.collection.Iterator.empty.next()
-  }
+  def reverseIterator: scIterator[A] = BiIterator direct this reverseIterator
 
   // TODO: reverse
-
   // TODO: check performance of foreach/map etc. should override or not?
   // Ideally, clients will inline calls to map all the way down, including the iterator/builder methods.
   // In principle, escape analysis could even remove the iterator/builder allocations and do it
@@ -85,9 +73,9 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
 
   // semi-private[std] api
 
-  private[std] def updateAt[B >: A](index: Int, elem: B): Vec[B] = {
+  private[std] def updateAt(index: Int, elem: A): Vec[A] = {
     val idx = checkRangeConvert(index)
-    val s = new Vec[B](startIndex, endIndex, idx)
+    val s = new Vec[A](startIndex, endIndex, idx)
     s.initFrom(this)
     s.dirty = dirty
     s.gotoPosWritable(focus, idx, focus ^ idx)  // if dirty commit changes; go to new pos and prepare for writing
@@ -114,13 +102,13 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
       dirty = true
   }
 
-  private[std] def appendFront[B >: A](value: B): Vec[B] = {
+  private[std] def appendFront(value: A): Vec[A] = {
     if (endIndex != startIndex) {
       val blockIndex = (startIndex - 1) & ~31
       val lo = (startIndex - 1) & 31
 
       if (startIndex != blockIndex + 32) {
-        val s = new Vec(startIndex - 1, endIndex, blockIndex)
+        val s = new Vec[A](startIndex - 1, endIndex, blockIndex)
         s.initFrom(this)
         s.dirty = dirty
         s.gotoPosWritable(focus, blockIndex, focus ^ blockIndex)
@@ -139,7 +127,7 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
           if (depth > 1) {
             val newBlockIndex = blockIndex + shift
             val newFocus = focus + shift
-            val s = new Vec(startIndex - 1 + shift, endIndex + shift, newBlockIndex)
+            val s = new Vec[A](startIndex - 1 + shift, endIndex + shift, newBlockIndex)
             s.initFrom(this)
             s.dirty = dirty
             s.shiftTopLevel(0, shiftBlocks) // shift right by n blocks
@@ -154,7 +142,7 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
             //assert(newBlockIndex == 0)
             //assert(newFocus == 0)
 
-            val s = new Vec(startIndex - 1 + shift, endIndex + shift, newBlockIndex)
+            val s = new Vec[A](startIndex - 1 + shift, endIndex + shift, newBlockIndex)
             s.initFrom(this)
             s.dirty = dirty
             s.shiftTopLevel(0, shiftBlocks) // shift right by n elements
@@ -170,7 +158,7 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
           val newFocus = focus + move
 
 
-          val s = new Vec(startIndex - 1 + move, endIndex + move, newBlockIndex)
+          val s = new Vec[A](startIndex - 1 + move, endIndex + move, newBlockIndex)
           s.initFrom(this)
           s.dirty = dirty
           s.gotoFreshPosWritable(newFocus, newBlockIndex, newFocus ^ newBlockIndex) // could optimize: we know it will create a whole branch
@@ -181,7 +169,7 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
           val newBlockIndex = blockIndex
           val newFocus = focus
 
-          val s = new Vec(startIndex - 1, endIndex, newBlockIndex)
+          val s = new Vec[A](startIndex - 1, endIndex, newBlockIndex)
           s.initFrom(this)
           s.dirty = dirty
           s.gotoFreshPosWritable(newFocus, newBlockIndex, newFocus ^ newBlockIndex)
@@ -195,20 +183,20 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
       // empty vector, just insert single element at the back
       val elems = new Array[AnyRef](32)
       elems(31) = value.asInstanceOf[AnyRef]
-      val s = new Vec(31,32,0)
+      val s = new Vec[A](31,32,0)
       s.depth = 1
       s.display0 = elems
       s
     }
   }
 
-  private[std] def appendBack[B>:A](value: B): Vec[B] = {
+  private[std] def appendBack(value: A): Vec[A] = {
     if (endIndex != startIndex) {
       val blockIndex = endIndex & ~31
       val lo = endIndex & 31
 
       if (endIndex != blockIndex) {
-        val s = new Vec(startIndex, endIndex + 1, blockIndex)
+        val s = new Vec[A](startIndex, endIndex + 1, blockIndex)
         s.initFrom(this)
         s.dirty = dirty
         s.gotoPosWritable(focus, blockIndex, focus ^ blockIndex)
@@ -223,7 +211,7 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
           if (depth > 1) {
             val newBlockIndex = blockIndex - shift
             val newFocus = focus - shift
-            val s = new Vec(startIndex - shift, endIndex + 1 - shift, newBlockIndex)
+            val s = new Vec[A](startIndex - shift, endIndex + 1 - shift, newBlockIndex)
             s.initFrom(this)
             s.dirty = dirty
             s.shiftTopLevel(shiftBlocks, 0) // shift left by n blocks
@@ -238,7 +226,7 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
             //assert(newBlockIndex == 0)
             //assert(newFocus == 0)
 
-            val s = new Vec(startIndex - shift, endIndex + 1 - shift, newBlockIndex)
+            val s = new Vec[A](startIndex - shift, endIndex + 1 - shift, newBlockIndex)
             s.initFrom(this)
             s.dirty = dirty
             s.shiftTopLevel(shiftBlocks, 0) // shift right by n elements
@@ -250,7 +238,7 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
           val newBlockIndex = blockIndex
           val newFocus = focus
 
-          val s = new Vec(startIndex, endIndex + 1, newBlockIndex)
+          val s = new Vec[A](startIndex, endIndex + 1, newBlockIndex)
           s.initFrom(this)
           s.dirty = dirty
           s.gotoFreshPosWritable(newFocus, newBlockIndex, newFocus ^ newBlockIndex)
@@ -262,7 +250,7 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
     } else {
       val elems = new Array[AnyRef](32)
       elems(0) = value.asInstanceOf[AnyRef]
-      val s = new Vec(0,1,0)
+      val s = new Vec[A](0,1,0)
       s.depth = 1
       s.display0 = elems
       s
@@ -420,7 +408,7 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
     val shift = (cutIndex & ~((1 << (5*d))-1))
 
     // need to init with full display iff going to cutIndex requires swapping block at level >= d
-    val s = new Vec(cutIndex-shift, endIndex-shift, blockIndex-shift)
+    val s = new Vec[A](cutIndex-shift, endIndex-shift, blockIndex-shift)
     s.initFrom(this)
     s.dirty = dirty
     s.gotoPosWritable(focus, blockIndex, focus ^ blockIndex)
@@ -434,7 +422,7 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
     val xor = startIndex ^ (cutIndex - 1)
     val d = requiredDepth(xor)
     val shift = (startIndex & ~((1 << (5*d))-1))
-    val s = new Vec(startIndex-shift, cutIndex-shift, blockIndex-shift)
+    val s = new Vec[A](startIndex-shift, cutIndex-shift, blockIndex-shift)
 
     s.initFrom(this)
     s.dirty = dirty
@@ -443,11 +431,10 @@ final class Vec[@spec +A](val startIndex: Int, val endIndex: Int, focus: Int) ex
     s.cleanRightEdge(cutIndex-shift)
     s
   }
-
 }
 
 
-class VectorIterator[@spec +A](_startIndex: Int, endIndex: Int) extends scIterator[A] with VectorPointer[A @uV] {
+class VectorIterator[@spec A](_startIndex: Int, endIndex: Int) extends scIterator[A] with VectorPointer[A @uV] {
   private[std] var blockIndex: Int = _startIndex & ~31
   private[std] var lo: Int         = _startIndex & 31
   private[std] var endLo           = math.min(endIndex - blockIndex, 32)
@@ -482,7 +469,7 @@ class VectorIterator[@spec +A](_startIndex: Int, endIndex: Int) extends scIterat
    *  Such a vector can then be split into several vectors using methods like `take` and `drop`.
    */
   private[std] def remainingVector: Vec[A] =
-    new Vec(blockIndex + lo, endIndex, blockIndex + lo) doto (_ initFrom this)
+    new Vec[A](blockIndex + lo, endIndex, blockIndex + lo) doto (_ initFrom this)
 }
 
 final class VectorBuilder[@spec A]() extends scmBuilder[A, Vec[A]] with VectorPointer[A @uV] {
