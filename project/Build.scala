@@ -14,6 +14,7 @@ object Build extends sbt.Build {
   def commonArgs = wordSeq("-Yno-predef -Yno-adapted-args -unchecked")
   def stdArgs    = "-Yno-imports" +: commonArgs
   def replArgs   = "-language:_" +: commonArgs
+  def ammonite   =  "com.lihaoyi" % "ammonite-repl_2.11.7" % "0.4.8"
 
   def rootResourceDir: SettingOf[File] = resourceDirectory in Compile in LocalRootProject
   def subprojects                      = List[sbt.Project](api, dmz, std, pio, dev, jvm, scalac)
@@ -90,7 +91,7 @@ object Build extends sbt.Build {
 
   lazy val api    = project setup "psp's non-standard api"
   lazy val dmz    = project setup "psp's non-standard dmz"
-  lazy val std    = project setup "psp's non-standard standard library" dependsOn (api, dmz) also (spire, jsr305)
+  lazy val std    = project setup "psp's non-standard standard library" dependsOn (api, dmz) also (spire, jsr305, ammonite)
   lazy val pio    = project setup "psp's non-standard io library" dependsOn std
   lazy val jvm    = project.usesCompiler.usesParsers setup "psp's non-standard jvm code" dependsOn pio
   lazy val dev    = project setup "psp's non-standard unstable code" dependsOn std also (guava, squants, okhttp)
@@ -106,19 +107,22 @@ object Build extends sbt.Build {
                          test  :=  (run in Test toTask "").value
   )
 
+  private def startAmmonite = """
+    ammonite.repl.Repl.run("", predefFile = Some(ammonite.ops.Path(java.nio.file.Paths get ".predef.scala" toAbsolutePath)))
+  """.trim
+
   // A console project which pulls in misc additional dependencies currently being explored.
   // Removing all scalac options except the ones listed here, to eliminate all the warnings
-  // repl startup code in resources/initialCommands.scala
   lazy val consoleOnly = (
     project.helper.usesCompiler.alsoToolsJar
     dependsOn (testOnly % "test->test")
     dependsOn (classpathDeps: _*)
-    also (jsr305) settings (
-                      libraryDependencies <+=  scalaCompiler,
-      scalacOptions in (Compile, console)  :=  replArgs,
-         scalacOptions in (Test, console)  :=  replArgs,
-                             key.initRepl <+=  resourceDirectory in Compile mapValue (d => IO.read(d / "initialCommands.scala")),
-                     key.initRepl in Test  +=  "\nimport org.scalacheck._, Prop._, Gen._\nimport psp.tests._"
+    also (jsr305, ammonite) settings (
+                        libraryDependencies <+= scalaCompiler,
+        scalacOptions in (Compile, console) :=  replArgs,
+           scalacOptions in (Test, console) :=  replArgs,
+      initialCommands in (Compile, console) :=  startAmmonite,
+                       key.initRepl in Test +=  "\nimport org.scalacheck._, Prop._, Gen._\nimport psp.tests._"
     )
   )
 
