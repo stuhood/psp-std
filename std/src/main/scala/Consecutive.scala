@@ -20,7 +20,7 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
   def elemAt(i: Index): A = f(startInt + i.getInt)
   def map[B](g: A => B)   = new Consecutive[B](startInt, lastInt, f andThen g)
 
-  def foreach(g: A => Unit): Unit             = if (!isEmpty) lowlevel.foreachConsecutive(startInt, lastInt, f andThen g)
+  def foreach(g: A => Unit): Unit             = if (!isEmpty) lowlevel.ll.foreachConsecutive(startInt, lastInt, f andThen g)
   def asIndices: IndexRange                   = Consecutive.to(startInt, lastInt) map (i => Index(i))
   def tail: Consecutive[A]                    = drop(1.size)
   def init: Consecutive[A]                    = dropRight(1.size)
