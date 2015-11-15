@@ -87,9 +87,10 @@ final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
   def lineVector: Direct[String]     = splitChar('\n')
   def dollarSegments: Direct[String] = splitChar('$')
   def dottedSegments: Direct[String] = splitChar('.')
+  def reverse: String                = new String(chars.inPlace.reverse)
 
   def containsChar(ch: Char): Boolean      = chars.m contains ch
-  def splitChar(ch: Char): Direct[String]  = splitRegex(Regex quote ch.toString)
+  def splitChar(ch: Char): Direct[String]  = splitRegex(Regex quote ch.any_s)
   def splitRegex(r: Regex): Direct[String] = r.pattern split self toDirect
   def words: Direct[String]                = splitRegex(whitespace)
 

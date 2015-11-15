@@ -33,11 +33,6 @@ object Direct {
     def elemAt(i: Index)                    = elem(i)
     @inline def foreach(f: A => Unit): Unit = size.indices foreach (i => f(elem(i)))
   }
-  final case class Reversed[A](xs: Direct[A]) extends AnyVal with DirectImpl[A] {
-    def size                = xs.size
-    def elemAt(i: Index): A = xs(size.lastIndex - i.sizeExcluding.get)
-    @inline def foreach(f: A => Unit): Unit = size.indices foreachReverse (i => f(xs(i)))
-  }
 
   trait DirectImpl[+A] extends Any with Direct[A] {
     def isEmpty = size.isZero

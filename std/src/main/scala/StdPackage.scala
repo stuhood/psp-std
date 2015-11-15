@@ -20,7 +20,6 @@ abstract class StdPackage
          with impl.AlgebraInstances
          with GlobalShow
          with StdGateways
-         with lowlevel.StdArrowAssoc
          with api.Aliases
          with SpireIntegration
          with PolicyDmz {
