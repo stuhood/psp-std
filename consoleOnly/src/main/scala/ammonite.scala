@@ -1,9 +1,30 @@
-import scala.collection.{ mutable => scm, immutable => sci }
-import java.nio.{ file => jnf }
-import psp._, std._, api._, pio._, jvm._
-import StdEq._, StdShow._
-import ammonite.repl._
-import psprepl._
+package psp
+
+import std._, api._, StdShow._
+import ammonite.repl.{ Ref, Repl, Storage }
+
+object REPL extends Repl(System.in, System.out, Ref(Storage(Repl.defaultAmmoniteHome, None)), "", Nil) {
+  import interp.replApi._
+
+  private def options     = "-Yno-adapted-args -Yno-imports -Yno-predef -encoding UTF-8"
+  private def initImports = "import psp._, std._, api._, StdShow._, StdEq._, INREPL._"
+
+  // Working around ammonite bugs.
+  // https://github.com/lihaoyi/Ammonite/issues/213
+  private def workarounds = "type Order[-A] = psp.api.Order[A] ; val Order = psp.std.Order"
+
+  def start(): Unit = {
+    compiler.settings processArgumentString options
+    load(initImports)
+    load(workarounds)
+    run()
+  }
+  override def action() = {
+    val res = super.action()
+    printer.println("") // Blank line between results.
+    res
+  }
+}
 
 trait TargetCommon[A] {
   def target: Vec[A]
@@ -17,7 +38,8 @@ trait ReplPackageLow {
   }
   implicit final class ReplJavaOps[A](val xs: jCollection[A]) extends TargetCommon[A] { def target = xs.toVec }
 }
-object psprepl extends ReplPackageLow {
+
+object INREPL extends ReplPackageLow {
   implicit final class ReplForeachOps[A](val xs: Each[A])            extends TargetCommon[A] { def target = xs.toVec }
   implicit final class ReplArrayOps[A](val xs: Array[A])             extends TargetCommon[A] { def target = xs.toVec }
   implicit final class ReplTraversableOps[A](val xs: sCollection[A]) extends TargetCommon[A] { def target = xs.toVec }
