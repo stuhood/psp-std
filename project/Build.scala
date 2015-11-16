@@ -91,7 +91,7 @@ object Build extends sbt.Build {
 
   lazy val api    = project setup "psp's non-standard api"
   lazy val dmz    = project setup "psp's non-standard dmz"
-  lazy val std    = project setup "psp's non-standard standard library" dependsOn (api, dmz) also (spire, jsr305, ammonite)
+  lazy val std    = project setup "psp's non-standard standard library" dependsOn (api, dmz) also (spire, jsr305)
   lazy val pio    = project setup "psp's non-standard io library" dependsOn std
   lazy val jvm    = project.usesCompiler.usesParsers setup "psp's non-standard jvm code" dependsOn pio
   lazy val dev    = project setup "psp's non-standard unstable code" dependsOn std also (guava, squants, okhttp)
@@ -107,10 +107,6 @@ object Build extends sbt.Build {
                          test  :=  (run in Test toTask "").value
   )
 
-  private def startAmmonite = """
-    ammonite.repl.Repl.run("", predefFile = Some(ammonite.ops.Path(java.nio.file.Paths get ".predef.scala" toAbsolutePath)))
-  """.trim
-
   // A console project which pulls in misc additional dependencies currently being explored.
   // Removing all scalac options except the ones listed here, to eliminate all the warnings
   lazy val consoleOnly = (
@@ -121,7 +117,7 @@ object Build extends sbt.Build {
                         libraryDependencies <+= scalaCompiler,
         scalacOptions in (Compile, console) :=  replArgs,
            scalacOptions in (Test, console) :=  replArgs,
-      initialCommands in (Compile, console) :=  startAmmonite,
+      initialCommands in (Compile, console) :=  "psp.REPL.start()",
                        key.initRepl in Test +=  "\nimport org.scalacheck._, Prop._, Gen._\nimport psp.tests._"
     )
   )
