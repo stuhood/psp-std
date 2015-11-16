@@ -3,10 +3,17 @@ package psp
 import std._, api._, StdShow._
 import ammonite.repl.{ Ref, Repl, Storage }
 
+object ReplMain {
+  def main(args: Array[String]): Unit = {
+    REPL.start()
+  }
+}
+
+
 object REPL extends Repl(System.in, System.out, Ref(Storage(Repl.defaultAmmoniteHome, None)), "", Nil) {
   import interp.replApi._
 
-  private def options     = "-Yno-adapted-args -Yno-imports -Yno-predef -encoding UTF-8"
+  private def options     = "-language:_ -Yno-adapted-args -Yno-imports -Yno-predef -encoding UTF-8"
   private def initImports = "import psp._, std._, api._, StdShow._, StdEq._, INREPL._"
 
   // Working around ammonite bugs.

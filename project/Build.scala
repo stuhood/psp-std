@@ -107,6 +107,14 @@ object Build extends sbt.Build {
                          test  :=  (run in Test toTask "").value
   )
 
+  def stdForkOptions               = ForkOptions(outputStrategy = Some(StdoutOutput), connectInput = true)
+  def consoleClasspathFiles        = fullClasspath in Compile in "consoleOnly" map (_.files)
+  def consoleClasspathString       = consoleClasspathFiles map (_ mkString ":")
+  def forkConfig                   = ForkConfig("psp.ReplMain", ImmutableProperties.empty, sciSeq("-usejavacp"), stdForkOptions)
+  def forkRepl: TaskOf[ForkConfig] = Def task (forkConfig addJvmOptions ("-cp", consoleClasspathString.value))
+
+  def asInputTask(task: TaskOf[ForkConfig]): InputTaskOf[Int] = Def inputTask task.value(spaceDelimited("<arg>").parsed: _*)
+
   // A console project which pulls in misc additional dependencies currently being explored.
   // Removing all scalac options except the ones listed here, to eliminate all the warnings
   lazy val consoleOnly = (
@@ -114,11 +122,11 @@ object Build extends sbt.Build {
     dependsOn (testOnly % "test->test")
     dependsOn (classpathDeps: _*)
     also (jsr305, ammonite) settings (
-                        libraryDependencies <+= scalaCompiler,
-        scalacOptions in (Compile, console) :=  replArgs,
-           scalacOptions in (Test, console) :=  replArgs,
-      initialCommands in (Compile, console) :=  "psp.REPL.start()",
-                       key.initRepl in Test +=  "\nimport org.scalacheck._, Prop._, Gen._\nimport psp.tests._"
+                      libraryDependencies <+= scalaCompiler,
+      scalacOptions in (Compile, console) :=  replArgs,
+         scalacOptions in (Test, console) :=  replArgs,
+                       console in Compile :=  asInputTask(forkRepl).toTask("").value,
+                     key.initRepl in Test +=  "\nimport org.scalacheck._, Prop._, Gen._\nimport psp.tests._"
     )
   )
 
