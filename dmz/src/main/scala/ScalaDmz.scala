@@ -7,7 +7,7 @@ import sc.{ mutable => scm, immutable => sci }
 import java.lang.{ String, Math }
 import sc.convert._
 
-trait PolicyDmz extends AnyRef
+trait ScalaDmz extends AnyRef
       with ScalaLibrary
       with JavaLibrary
       with DecorateAsScala

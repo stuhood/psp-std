@@ -4,7 +4,7 @@ sudo: false
 cache:
   directories:
     - $HOME/.ivy2/cache
-    - $HOME/.sbt/launchers/0.13.8
+    - $HOME/.sbt
 
 language: scala
 script: bin/run-travis
@@ -12,8 +12,8 @@ jdk:
   - oraclejdk7
   - oraclejdk8
 
-scala: latest # set a dummy value as this build configuration does not rely on TRAVIS_SCALA_VERSION
+scala: 2.11.7
 
 # codecov
-before_install: pip install --user codecov
-after_success: codecov
+# before_install: pip install --user codecov
+# after_success: codecov
