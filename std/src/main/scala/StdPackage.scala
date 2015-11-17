@@ -2,7 +2,7 @@ package psp
 package std
 
 import api._
-import psp.dmz.PolicyDmz
+import psp.dmz.ScalaDmz
 
 /** Yes I know all about implicit classes.
  *  There's no way to write an implicit value class which doesn't hardcode
@@ -22,7 +22,7 @@ abstract class StdPackage
          with StdGateways
          with api.Aliases
          with SpireIntegration
-         with PolicyDmz {
+         with ScalaDmz {
 
   // Higher than Direct.
   implicit def arraySpecificOps[A](xs: Array[A]): ops.ArraySpecificOps[A]       = new ops.ArraySpecificOps[A](xs)
