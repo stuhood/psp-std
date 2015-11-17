@@ -26,27 +26,13 @@ final class ExMapOps[K, V](xs: ExMap[K, V]) {
   def size: Size                = keys.size
 
   def filterValues(p: ToBool[V]): ExMap[K, V] = xs filterKeys (k => p(xs(k)))
-  def +(entry: Entry): ExMap[K, V]            = ExMap(keySet + entry._1, Fun literal entry orElse xs.lookup)
+  def +(entry: Entry): ExMap[K, V]            = ExMap(keySet + entry._1, Fun finite entry orElse xs.lookup)
 }
 final class ExSetOps[A](xs: ExSet[A]) {
-  private implicit def eqs: Eq[A] = Eq(xs.equiv)
-
-  /** replace adds the element, ejecting any existing element which measures === to it.
-   *  add adds the element only if no existing element is === to it.
-   */
-
-  def add(x: A): ExSet[A]                 = if (xs(x)) xs else xs union exSet(x)
-  def canonicalize(x: A): A               = xs.m.findOr(_ === x, x)
-  def diff(that: ExSet[A]): ExSet[A]      = ExSet.Diff(xs, that)
-  def filter(p: ToBool[A]): ExSet[A]      = ExSet.Filtered(xs, p)
-  def intersect(that: ExSet[A]): ExSet[A] = ExSet.Intersect(xs, that)
-  def isSubsetOf(ys: InSet[A]): Boolean   = xs forall ys
-  def mapOnto[B](f: A => B): ExMap[A, B]  = ExMap(xs, Fun(f))
-  def replace(x: A): ExSet[A]             = if (xs(x)) without(x) add x else this add x
-  def union(that: ExSet[A]): ExSet[A]     = ExSet.Union(xs, that)
-  def without(x: A): ExSet[A]             = xs diff exSet(x)
-
-  def filterNot(p: ToBool[A]): ExSet[A] = this filter !p
+  def add(x: A): ExSet[A]                = xs + x
+  def filter(p: ToBool[A]): ExSet[A]     = ExSet.Filtered(xs, p)
+  def union(that: ExSet[A]): ExSet[A]    = ExSet.Union(xs, that)
+  def mapOnto[B](f: A => B): ExMap[A, B] = ExMap(xs, Fun(f))
 }
 
 trait HasPreciseSizeMethods extends Any {

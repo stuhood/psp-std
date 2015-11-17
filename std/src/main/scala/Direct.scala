@@ -46,6 +46,7 @@ object Direct {
   def fromArray[A](xs: Array[A]): Direct[A]            = WrapArray[A](xs)
   def wrapArray[A](xs: Array[_]): Direct[A]            = WrapArray[A](xs)
   def pure[A](size: Precise, f: Index => A): Direct[A] = Pure(size, f)
+  def reversed[A](xs: Direct[A]): Direct[A]            = Pure(xs.size, i => xs(xs.lastIndex - i.get))
 
   def apply[A](xs: A*): Direct[A] = xs match {
     case xs: scmWrappedArray[_] => fromArray[A](xs.array.castTo[Array[A]])

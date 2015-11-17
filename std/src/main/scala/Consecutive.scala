@@ -56,6 +56,7 @@ object Consecutive {
   final class Ints private[std] (s: Int, e: Int) extends Consecutive[Int](s, e, id)
   val empty = new Consecutive[Nothing](0, -1, _ => sys.error("empty"))
 
+  def downTo(start: Int, end: Int): Direct[Int]                   = Direct reversed to(end, start)
   def to(start: Int, end: Int): Consecutive[Int]                  = if (end < start) empty else new Ints(start, end)
   def until(start: Int, end: Int): Consecutive[Int]               = if (end <= start) empty else new Ints(start, end - 1)
   def until[A](start: Int, end: Int, f: Int => A): Consecutive[A] = if (end <= start) empty else new Consecutive(start, end - 1, f)
