@@ -5,18 +5,18 @@ import api._
 
 final class Conversions[A](val xs: View[A]) extends AnyVal with ConversionsImpl[A]
 
-final class Unbuilder[A, Repr](repr: Repr)(implicit z: Unbuilds[A, Repr]) {
+final class Unbuilder[A, Repr](repr: Repr)(implicit z: UnbuildsAs[A, Repr]) {
   def xs: View[A] = z unbuild repr
   def m: AtomicView[A, Repr] = xs match {
     case xs: Direct[A] => new DirectView(xs)
     case xs            => new LinearView(xs)
   }
 }
-
 object Unbuilds {
-  def apply[A, Repr](f: Repr => Each[A]): Unbuilds[A, Repr] = new Impl(f)
+  def apply[A, Repr](f: Repr => Each[A]): UnbuildsAs[A, Repr] = new Impl[A, Repr](f)
 
-  final class Impl[A, Repr](val f: Repr => Each[A]) extends AnyVal with Unbuilds[A, Repr] {
+  final class Impl[A, Repr](val f: Repr => Each[A]) extends AnyVal with Unbuilds[Repr] {
+    type Elem = A
     def unbuild(xs: Repr): Each[A] = f(xs)
   }
 }
@@ -44,6 +44,7 @@ trait ConversionsImpl[A] extends Any {
 
   def toArray(implicit z: CTag[A]): Array[A]   = to[Array]
   def toDirect: Direct[A]                      = to[Direct]
+  def toEach: Each[A]                          = to[Each]
   def toEqualsSet: ExSet[A]                    = toHashSet(inheritEq)
   def toExSet(implicit z: Eq[A]): ExSet[A]     = to[ExSet]
   def toHashSet(implicit z: Hash[A]): ExSet[A] = to[ExSet]

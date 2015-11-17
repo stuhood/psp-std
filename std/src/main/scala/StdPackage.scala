@@ -19,7 +19,7 @@ abstract class StdPackage
          with StdProperties
          with impl.AlgebraInstances
          with GlobalShow
-         with StdGateways
+         with StdImplicits
          with api.Aliases
          with SpireIntegration
          with ScalaDmz {
@@ -30,6 +30,8 @@ abstract class StdPackage
 
   implicit def pairedCollectionOps0[R, A, B](xs: View[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B] = new Paired[R, A, B](xs.toEach)
   implicit def pairedCollectionOps[R, A, B](xs: Each[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B]  = new Paired[R, A, B](xs)
+
+  type UnbuildsAs[+A, R] = Unbuilds[R] { type Elem <: A }
 
   implicit class CleaveOps[R, A, B](xs: R)(implicit z: Pair.Cleave[R, A, B]) {
     def mapLeft(f: A => A): R  = z.join(f(z left xs), z right xs)
@@ -64,6 +66,7 @@ abstract class StdPackage
     def comap[Prev](f: Prev => Elem): Builds[Prev, To] = Builds(xs => z build (xs map f))
     def map[Next](f: To => Next): Builds[Elem, Next]   = Builds(xs => f(z build xs))
     def direct: Suspended[Elem] => To                  = mf => z build Each(mf)
+    def scalaBuilder: scmBuilder[Elem, To]             = sciVector.newBuilder[Elem] mapResult (z build _.toEach)
   }
   implicit class Tuple2Ops[A, B](val lhs: (A, B)) {
     def fold[C, D](rhs: (A, B))(f: (A, A) => C, g: (B, B) => C)(h: (C, C) => D): D =

@@ -10,9 +10,7 @@ class SliceSpec extends ScalacheckBundle {
     show"$xs drop $start take ($end - $start) === $expect" -> Prop((xs drop start.size take (end - start).size).force[Direct[A]] === expect)
   )
 
-  def props = Direct(
-    checkSlice('a' to 'g', 2, 5, 'c' to 'e')
-  ).flatMap(x => x) // XXX should be .flatten
+  def props = checkSlice('a' to 'g', 2, 5, 'c' to 'e')
 }
 
 class InferenceSpec extends ScalacheckBundle {
@@ -90,7 +88,7 @@ class InferenceSpec extends ScalacheckBundle {
     expectType[ExSet[Int]]    (xs.m map identity force),
     expectType[Each[Int]]     (fs map identity),
     expectType[Each[Int]]     (fs.m map identity force),
-    expectType[Direct[Int]]  (ds map identity),
+    expectType[Direct[Int]]  (ds mapNow identity),
     expectType[Direct[Int]]  (ds.m map identity force),
     expectType[Direct[Int]]  (vs.m map identity force),
     expectType[sciList[Int]]  (ls map identity),

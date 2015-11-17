@@ -18,8 +18,9 @@ object Build extends sbt.Build {
 
   def rootResourceDir: SettingOf[File] = resourceDirectory in Compile in LocalRootProject
   def subprojects                      = List[sbt.Project](api, dmz, std, pio, dev, jvm, scalac)
-  def classpathDeps                    = convertSeq(subprojects): List[ClasspathDep[ProjectReference]]
-  def projectRefs                      = convertSeq(subprojects): List[ProjectReference]
+  def activeProjects                   = List[sbt.Project](api, dmz, std)
+  def classpathDeps                    = convertSeq(activeProjects): List[ClasspathDep[ProjectReference]]
+  def projectRefs                      = convertSeq(activeProjects): List[ProjectReference]
 
   def parserDep = Def setting {
     scalaBinaryVersion.value match {

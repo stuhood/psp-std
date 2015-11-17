@@ -26,10 +26,10 @@ trait HasPreciseSize extends Any with HasAtomicSize        { def size: Precise  
 trait IsEmpty extends Any              { def isEmpty: Boolean }
 trait Opt[+A] extends Any with IsEmpty { def get: A           }
 
-trait Each[@spec(SpecTypes) +A]      extends Any with HasSize                        { def foreach(f: A => Unit): Unit    }
-trait Indexed[@spec(SpecTypes) +A]   extends Any with Each[A]                        { def elemAt(i: Index): A            }
-trait Direct[@spec(SpecTypes) +A]    extends Any with Indexed[A] with HasPreciseSize
-trait Linear[@spec(SpecTypes) +A]    extends Any with Each[A]    with IsEmpty        { def head: A ; def tail: Linear[A]  }
+trait Each[@spec(SpecTypes) +A]    extends Any with HasSize with Foreach[A] with NotView { def foreach(f: A => Unit): Unit   }
+trait Indexed[@spec(SpecTypes) +A] extends Any with Each[A]                              { def elemAt(i: Index): A           }
+trait Direct[@spec(SpecTypes) +A]  extends Any with Indexed[A] with HasPreciseSize
+trait Linear[@spec(SpecTypes) +A]  extends Any with Each[A]    with IsEmpty              { def head: A ; def tail: Linear[A] }
 
 trait InSet[-A]     extends Any                            { def apply(x: A): Boolean       }
 trait InMap[-K, +V] extends Any                            { def lookup: Fun[K, V]          }
@@ -41,10 +41,15 @@ trait ExMap[K, +V]  extends Any with InMap[K, V]           { def lookup: FiniteD
 // final case class IntIndex(x: Int) extends AnyVal with Index   { def isEmpty = x < 0 ; def get: Long = x }
 trait Index extends Any with Opt[Long]
 
-trait AnyView[@spec(SpecTypes) +A] extends Any with HasSize {
-  type MapTo[+X] <: AnyView[X]
+sealed trait MaybeView extends Any                { def isView: Boolean      }
+trait IsView           extends Any with MaybeView { final def isView = true  }
+trait NotView          extends Any with MaybeView { final def isView = false }
 
+trait Foreach[+A] extends Any with MaybeView {
   def foreach(f: A => Unit): Unit
+}
+trait AnyView[@spec(SpecTypes) +A] extends Any with HasSize with IsView with Foreach[A] {
+  type MapTo[+X] <: AnyView[X]
 }
 
 /** Contiguous operations share the property that the result is always
@@ -71,7 +76,7 @@ trait ContiguousViewOps[@spec(SpecTypes) +A] extends Any with AnyView[A] {
 trait NonContiguousViewOps[@spec(SpecTypes) +A] extends Any with AnyView[A] {
   def collect[B](pf: A ?=> B): MapTo[B]
   def map[B](f: A => B): MapTo[B]
-  def flatMap[B](f: A => Each[B]): MapTo[B]
+  def flatMap[B](f: A => Foreach[B]): MapTo[B]
   def withFilter(p: ToBool[A]): MapTo[A]
 }
 

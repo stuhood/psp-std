@@ -20,11 +20,16 @@ object Each {
     def size = impl.Size(xs)
     @inline def foreach(f: A => Unit): Unit = xs foreach f
   }
+
+  final class ToScalaTrav[A](xs: Foreach[A]) extends sciTraversable[A] {
+    def foreach[U](f: A => U): Unit = xs foreach (x => f(x))
+  }
+
   /** We have to produce a scala Seq in order to return from an extractor.
    *  That requires us to produce made-up values for these methods thanks to
    *  scala's rampant overspecification.
    */
-  final class ToScala[A](xs: Each[A]) extends sciSeq[A] {
+  final class ToScalaSeq[A](xs: Each[A]) extends sciSeq[A] {
     override def length: Int = xs.size match {
       case Infinite                 => throw new InfiniteSizeException(s"$xs")
       case Precise(n) if n > MaxInt => throw new LongSizeException(s"$xs")

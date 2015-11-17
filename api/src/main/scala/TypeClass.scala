@@ -19,8 +19,12 @@ trait Empty[@spec(SpecTypes) +A] extends Any { def empty: A }
 /** Back and forth between a Repr and an Each[A].
  *  Not especially classic in this presentation.
  */
-trait Builds[@spec(SpecTypes) -Elem, +To]    extends Any { def build(xs: Each[Elem]): To     }
-trait Unbuilds[+Elem, Repr] extends Any { def unbuild(xs: Repr): Each[Elem] }
+trait Builds[@spec(SpecTypes) -Elem, +To] extends Any { def build(xs: Each[Elem]): To     }
+
+trait Unbuilds[Repr] extends Any {
+  type Elem
+  def unbuild(xs: Repr): Each[Elem]
+}
 
 /** Some monadic ops.
  */

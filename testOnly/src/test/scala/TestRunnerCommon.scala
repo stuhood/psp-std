@@ -22,7 +22,7 @@ abstract class TestRunnerCommon {
     new CollectionsSpec,
     new SliceSpec,
     new OperationCounts,
-    new TokenSpec,
+    // new TokenSpec,
     new ResourcesSpec,
     new FunSpec
   )

@@ -108,11 +108,11 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
    */
   private[this] def orderOps(implicit z: Order[A]): HasOrder[A] = new HasOrder(xs)
 
-  def max(implicit z: Order[A]): A                       = orderOps.max
-  def min(implicit z: Order[A]): A                       = orderOps.min
-  def sorted(implicit z: Order[A]): Vec[A]               = orderOps.sorted
-  def sortDistinct(implicit z: Order[A]): Vec[A]         = orderOps.sortDistinct
-  def sortBy[B](f: A => B)(implicit z: Order[B]): Vec[A] = sorted(z on f)
+  def max(implicit z: Order[A]): A                        = orderOps.max
+  def min(implicit z: Order[A]): A                        = orderOps.min
+  def sorted(implicit z: Order[A]): View[A]               = orderOps.sorted
+  def sortDistinct(implicit z: Order[A]): View[A]         = orderOps.sortDistinct
+  def sortBy[B](f: A => B)(implicit z: Order[B]): View[A] = sorted(z on f)
 
   def findOr(p: ToBool[A], alt: => A): A            = find(p) | alt
   def reducel(f: BinOp[A]): A                       = tail.foldl(head)(f)
