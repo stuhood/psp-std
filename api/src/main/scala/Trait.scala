@@ -34,7 +34,7 @@ trait Linear[@spec(SpecTypes) +A]    extends Any with Each[A]    with IsEmpty   
 trait InSet[-A]     extends Any                            { def apply(x: A): Boolean       }
 trait InMap[-K, +V] extends Any                            { def lookup: Fun[K, V]          }
 trait ExSet[A]      extends Any with Each[A] with InSet[A] { def equiv(x: A, y: A): Boolean }
-trait ExMap[K, +V]  extends Any with InMap[K, V]           { def domain: ExSet[K]           }
+trait ExMap[K, +V]  extends Any with InMap[K, V]           { def lookup: FiniteDom[K, V]    }
 
 // TODO - maybe.
 // final case class LongIndex(x: Long) extends AnyVal with Index { def isEmpty = x < 0 ; def get: Long = x }

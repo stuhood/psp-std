@@ -35,6 +35,10 @@ package object std extends psp.std.StdPackage {
   def shownEq[A: Show] : Hash[A]         = inheritEq[String] on (_.render)
 
   implicit def opsFun[A, B](f: Fun[A, B]): ops.FunOps[A, B] = new ops.FunOps(f)
+  implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = new (A ?=> B) {
+    def isDefinedAt(x: A) = f isDefinedAt x
+    def apply(x: A)       = f(x)
+  }
 
   // Helpers for inference when calling 'on' on contravariant type classes.
   def eqBy[A]    = new psp.impl.EqBy[A]
@@ -216,11 +220,11 @@ package object std extends psp.std.StdPackage {
   def snd[A, B](x: A -> B): B = x._2
 
   def vec[@spec(SpecTypes) A](xs: A*): Vec[A]           = Vec(xs: _*)
-  def exMap[K: Eq, V](xs: (K -> V)*): ExMap[K, V]       = xs.m.toEach.toMap[ExMap]
+  def exMap[K: Eq, V](xs: (K -> V)*): ExMap[K, V]       = xs.m.toExMap // ExMap(xs xs.m.toEach.toMap[ExMap]
   def exSeq[@spec(SpecTypes) A](xs: A*): Vec[A]         = Vec(xs: _*)
   def exSet[A: Eq](xs: A*): ExSet[A]                    = xs.m.toExSet
   def exView[A](xs: A*): View[A]                        = Direct[A](xs: _*).m
-  def inMap[K, V](p: ToBool[K], f: K => V): InMap[K, V] = InMap(inSet(p), f)
+  def inMap[K, V](pf: K ?=> V): InMap[K, V]             = InMap(Fun partial pf)
   def inSet[A](p: ToBool[A]): InSet[A]                  = InSet(p)
   def inView[A](mf: Suspended[A]): View[A]              = Each(mf).m
   def mutableMap[K, V](xs: (K -> V)*): MutableMap[K, V] = MutableMap(jConcurrentMap(xs: _*))

@@ -14,30 +14,19 @@ final class DocSeqOps(xs: Direct[Doc]) {
   def joinParents: String = nonEmpties mkString " with "
   def joinWords: String   = nonEmpties mkString " "
 }
-
-final class InMapOps[K, V](xs: InMap[K, V]) {
-  def mapIn[K1](f: K1 => K): InMap[K1, V] = new InMap.Impl(xs.domain mapIn f, xs.lookup mapIn f)
-  def partial: K ?=> V                    = newPartial(contains, xs.apply)
-  def contains(key: K): Boolean           = xs domain key
-  def ++(that: InMap[K, V]): InMap[K, V]  = new InMap.Impl(xs.domain union that.domain, xs.lookup orElse that.lookup)
-}
 final class ExMapOps[K, V](xs: ExMap[K, V]) {
-  def ++(that: ExMap[K, V]): ExMap[K, V] = new ExMap.Impl(xs.domain union that.domain, xs.lookup orElse that.lookup)
-}
+  type Entry = K -> V
 
-final class InSetOps[A](xs: InSet[A]) {
-  def mapIn[A1](f: A1 => A): InSet[A1]    = InSet(f andThen xs)
-  def mapOnto[B](f: A => B): InMap[A, B]  = InMap(xs, f)
-  def diff(that: InSet[A]): InSet[A]      = InSet.Diff(xs, that)
-  def union(that: InSet[A]): InSet[A]     = InSet.Union(xs, that)
-  def intersect(that: InSet[A]): InSet[A] = InSet.Intersect(xs, that)
-  def complement: InSet[A] = xs match {
-    case InSet.Complement(xs) => xs
-    case _                             => InSet.Complement(xs)
-  }
+  def keys: View[K]             = keySet.m
+  def values: View[V]           = keyVector map xs.lookup
+  def keySet: ExSet[K]          = xs.lookup.keys
+  def keyVector: Vec[K]         = keys.toVec
+  def entries: View[Entry]      = keyVector mapZip xs.lookup
+  def contains(key: K): Boolean = keySet(key)
+  def size: Size                = keys.size
 
-  def filter(p: ToBool[A]): InSet[A]    = this intersect inSet(p)
-  def filterNot(p: ToBool[A]): InSet[A] = this filter !p
+  def filterValues(p: ToBool[V]): ExMap[K, V] = xs filterKeys (k => p(xs(k)))
+  def +(entry: Entry): ExMap[K, V]            = ExMap(keySet + entry._1, Fun literal entry orElse xs.lookup)
 }
 final class ExSetOps[A](xs: ExSet[A]) {
   private implicit def eqs: Eq[A] = Eq(xs.equiv)
@@ -52,7 +41,7 @@ final class ExSetOps[A](xs: ExSet[A]) {
   def filter(p: ToBool[A]): ExSet[A]      = ExSet.Filtered(xs, p)
   def intersect(that: ExSet[A]): ExSet[A] = ExSet.Intersect(xs, that)
   def isSubsetOf(ys: InSet[A]): Boolean   = xs forall ys
-  def mapOnto[B](f: A => B): ExMap[A, B]  = new ExMap.Impl(xs, Fun(f))
+  def mapOnto[B](f: A => B): ExMap[A, B]  = ExMap(xs, Fun(f))
   def replace(x: A): ExSet[A]             = if (xs(x)) without(x) add x else this add x
   def union(that: ExSet[A]): ExSet[A]     = ExSet.Union(xs, that)
   def without(x: A): ExSet[A]             = xs diff exSet(x)
@@ -223,22 +212,16 @@ final class FunOps[A, B](val f: Fun[A, B]) extends AnyVal {
     case x: Opaque[_, _] => x
     case _               => Opaque(x => if (f isDefinedAt x) f(x) else abort("" + x))
   }
-  def get(x: A): Option[B] = f match {
-    case Opaque(g)       => Some(g(x))
-    case OrElse(u1, u2)  => (u1 get x) orElse (u2 get x)
-    case Defaulted(_, u) => u get x // get ignores default
-    case FilterIn(p, u)  => if (p(x)) u get x else None
-    case AndThen(u1, u2) => (u1 get x) flatMap (u2 get _)
-  }
-  def orElse(g: Fun[A, B]): Fun[A, B] = OrElse(f, g)
+  def get(x: A): Option[B]            = if (f isDefinedAt x) Some(f(x)) else None
   def getOr(key: A, alt: => B): B     = get(key) getOrElse alt
+  def orElse(g: Fun[A, B]): Fun[A, B] = OrElse(f, g)
+  def mapIn[C](g: C => A): Fun[C, B]  = AndThen(Fun(g), f)
+  def mapOut[C](g: B => C): Fun[A, C] = AndThen(f, Fun(g))
 
   def defaulted(g: A => B): Defaulted[A, B] = f match {
     case Defaulted(_, u) => Defaulted(g, u)
     case _               => Defaulted(g, f)
   }
-  def mapIn[C](g: C => A): Fun[C, B]  = AndThen(Fun(g), f)
-  def mapOut[C](g: B => C): Fun[A, C] = AndThen(f, Fun(g))
 
   def filterIn(p: A => Boolean): FilterIn[A, B] = f match {
     case FilterIn(p0, u) => FilterIn(x => p0(x) && p(x), u)

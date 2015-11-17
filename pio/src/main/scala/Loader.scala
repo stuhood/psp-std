@@ -5,7 +5,7 @@ package pio
 import api._, StdEq._, StdShow._
 
 final class PolicyLoader(val classMap: ExMap[String, Bytes]) extends ClassLoader {
-  private val keys        = classMap.domain.toVec
+  private val keys        = classMap.keyVector
   private val instanceMap = scmMap[String, jClass]()
   private val errorMap    = scmMap[String, LinkageError]()
   private def isNoClassDefFoundError(t: Throwable) = t match {

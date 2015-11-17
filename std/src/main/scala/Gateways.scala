@@ -37,11 +37,7 @@ trait GlobalShow extends GlobalShow0 {
   implicit def convertHasShowDoc[A](x: A)(implicit z: Show[A]): Doc = Doc(x)
 }
 
-trait SetAndMapOps1 {
-  implicit def opsIntensionalSet[A](x: InSet[A]): ops.InSetOps[A]          = new ops.InSetOps(x)
-  implicit def opsIntensionalMap[K, V](x: InMap[K, V]): ops.InMapOps[K, V] = new ops.InMapOps(x)
-}
-trait SetAndMapOps extends SetAndMapOps1 {
+trait SetAndMapOps {
   implicit def opsExtensionalSet[A](x: ExSet[A]): ops.ExSetOps[A]          = new ops.ExSetOps(x)
   implicit def opsExtensionalMap[K, V](x: ExMap[K, V]): ops.ExMapOps[K, V] = new ops.ExMapOps(x)
 }
