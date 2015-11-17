@@ -278,7 +278,7 @@ class CollectionsSpec extends ScalacheckBundle {
         pset union pset
       ),
       expectTypes[Vec[_]](
-        pvec map identity,
+        pvec mapNow identity,
         pvec ++ pvec,
         pvec.m ++ pvec.m build,
         pvec.tail.force,

@@ -14,6 +14,11 @@ object +: {
   def unapply[A](xs: sCollection[A]) = if (xs.isEmpty) None else Some(xs.head -> xs.tail)
 }
 
+object Empty {
+  def apply[A](empty: A): Impl[A] = new Impl[A](empty)
+  final class Impl[A](val empty: A) extends AnyVal with Empty[A]
+}
+
 object StdEq extends impl.EqInstances
 object StdShow extends ShowInstances
 object Unsafe extends LowPriorityUnsafe {

@@ -1,3 +1,5 @@
+/***
+
 package psp
 package tests
 
@@ -15,3 +17,5 @@ class TokenSpec extends ScalacheckBundle {
     s"sample source file tokenizes" -> Prop(expected === toks_s)
   )
 }
+
+***/

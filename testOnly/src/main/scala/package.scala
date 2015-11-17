@@ -83,7 +83,7 @@ package object tests {
     def collect[B](pf: A ?=> B): Gen[B]                                    = g suchThat pf.isDefinedAt map pf.apply
     def collectN[B](n: Int)(pf: Each[A] ?=> B)(implicit z: Arb[A]): Gen[B] = gen.eachOfN(n, g) collect pf
     def stream: Each[A]                                                    = Each continually g.sample flatMap (_.toVec)
-    def take(n: Int): Direct[A]                                            = stream take n.size
+    def take(n: Int): Vec[A]                                               = stream take n.size toVec
   }
   implicit def chooseIndex: Choose[Index]  = Choose.xmap[Long, Index](_.index, _.index)
   implicit def chooseSize: Choose[Precise] = Choose.xmap[Long, Precise](_.size, _.value)
@@ -101,7 +101,7 @@ package object tests {
   def expectTypes[A: CTag](results: A*): NamedProp                  = expectTypes(classOf[A], Direct fromScala results mapNow (_.getClass))
 
   implicit def buildsToBuildable[A, CC[X]](implicit z: Builds[A, CC[A]]): Buildable[A, CC] = new Buildable[A, CC] {
-    def builder: scmBuilder[A, CC[A]] = scala.collection.immutable.Vector.newBuilder[A] mapResult (z build _)
+    def builder: scmBuilder[A, CC[A]] = z.scalaBuilder
   }
 
   implicit class PropOps(p: Prop) {

@@ -36,7 +36,7 @@ final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr]
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = linearlySlice(underlying, range, f)
 }
 
-final class IndexedView[A, Repr](val underlying: Indexed[A]) extends AtomicView[A, Repr] with Indexed[A] {
+final class IndexedView[A, Repr](val underlying: Indexed[A]) extends AtomicView[A, Repr] {
   type This = IndexedView[A, Repr]
 
   def viewOps                                                   = vec("<indexed>".s)
@@ -46,7 +46,7 @@ final class IndexedView[A, Repr](val underlying: Indexed[A]) extends AtomicView[
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = ??? // underlying slice range foreach f
 }
 
-final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Repr] with Direct[A] with ops.HasPreciseSizeMethods {
+final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Repr] with ops.HasPreciseSizeMethods {
   type This = DirectView[A, Repr]
 
   def viewOps                                                   = vec("<vector>".s)
@@ -76,16 +76,16 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
   def |:(label: String): MapTo[A] = new LabeledView(this, viewOps.init :+ label.s)
   def :|(label: String): MapTo[A] = new LabeledView(this, viewOps.init :+ label.s)
 
-  final def collect[B](pf: A ?=> B): MapTo[B]     = Collected(this, pf)
-  final def drop(n: Precise): MapTo[A]            = Dropped(this, n)
-  final def dropRight(n: Precise): MapTo[A]       = DroppedR(this, n)
-  final def dropWhile(p: ToBool[A]): MapTo[A]     = DropWhile(this, p)
-  final def flatMap[B](f: A => Each[B]): MapTo[B] = FlatMapped(this, f)
-  final def map[B](f: A => B): MapTo[B]           = Mapped(this, f)
-  final def take(n: Precise): MapTo[A]            = Taken(this, n)
-  final def takeRight(n: Precise): MapTo[A]       = TakenR(this, n)
-  final def takeWhile(p: ToBool[A]): MapTo[A]     = TakenWhile(this, p)
-  final def withFilter(p: ToBool[A]): MapTo[A]    = Filtered(this, p)
+  final def collect[B](pf: A ?=> B): MapTo[B]        = Collected(this, pf)
+  final def drop(n: Precise): MapTo[A]               = Dropped(this, n)
+  final def dropRight(n: Precise): MapTo[A]          = DroppedR(this, n)
+  final def dropWhile(p: ToBool[A]): MapTo[A]        = DropWhile(this, p)
+  final def flatMap[B](f: A => Foreach[B]): MapTo[B] = FlatMapped(this, f)
+  final def map[B](f: A => B): MapTo[B]              = Mapped(this, f)
+  final def take(n: Precise): MapTo[A]               = Taken(this, n)
+  final def takeRight(n: Precise): MapTo[A]          = TakenR(this, n)
+  final def takeWhile(p: ToBool[A]): MapTo[A]        = TakenWhile(this, p)
+  final def withFilter(p: ToBool[A]): MapTo[A]       = Filtered(this, p)
 
   final def force[That](implicit z: Builds[A, That]): That = z build this
   final def build(implicit z: Builds[A, Repr]): Repr       = force[Repr]
@@ -200,5 +200,5 @@ final case class TakenR      [A   , Repr](prev: BaseView[A, Repr], n: Precise)  
 final case class TakenWhile  [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](doc"takeW $p",    _.atMost)
 final case class DropWhile   [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](doc"dropW $p",    _.atMost)
 final case class Mapped      [A, B, Repr](prev: BaseView[A, Repr], f: A => B)       extends CompositeView[A, B, Repr](doc"map $f",      x => x)
-final case class FlatMapped  [A, B, Repr](prev: BaseView[A, Repr], f: A => Each[B]) extends CompositeView[A, B, Repr](doc"flatMap $f",  x => if (x.isZero) x else Unknown)
+final case class FlatMapped  [A, B, Repr](prev: BaseView[A, Repr], f: A => Foreach[B]) extends CompositeView[A, B, Repr](doc"flatMap $f",  x => if (x.isZero) x else Unknown)
 final case class Collected   [A, B, Repr](prev: BaseView[A, Repr], pf: A ?=> B)     extends CompositeView[A, B, Repr](doc"collect $pf", _.atMost)
