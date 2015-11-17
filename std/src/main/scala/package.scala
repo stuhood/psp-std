@@ -16,29 +16,31 @@ package object std extends psp.std.StdPackage {
    *  The parameter can be given explicitly, it just won't be found unless the function type is invariant.
    *  The same issue arises with intensional sets.
    */
-   type InvariantPredicate[A] = A => Boolean
-   type InvariantInSet[A]     = InSet[A]
-   type View2D[+A]            = View[View[A]]
-   type Each2D[+A]            = Each[Each[A]]
-   type IndexRange            = Consecutive[Index]
-   type IntRange              = Consecutive[Int]
-   type BuildsMap[K, V]       = Builds[K -> V, ExMap[K, V]]
+  type InvariantPredicate[A] = A => Boolean
+  type InvariantInSet[A]     = InSet[A]
+  type View2D[+A]            = View[View[A]]
+  type Each2D[+A]            = Each[Each[A]]
+  type IndexRange            = Consecutive[Index]
+  type IntRange              = Consecutive[Int]
+  type BuildsMap[K, V]       = Builds[K -> V, ExMap[K, V]]
 
-   val StringOrder = orderBy[Any](_.any_s)
+  val StringOrder = orderBy[Any](_.any_s)
 
-   def lexicalOrder: Order[String] = Order.fromInt(_ compareTo _)
+  def lexicalOrder: Order[String] = Order.fromInt(_ compareTo _)
 
-   def inheritShow[A] : Show[A]           = Show.Inherited
-   def inheritEq[A] : Hash[A]             = Eq.Inherited
-   def referenceEq[A <: AnyRef] : Hash[A] = Eq.Reference
-   def stringEq[A] : Hash[A]              = Eq.ToString
-   def shownEq[A: Show] : Hash[A]         = inheritEq[String] on (_.render)
+  def inheritShow[A] : Show[A]           = Show.Inherited
+  def inheritEq[A] : Hash[A]             = Eq.Inherited
+  def referenceEq[A <: AnyRef] : Hash[A] = Eq.Reference
+  def stringEq[A] : Hash[A]              = Eq.ToString
+  def shownEq[A: Show] : Hash[A]         = inheritEq[String] on (_.render)
 
-   // Helpers for inference when calling 'on' on contravariant type classes.
-   def eqBy[A]    = new psp.impl.EqBy[A]
-   def hashBy[A]  = new psp.impl.HashBy[A]
-   def orderBy[A] = new psp.impl.OrderBy[A]
-   def showBy[A]  = new psp.impl.ShowBy[A]
+  implicit def opsFun[A, B](f: Fun[A, B]): ops.FunOps[A, B] = new ops.FunOps(f)
+
+  // Helpers for inference when calling 'on' on contravariant type classes.
+  def eqBy[A]    = new psp.impl.EqBy[A]
+  def hashBy[A]  = new psp.impl.HashBy[A]
+  def orderBy[A] = new psp.impl.OrderBy[A]
+  def showBy[A]  = new psp.impl.ShowBy[A]
 
   // Inlinable.
   final val InputStreamBufferSize = 8192

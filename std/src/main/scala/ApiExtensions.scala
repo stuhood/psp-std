@@ -215,3 +215,42 @@ final class SizeOps(val lhs: Size) extends AnyVal {
     case (GenBounded(l1, h1), GenBounded(l2, h2)) => bounded(l1 max l2, h1 max h2)
   }
 }
+
+final class FunOps[A, B](val f: Fun[A, B]) extends AnyVal {
+  outer =>
+
+  def opaquely: Opaque[A, B] = f match {
+    case x: Opaque[_, _] => x
+    case _               => Opaque(x => if (f isDefinedAt x) f(x) else abort("" + x))
+  }
+  def get(x: A): Option[B] = f match {
+    case Opaque(g)       => Some(g(x))
+    case OrElse(u1, u2)  => (u1 get x) orElse (u2 get x)
+    case Defaulted(_, u) => u get x // get ignores default
+    case FilterIn(p, u)  => if (p(x)) u get x else None
+    case AndThen(u1, u2) => (u1 get x) flatMap (u2 get _)
+  }
+  def orElse(g: Fun[A, B]): Fun[A, B] = OrElse(f, g)
+  def getOr(key: A, alt: => B): B     = get(key) getOrElse alt
+
+  def defaulted(g: A => B): Defaulted[A, B] = f match {
+    case Defaulted(_, u) => Defaulted(g, u)
+    case _               => Defaulted(g, f)
+  }
+  def mapIn[C](g: C => A): Fun[C, B]  = AndThen(Fun(g), f)
+  def mapOut[C](g: B => C): Fun[A, C] = AndThen(f, Fun(g))
+
+  def filterIn(p: A => Boolean): FilterIn[A, B] = f match {
+    case FilterIn(p0, u) => FilterIn(x => p0(x) && p(x), u)
+    case _               => FilterIn(p, f)
+  }
+
+  def traced(in: A => Unit, out: B => Unit): Fun[A, B] = ( f
+     mapIn[A] { x => in(x) ; x }
+    mapOut[B] { x => out(x) ; x }
+  )
+  def memoized: Fun[A, B] = {
+    val cache = scala.collection.mutable.Map[A, B]()
+    Opaque[A, B](x => cache.getOrElseUpdate(x, f(x))) filterIn (x => (cache contains x) || (f isDefinedAt x))
+  }
+}

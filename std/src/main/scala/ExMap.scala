@@ -4,9 +4,9 @@ package std
 import api._
 
 object ExMap {
-  def apply[K, V](keys: ExSet[K], pf: K ?=> V): ExMap[K, V] = new Impl(keys, Fun.partial(pf)) //  Lookup(pf))
-  def fromJava[K, V](xs: jMap[K, V]): ExMap[K, V]           = new Impl(xs.keySet.toEqualsSet, Fun(xs get _)) //  Lookup.total(xs get _))
-  def fromScala[K, V](xs: scMap[K, V]): ExMap[K, V]         = xs.toMap |> (xs => new Impl(xs.keys.toEqualsSet, Fun.partial(xs))) // Lookup(xs)))
+  def apply[K, V](keys: ExSet[K], pf: K ?=> V): ExMap[K, V] = new Impl(keys, Fun.partial(pf))
+  def fromJava[K, V](xs: jMap[K, V]): ExMap[K, V]           = new Impl(xs.keySet.toEqualsSet, Fun(xs get _))
+  def fromScala[K, V](xs: scMap[K, V]): ExMap[K, V]         = xs.toMap |> (xs => new Impl(xs.keys.toEqualsSet, Fun.partial(xs)))
 
   def unapplySeq[K, V](map: ExMap[K, V]): Some[sciSeq[K]] = Some(map.keyVector.toScalaSeq)
   def impl[K, V](xs: ExMap[K, V]): Impl[K, V] = xs match {
