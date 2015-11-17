@@ -104,6 +104,6 @@ object Each {
 
   def show[A: Show](xs: Each[A], minElements: Precise, maxElements: Precise): String = xs splitAt maxElements.lastIndex match {
     case Split(xs, ys) if ys.isEmpty => xs mk_s ", "
-    case Split(xs, _)                => (xs take minElements mk_s ", ") ~ ", ..."
+    case Split(xs, _)                => (xs take minElements mk_s ", ") append ", ..."
   }
 }

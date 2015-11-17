@@ -11,7 +11,7 @@ object Build extends sbt.Build {
   private[this] var settingsLogger: Logger = _
 
   def slog       = settingsLogger
-  def commonArgs = wordSeq("-Yno-predef -Yno-adapted-args -unchecked")
+  def commonArgs = wordSeq("-optimise -Yinline-warnings -Yno-predef -Yno-adapted-args -unchecked")
   def stdArgs    = "-Yno-imports" +: commonArgs
   def replArgs   = "-language:_" +: commonArgs
   def ammonite   =  "com.lihaoyi" % "ammonite-repl_2.11.7" % "0.4.8"

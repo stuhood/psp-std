@@ -1,9 +1,14 @@
 package psp
 package api
 
+import scala.specialized
+
 // Importing from this is necessary to use these aliases within the api package,
 // where they aren't otherwise visible because there's no api package object.
-object Api extends Aliases
+object Api extends Aliases {
+  type spec     = specialized
+  val SpecTypes = new scala.Specializable.Group((scala.Int, scala.Long, scala.Double))
+}
 
 // This mostly consists of "magic" types which can never be avoided due to language
 // privilege. The rest of the standard type aliases are defined in the dmz package.

@@ -11,8 +11,8 @@ final case class Source(content: Array[Char], analysis: TokenAnalysis) {
   lazy val lineStartOffsets: Direct[Offset]    = lineStartIndices mapNow (_.toOffset)
   lazy val lineVector: Direct[String]          = lineStartOffsets mapNow lineFrom
   lazy val numberedLines: Direct[NumberedLine] = lineVector.nths mapNow numberedLine
-  lazy val anonymizedText: String              = numberedLines.mapNow(_.anonymous_s).joinLines ~ "\n"
-  lazy val numberedText: String                = numberedLines.mapNow(_.numbered_s).joinLines ~ "\n"
+  lazy val anonymizedText: String              = numberedLines.mapNow(_.anonymous_s).joinLines append "\n"
+  lazy val numberedText: String                = numberedLines.mapNow(_.numbered_s).joinLines append "\n"
 
   private def numberedLine(n: Nth)             = new NumberedLine(n, lineStartOffsets(n.toIndex), lineVector(n.toIndex), analysis.tokens filter (_.line == n))
   private def lineFrom(offset: Offset): String = content drop offset.toSize takeWhile (_ != '\n') force

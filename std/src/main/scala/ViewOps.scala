@@ -3,11 +3,12 @@ package std
 package ops
 
 import api._, StdShow._
+import Api.SpecTypes
 
 trait ApiViewOps[+A] extends Any {
   def xs: View[A]
 
-  private def stringed(sep: String)(f: ToString[A]): String = xs map f zreduce (_ ~ sep ~ _)
+  private def stringed(sep: String)(f: ToString[A]): String = xs map f zreduce (_ append sep append _)
   private def directIsEmpty: Boolean = {
     xs foreach (_ => return false)
     true
@@ -60,11 +61,11 @@ trait ApiViewOps[+A] extends Any {
   def takeToFirst(p: ToBool[A]): View[A] = xs.toEach span !p mapRight (_ take 1.size) rejoin
   def dropIndex(index: Index): View[A]   = xs.toEach splitAt index mapRight (_ drop 1.size) rejoin
 
-  def foldWithIndex[B](zero: B)(f: (B, A, Index) => B): B  = foldFrom(zero) indexed f
-  def foldl[B](zero: B)(f: (B, A) => B): B                 = foldFrom(zero) left f
-  def foldr[B](zero: B)(f: (A, B) => B): B                 = foldFrom(zero) right f
-  def fold[B](implicit z: Empty[B]): HasInitialValue[A, B] = foldFrom(z.empty)
-  def foldFrom[B](zero: B): HasInitialValue[A, B]          = new HasInitialValue(xs, zero)
+  def foldWithIndex[@spec(SpecTypes) B](zero: B)(f: (B, A, Index) => B): B  = foldFrom(zero) indexed f
+  def foldl[@spec(SpecTypes) B](zero: B)(f: (B, A) => B): B                 = foldFrom(zero) left f
+  def foldr[@spec(SpecTypes) B](zero: B)(f: (A, B) => B): B                 = foldFrom(zero) right f
+  def fold[@spec(SpecTypes) B](implicit z: Empty[B]): HasInitialValue[A, B] = foldFrom(z.empty)
+  def foldFrom[@spec(SpecTypes) B](zero: B): HasInitialValue[A, B]          = new HasInitialValue(xs, zero)
 }
 
 trait InvariantViewOps[A] extends Any with ApiViewOps[A] {

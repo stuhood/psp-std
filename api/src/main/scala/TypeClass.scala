@@ -14,12 +14,12 @@ trait Hash[-A] extends Any with Eq[A] { def hash(x: A): Int            }
  *  Suitable only for types with a unique (useful) definition of empty - but that's
  *  a whole lot of types.
  */
-trait Empty[+A] extends Any { def empty: A }
+trait Empty[@spec(SpecTypes) +A] extends Any { def empty: A }
 
 /** Back and forth between a Repr and an Each[A].
  *  Not especially classic in this presentation.
  */
-trait Builds[-Elem, +To]    extends Any { def build(xs: Each[Elem]): To     }
+trait Builds[@spec(SpecTypes) -Elem, +To]    extends Any { def build(xs: Each[Elem]): To     }
 trait Unbuilds[+Elem, Repr] extends Any { def unbuild(xs: Repr): Each[Elem] }
 
 /** Some monadic ops.

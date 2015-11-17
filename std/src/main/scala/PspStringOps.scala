@@ -63,24 +63,11 @@ final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
     case _                    => self
   }
 
-  // Ugh.
-  def toCamelCase: String = self match {
-    case Extract.Char(l, r) =>
-      l.toUpper.to_s ~ {
-        val m = java.util.regex.Pattern compile "_([a-z])" matcher r
-        val sb = new java.lang.StringBuffer
-        while (m.find()) m.appendReplacement(sb, m group 1 toUpperCase)
-        m appendTail sb
-        sb.toString
-      }
-    case _ => self
-  }
-
-  def ~ (that: String): String    = self + that
-  def * (n: Int): String          = this * n.size
-  def * (n: Precise): String      = n timesConst self mkString ""
-  def format(args : Any*): String = java.lang.String.format(self, args map unwrapArg: _*)
-  def length                      = self.length
+  def append(that: String): String = self + that
+  def * (n: Int): String           = this * n.size
+  def * (n: Precise): String       = n timesConst self mkString ""
+  def format(args : Any*): String  = java.lang.String.format(self, args map unwrapArg: _*)
+  def length                       = self.length
 
   def bytes: Array[Byte]          = self.getBytes
   def chars: Array[Char]          = self.toCharArray
@@ -122,7 +109,8 @@ final class PspStringOps(val self: String) extends AnyVal with ForceShowDirect {
   def sanitize: String    = mapChars { case x if x.isControl => '?' }
 
   // def truncateAndLeftJustifyTo(max: Precise) = max leftFormat (normalizeSpace truncateTo max).asis
-  def truncateTo(max: Precise)               = if ((size: Precise) <= max) self else (self take max - 3).force ~ "..."
+
+  def truncateTo(max: Precise) = if ((size: Precise) <= max) self else (self take max - 3).force append "..."
 
   def normalizeSpace: String = self.trim.replacePattern(
     "\\n+"      -> "\n",

@@ -89,7 +89,7 @@ package object tests {
   implicit def chooseSize: Choose[Precise] = Choose.xmap[Long, Precise](_.size, _.value)
   implicit def chooseNth: Choose[Nth]      = Choose.xmap[Long, Nth](_.nth, _.nth)
 
-  def preNewline(s: String) = if (s contains "\n") "\n" + s.mapLines("| " ~ _) else s
+  def preNewline(s: String): String = if (s contains "\n") "\n" + s.mapLines("| " append _) else s
   def showsAs[A: Show](expected: String, x: A): NamedProp         = preNewline(expected) -> (expected =? show"$x")
   def seqShows[A: Show](expected: String, xs: Each[A]): NamedProp = preNewline(expected) -> (expected =? (xs mk_s ", "))
 
@@ -100,8 +100,9 @@ package object tests {
   def expectType[A: CTag](result: A): NamedProp                     = expectType(classOf[A], result.getClass)
   def expectTypes[A: CTag](results: A*): NamedProp                  = expectTypes(classOf[A], Direct fromScala results mapNow (_.getClass))
 
-  implicit def buildsToBuildable[A, CC[X]](implicit z: Builds[A, CC[A]]): Buildable[A, CC] =
-    new Buildable[A, CC] { def builder: scmBuilder[A, CC[A]] = z.scalaBuilder }
+  implicit def buildsToBuildable[A, CC[X]](implicit z: Builds[A, CC[A]]): Buildable[A, CC] = new Buildable[A, CC] {
+    def builder: scmBuilder[A, CC[A]] = scala.collection.immutable.Vector.newBuilder[A] mapResult (z build _)
+  }
 
   implicit class PropOps(p: Prop) {
     def mapParams(f: ToSelf[TestParams]): Prop = new NamedProp.MapParams(p, f)

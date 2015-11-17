@@ -59,11 +59,11 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
 
   final def sm(args: Any*): String = {
     def isLineBreak(c: Char) = c == '\n' || c == '\f' // compatible with StringLike#isLineBreak
-    def stripTrailingPart(s: String) = {
+    def stripTrailingPart(s: String): String = {
       val index        = s indexWhere isLineBreak
       val pre: String  = s take index.sizeExcluding force
       val post: String = s drop index.sizeExcluding force;
-      pre ~ post.stripMargin
+      pre append post.stripMargin
     }
     val stripped: sciList[String] = stringContext.parts.toList match {
       case head :: tail => head.stripMargin :: (tail map stripTrailingPart)

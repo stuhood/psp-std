@@ -2,7 +2,6 @@ package psp
 package std
 package jvm
 
-import api._
 import StdShow._, StdEq._
 import scala.collection.:+
 

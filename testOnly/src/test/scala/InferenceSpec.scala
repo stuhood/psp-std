@@ -34,7 +34,7 @@ class InferenceSpec extends ScalacheckBundle {
   val b6 = vs.m map identity build
   // val b7 = xs map identity //build
 
-  def ptBuild = Direct[NamedProp](
+  def ptBuild = vec[NamedProp](
     expectType[Array[Int]](b1),
     expectType[Direct[Int]](b2),
     expectType[Each[Int]](b3),
@@ -80,7 +80,7 @@ class InferenceSpec extends ScalacheckBundle {
     xs.m map identity force
   )
 
-  def props: Direct[NamedProp] = Direct(ptArray, ptView, ptVector) ++ ptBuild ++ Direct(
+  def props: Vec[NamedProp] = vec(ptArray, ptView, ptVector) ++ ptBuild ++ vec(
     expectType[Array[Char]]   (ss.m map identity force),
     // expectType[String]        (ss map identity),
     expectType[String]        (ss map identity build),
