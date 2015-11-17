@@ -2,29 +2,120 @@ package psp
 package std
 
 import scala.compat.Platform.arraycopy
+import Vec.levelOf
+
+sealed trait ArrayN[@spec A] extends AnyRef {
+  type Elem
+  type This = ArrayN.Typed[A, Elem]
+
+  def xs: Array[Elem]
+  def apply(n: Int): A
+
+  def length                                        = xs.length
+  def update(index: Int, value: Elem): Unit         = xs(index) = value
+  def updateUnchecked(index: Int, value: Any): Unit = update(index, value.asInstanceOf[Elem])
+}
+final case class Array0[@spec A](xs: Array[A]) extends ArrayN[A] {
+  type Elem = A
+  def apply(n: Int): A = xs(n & 31)
+}
+final case class Array1[@spec A](xs: Array2D[A]) extends ArrayN[A] {
+  type Elem = Array[A]
+  def apply(n: Int): A = xs((n >> 5) & 31)(n & 31)
+}
+final case class Array2[@spec A](xs: Array3D[A]) extends ArrayN[A] {
+  type Elem = Array2D[A]
+  def apply(n: Int): A = xs((n >> 10) & 31)((n >> 5) & 31)(n & 31)
+}
+final case class Array3[@spec A](xs: Array4D[A]) extends ArrayN[A] {
+  type Elem = Array3D[A]
+  def apply(n: Int): A = xs((n >> 15) & 31)((n >> 10) & 31)((n >> 5) & 31)(n & 31)
+}
+final case class Array4[@spec A](xs: Array5D[A]) extends ArrayN[A] {
+  type Elem = Array4D[A]
+  def apply(n: Int): A = xs((n >> 20) & 31)((n >> 15) & 31)((n >> 10) & 31)((n >> 5) & 31)(n & 31)
+}
+final case class Array5[@spec A](xs: Array6D[A]) extends ArrayN[A] {
+  type Elem = Array5D[A]
+  def apply(n: Int): A = xs((n >> 25) & 31)((n >> 20) & 31)((n >> 15) & 31)((n >> 10) & 31)((n >> 5) & 31)(n & 31)
+}
+
+object ArrayN {
+  type Typed[A, E] = ArrayN[A] { type Elem = E }
+
+  def apply[@spec A : CTag](len: Int): Array0[A] = new Array0[A](newArray[A](len))
+}
+
+class ArrayLevels[@spec A: CTag] {
+  var depth: Int = _
+
+  final val Width   = 6
+  final val displays = new Array[ArrayN[A]](Width)
+
+  def getDisplay(n: Int): ArrayN[A]           = displays(n)
+  def setDisplay(n: Int, xs: ArrayN[A]): Unit = displays(n) = xs
+
+  private def copyOfArray[B: CTag](a: Array[B]): Array[B] = {
+    val b = newArray[B](a.length)
+    arraycopy(a, 0, b, 0, a.length)
+    b
+  }
+
+  private def copyOf(a: ArrayN[A]): ArrayN[A] = a match {
+    case Array0(xs) => Array0(copyOfArray(xs))
+    case Array1(xs) => Array1(copyOfArray(xs))
+    case Array2(xs) => Array2(copyOfArray(xs))
+    case Array3(xs) => Array3(copyOfArray(xs))
+    case Array4(xs) => Array4(copyOfArray(xs))
+    case Array5(xs) => Array5(copyOfArray(xs))
+  }
+
+  def stabilize(index: Int): Unit = {
+    val idx = new Base32(index)
+    def levels = depth - 1 downTo 1
+    levels foreach (n => displays(n) = copyOf(displays(n)))
+    levels foreach (n => displays(n).updateUnchecked(idx digitAt n, displays(n - 1)))
+  }
+
+  private[std] final def copyRange[E: CTag](array: ArrayN.Typed[A, E], oldLeft: Int, newLeft: Int): Array[E] = {
+    val elems = new Array[E](32)
+    arraycopy(array, oldLeft, elems, newLeft, 32 - math.max(newLeft,oldLeft))
+    elems
+  }
+
+  private[std] def shiftTopLevel(oldLeft: Int, newLeft: Int) = displays(depth - 1) match {
+    case xs: Array0[A] => copyRange(xs, oldLeft, newLeft)
+    case xs: Array1[A] => copyRange(xs, oldLeft, newLeft)
+    case xs: Array2[A] => copyRange(xs, oldLeft, newLeft)
+    case xs: Array3[A] => copyRange(xs, oldLeft, newLeft)
+    case xs: Array4[A] => copyRange(xs, oldLeft, newLeft)
+    case xs: Array5[A] => copyRange(xs, oldLeft, newLeft)
+  }
+
+  def initFrom(parent: ArrayLevels[A]): Unit = {
+    depth = parent.depth
+    0 until depth foreach (n => displays(n) = parent.displays(n))
+  }
+
+  def getElem(n: Int, level: Int): A = displays(level) match {
+    case xs: Array0[A] => xs(n)
+    case xs: Array1[A] => xs(n)
+    case xs: Array2[A] => xs(n)
+    case xs: Array3[A] => xs(n)
+    case xs: Array4[A] => xs(n)
+    case xs: Array5[A] => xs(n)
+    case n             => illegalArgumentException(n)
+  }
+}
 
 /** Taking a stab at deciphering the scala Vector implementation
  *  in the interests of specializing for primitive types.
  */
 final class Base32(val index: Int) extends AnyVal {
   def digitAt(place: Int): Int = apply(place)
-  def apply(place: Int): Int = place match {
-    case 0 => index & 31
-    case 1 => (index >>  5) & 31
-    case 2 => (index >> 10) & 31
-    case 3 => (index >> 15) & 31
-    case 4 => (index >> 20) & 31
-    case 5 => (index >> 25) & 31
-  }
-  def level = (
-    if (index < 32) 0
-    else if ((index >> 5) < 32) 1
-    else if ((index >> 10) < 32) 2
-    else if ((index >> 15) < 32) 3
-    else if ((index >> 20) < 32) 4
-    else if ((index >> 25) < 32) 5
-    else 6
-  )
+  def apply(place: Int): Int = (index >> (level * 5)) & 31
+
+  def level  = levelOf(index)
   def places = 0 to level
   def digits = (places map digitAt).toVec.reverseIterator.toVec
 

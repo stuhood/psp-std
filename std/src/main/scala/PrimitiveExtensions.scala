@@ -97,6 +97,7 @@ final class IntOps(val self: Int) extends AnyVal {
 
   def until(end: Int): IntRange        = Consecutive.until(self, end)
   def to(end: Int): IntRange           = Consecutive.to(self, end)
+  def downTo(end: Int): Direct[Int]    = Consecutive.downTo(self, end)
   def takeNext(len: Precise): IntRange = Consecutive.until(self, self + len.getInt)
 
   def binary: String = jl.Integer.toBinaryString(self)

@@ -54,10 +54,11 @@ trait Aliases extends scala.Any {
   type UShort = Char     // unsigned short
 
   // Original type aliases.
-  type Array2[A]            = Array[Array[A]]
-  type Array3[A]            = Array[Array[Array[A]]]
-  type Array4[A]            = Array[Array[Array[Array[A]]]]
-  type Array5[A]            = Array[Array[Array[Array[Array[A]]]]]
+  type Array2D[A]           = Array[Array[A]]
+  type Array3D[A]           = Array[Array[Array[A]]]
+  type Array4D[A]           = Array[Array[Array[Array[A]]]]
+  type Array5D[A]           = Array[Array[Array[Array[Array[A]]]]]
+  type Array6D[A]           = Array[Array[Array[Array[Array[Array[A]]]]]]
   type Bag[A]               = ExMap[A, Precise]
   type BinOp[A]             = (A, A) => A // binary operation
   type Predicate2[-A1, -A2] = (A1, A2) => Boolean

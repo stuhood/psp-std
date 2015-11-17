@@ -4,6 +4,7 @@ package std
 import api._, StdShow._
 import scala.compat.Platform.arraycopy
 import Api.SpecTypes
+import Vec.levelOf
 
 /** Based on the scala library Vector by Tiark Rompf.
  *    https://issues.scala-lang.org/browse/SI-4442
@@ -23,12 +24,12 @@ object Vec {
   private[std] final val TinyAppendFaster = 2
 
   def levelOf(index: Int): Int = (
-    if (index < 32) 0
-    else if ((index >> 5) < 32) 1
-    else if ((index >> 10) < 32) 2
-    else if ((index >> 15) < 32) 3
-    else if ((index >> 20) < 32) 4
-    else if ((index >> 25) < 32) 5
+    if (index < (1 << 5)) 0
+    else if (index < (1 << 10)) 1
+    else if (index < (1 << 15)) 2
+    else if (index < (1 << 20)) 3
+    else if (index < (1 << 25)) 4
+    else if (index < (1 << 30)) 5
     else 6
   )
 
@@ -391,42 +392,36 @@ final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focu
   }
 
   // requires structure is at index cutIndex and writable at level 0
-  private[std] def cleanLeftEdge(cutIndex: Int) = {
-    if (cutIndex < (1 << 5)) {
+  private[std] def cleanLeftEdge(cutIndex: Int) = (levelOf(cutIndex): @switch) match {
+    case 0 =>
       zeroLeft(display0, cutIndex)
-    } else
-    if (cutIndex < (1 << 10)) {
+    case 1 =>
       zeroLeft(display0, cutIndex & 0x1f)
       display1 = copyRight(display1, (cutIndex >>>  5))
-    } else
-    if (cutIndex < (1 << 15)) {
+    case 2 =>
       zeroLeft(display0, cutIndex & 0x1f)
       display1 = copyRight(display1, (cutIndex >>>  5) & 0x1f)
       display2 = copyRight(display2, (cutIndex >>> 10))
-    } else
-    if (cutIndex < (1 << 20)) {
+    case 3 =>
       zeroLeft(display0, cutIndex & 0x1f)
       display1 = copyRight(display1, (cutIndex >>>  5) & 0x1f)
       display2 = copyRight(display2, (cutIndex >>> 10) & 0x1f)
       display3 = copyRight(display3, (cutIndex >>> 15))
-    } else
-    if (cutIndex < (1 << 25)) {
+    case 4 =>
       zeroLeft(display0, cutIndex & 0x1f)
       display1 = copyRight(display1, (cutIndex >>>  5) & 0x1f)
       display2 = copyRight(display2, (cutIndex >>> 10) & 0x1f)
       display3 = copyRight(display3, (cutIndex >>> 15) & 0x1f)
       display4 = copyRight(display4, (cutIndex >>> 20))
-    } else
-    if (cutIndex < (1 << 30)) {
+    case 5 =>
       zeroLeft(display0, cutIndex & 0x1f)
       display1 = copyRight(display1, (cutIndex >>>  5) & 0x1f)
       display2 = copyRight(display2, (cutIndex >>> 10) & 0x1f)
       display3 = copyRight(display3, (cutIndex >>> 15) & 0x1f)
       display4 = copyRight(display4, (cutIndex >>> 20) & 0x1f)
       display5 = copyRight(display5, (cutIndex >>> 25))
-    } else {
-      throw new IllegalArgumentException()
-    }
+    case _ =>
+      illegalArgumentException(cutIndex)
   }
 
   private def copyRight(array: Array[AnyRef], left: Int): Array[AnyRef] =
