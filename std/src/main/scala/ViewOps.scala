@@ -2,7 +2,7 @@ package psp
 package std
 package ops
 
-import api._, StdShow._
+import api._, StdShow._, StdEq._
 import Api.SpecTypes
 
 trait ApiViewOps[+A] extends Any {
@@ -58,8 +58,8 @@ trait ApiViewOps[+A] extends Any {
   def zipView[A1, A2](implicit z: Pair.Split[A, A1, A2]): ZipView[A1, A2] = new Zipped0(xs)
 
   def ofClass[B: CTag] : View[B]         = xs collect classFilter[B]
-  def takeToFirst(p: ToBool[A]): View[A] = xs.toEach span !p mapRight (_ take 1.size) rejoin
-  def dropIndex(index: Index): View[A]   = xs.toEach splitAt index mapRight (_ drop 1.size) rejoin
+  def takeToFirst(p: ToBool[A]): View[A] = xs span !p mapRight (_ take 1.size) rejoin
+  def dropIndex(index: Index): View[A]   = xs splitAt index mapRight (_ drop 1.size) rejoin
 
   def foldWithIndex[@spec(SpecTypes) B](zero: B)(f: (B, A, Index) => B): B  = foldFrom(zero) indexed f
   def foldl[@spec(SpecTypes) B](zero: B)(f: (B, A) => B): B                 = foldFrom(zero) left f
@@ -69,19 +69,10 @@ trait ApiViewOps[+A] extends Any {
 }
 
 trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
-  def +:(elem: A): View[A] = exView(elem) ++ xs
-  def :+(elem: A): View[A] = xs ++ exView(elem)
+  def +:(elem: A): View[A] = view(elem) ++ xs
+  def :+(elem: A): View[A] = xs ++ view(elem)
 
-  // We'd love for these not to be here in favor of HasEq and etc, but see the note there.
-  def contains(x: A)(implicit z: Eq[A]): Boolean              = exists (_ === x)
-  def distinct(implicit z: Eq[A]): View[A]                    = xs.toExSet
-  def indexOf(x: A)(implicit z: Eq[A]): Index                 = indexWhere (_ === x)
-  def indicesOf(x: A)(implicit z: Eq[A]): View[Index]         = indicesWhere (_ === x)
-  def mapOnto[B](f: A => B)(implicit z: Eq[A]): ExMap[A, B]   = xs.toExSet mapOnto f
-  def toBag(implicit z: Eq[A]): Bag[A]                        = xs groupBy identity map (_.size)
-  def without(x: A)(implicit z: Eq[A]): View[A]               = xs filterNot (_ === x)
-  def withoutEmpty(implicit z: Empty[A], eqs: Eq[A]): View[A] = xs without z.empty
-  def clusterBy[B: Eq](f: A => B): View[Vec[A]]               = groupBy[B](f).values
+  def clusterBy[B: Eq](f: A => B): View[Vec[A]] = groupBy[B](f).values
 
   /** This is kind of horrific but has the advantage of not being as busted.
    *  We need to not be using scala's map because it will always compare keys based
@@ -102,30 +93,17 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
     res.m.toMap[ExMap]
   }
 
-  /** Not especially efficient while we're sorting this out.
-   *                                       sorting this out.
-   *                                       sorting         .
-   */
-  private[this] def orderOps(implicit z: Order[A]): HasOrder[A] = new HasOrder(xs)
+  private[this] def orderOps(z: Order[A]): HasOrder[A] = new HasOrder[A](xs)(z)
 
-  def max(implicit z: Order[A]): A                        = orderOps.max
-  def min(implicit z: Order[A]): A                        = orderOps.min
-  def sorted(implicit z: Order[A]): View[A]               = orderOps.sorted
-  def sortDistinct(implicit z: Order[A]): View[A]         = orderOps.sortDistinct
-  def sortBy[B](f: A => B)(implicit z: Order[B]): View[A] = sorted(z on f)
-
-  def findOr(p: ToBool[A], alt: => A): A            = find(p) | alt
-  def reducel(f: BinOp[A]): A                       = tail.foldl(head)(f)
-  def zapply(i: Index)(implicit z: Empty[A]): A     = xs drop i.sizeExcluding zhead
-  def zfind(p: ToBool[A])(implicit z: Empty[A]): A  = findOr(p, z.empty)
-  def zhead(implicit z: Empty[A]): A                = if (isEmpty) z.empty else head
-  def zlast(implicit z: Empty[A]): A                = if (isEmpty) z.empty else last
-  def zreduce(f: BinOp[A])(implicit z: Empty[A]): A = if (isEmpty) z.empty else reducel(f)
+  def sortBy[B](f: A => B)(implicit z: Order[B]): View[A] = orderOps(z on f).sorted
+  def sortWith(cmp: OrderRelation[A]): View[A]            = orderOps(Order(cmp)).sorted
+  def findOr(p: ToBool[A], alt: => A): A                  = find(p) | alt
+  def reducel(f: BinOp[A]): A                             = tail.foldl(head)(f)
 
   def zinit: View[A]                    = if (isEmpty) emptyValue[View[A]] else init
   def ztail: View[A]                    = if (isEmpty) emptyValue[View[A]] else tail
-  def prepend(x: A): View[A]            = exView(x) ++ xs
-  def append(x: A): View[A]             = xs ++ exView(x)
+  def prepend(x: A): View[A]            = view(x) ++ xs
+  def append(x: A): View[A]             = xs ++ view(x)
   def intersperse(ys: View[A]): View[A] = xs zip ys flatMap ((x, y) => vec(x, y))
 
   def transpose[B](implicit ev: A <:< View[B]): View2D[B] = {
@@ -155,7 +133,7 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
 
   def boundedClosure(maxDepth: Precise, f: A => View[A]): View[A] = (
     if (maxDepth.isZero) xs
-    else xs ++ (xs flatMap (x => f(x).toEach)).boundedClosure(maxDepth - 1, f)
+    else xs ++ (xs flatMap f).boundedClosure(maxDepth - 1, f)
   )
 }
 
@@ -165,6 +143,7 @@ private abstract class HeadAndTail[A, B] {
   def tail(xs: View[A]): View[A]
   def apply(xs: View[A]): View[B] = if (isDone(xs)) emptyValue else head(xs) +: apply(tail(xs)) // XXX @tailrec
 }
+
 private class Grouped[A](n: Precise) extends HeadAndTail[A, View[A]] {
   def isDone(xs: View[A]): Boolean = xs.isEmpty
   def head(xs: View[A]): View[A]   = xs take n
@@ -190,7 +169,7 @@ final class InvariantApiViewOps[A](val xs: InvariantView[A]) extends AnyVal with
  */
 class HasEq[A](xs: View[A])(implicit z: Eq[A]) {
   def contains(x: A): Boolean                     = xs exists (_ === x)
-  def distinct: View[A]                           = xs.foldl(vec[A]())((res, x) => if (res exists (_ === x)) res else res :+ x).m
+  def distinct: View[A]                           = xs.zfoldl[Vec[A]]((res, x) => if (res.m contains x) res else res :+ x)
   def indexOf(x: A): Index                        = xs indexWhere (_ === x)
   def indicesOf(x: A): View[Index]                = xs indicesWhere (_ === x)
   def mapOnto[B](f: A => B): ExMap[A, B]          = toSet mapOnto f
@@ -205,7 +184,13 @@ final class HasOrder[A](xs: View[A])(implicit z: Order[A]) extends HasEq[A](xs) 
   def sortDistinct: View[A] = sorted.distinct
   def sorted: View[A]       = xs.toRefArray.inPlace.sort
 }
-
+final class HasEmpty[A](xs: View[A])(implicit z: Empty[A]) {
+  def zapply(i: Index): A     = xs drop i.sizeExcluding zhead
+  def zfind(p: ToBool[A]): A  = xs.findOr(p, emptyValue)
+  def zhead: A                = if (xs.isEmpty) emptyValue else xs.head
+  def zlast: A                = if (xs.isEmpty) emptyValue else xs.last
+  def zreduce(f: BinOp[A]): A = if (xs.isEmpty) emptyValue else xs reducel f
+}
 final class HasInitialValue[+A, B](xs: View[A], initial: B) {
   def indexed(f: (B, A, Index) => B): B = lowlevel.ll.foldLeftIndexed(xs, initial, f)
   def left(f: (B, A) => B): B           = lowlevel.ll.foldLeft(xs, initial, f)

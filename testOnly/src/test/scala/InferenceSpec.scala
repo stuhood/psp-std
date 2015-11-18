@@ -22,7 +22,7 @@ class InferenceSpec extends ScalacheckBundle {
   val ls: sciList[Int]   = sciList(1, 2, 3)
   val ss: String         = "123"
   val vs: sciVector[Int] = sciVector(1, 2, 3)
-  val xs: ExSet[Int]     = exSet(1, 2, 3)
+  val xs: ExSet[Int]     = set(1, 2, 3)
 
   val b1 = as map identity build
   val b2 = ds map identity build

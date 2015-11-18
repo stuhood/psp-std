@@ -76,8 +76,8 @@ abstract class StdPackage
     def seq: Vec[A] = vec(x._1, x._2)
   }
   implicit class AnyTargetSeqOps[A: Eq](root: A) {
-    def transitiveClosure(expand: A => View[A]): View[A] = inView { f =>
-      var seen = exSet[A]()
+    def transitiveClosure(expand: A => Foreach[A]): View[A] = inView { f =>
+      var seen = set[A]()
       def loop(root: A, f: A => Unit): Unit = if (!seen(root)) {
         seen = seen add root
         f(root)

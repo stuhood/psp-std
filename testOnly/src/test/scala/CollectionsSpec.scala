@@ -25,7 +25,7 @@ class FunSpec extends ScalacheckBundle {
   val f2 = f1 mapOut (_ * 3)
   val f3 = f2 filterIn (_ <= 2)
   val f4 = f3 defaulted (_ => 99)
-  val xs = exSeq(1, 2, 3)
+  val xs = vec(1, 2, 3)
 
   var seen = ""
   val m1 = f1.traced(
@@ -139,7 +139,7 @@ class ViewBasic extends ScalacheckBundle {
   val s4 = new Bippy("def", 3)
   val strs = sciVector(s1, s2, s3, s4)
 
-  def closure    = parray transitiveClosure (x => exView(x.init.force, x.tail.force))
+  def closure    = parray transitiveClosure (x => view(x.init.force, x.tail.force))
   def closureBag = closure flatMap (x => x) toBag // That's my closure bag, baby
   def xxNumbers  = (Indexed from 0).m grep """^(.*)\1""".r
 
@@ -218,63 +218,69 @@ class CollectionsSpec extends ScalacheckBundle {
       arr ++ arr,
       arr.m ++ arr.m force,
       arr.m.build,
-      arr.m flatMap (x => Direct(x)) build,
-      arr.flatMap(x => Direct(x)).force[Array[Int]]
+      arr flatMap (x => vec(x)) build,
+      arr flatMap (x => list(x)) build,
+      arr flatMap (x => view(x)) build,
+      arr.m flatMap (x => vec(x)) build,
+      arr.m flatMap (x => list(x)) build,
+      arr.m flatMap (x => view(x)) build,
+      arr.flatMap(x => view(x)).force[Array[Int]],
+      arr.m.flatMap(x => vec(x)).force[Array[Int]]
     ),
     expectTypes[sciSet[_]](
       sset map identity,
       sset.m build,
       sset.m map identity build,
-      sset.m.map(_._1) map paired build
+      sset.m.map(fst) map paired build
     ),
     expectTypes[sciMap[_, _]](
       (smap map identity).force[sciMap[_, _]],
       smap.m build,
       smap.m map identity build,
-      smap.m map (_._1) map identity map paired build
+      smap.m map fst map identity map paired build
     ),
     expectTypes[scSeq[_]](
       sseq map identity,
       sseq.m build,
       sseq.m map identity build,
-      sseq.m.map(_._1).map(paired).force[scSeq[_]]
+      sseq.m.map(fst).map(paired).force[scSeq[_]]
     ),
     expectTypes[sciVector[_]](
       svec map identity,
       svec.m.build,
       svec.m map identity build,
-      svec.m.map(_._1).map(paired).force[sciVector[_]]
+      svec.m.map(fst).map(paired).force[sciVector[_]]
     ),
     expectTypes[jList[_]](
       jseq map identity build,
       jseq.m.build,
       jseq.m map identity build,
-      jseq.m.map(_._1).map(paired).force[jList[_]]
+      jseq.m.map(fst).map(paired).force[jList[_]]
     ),
     expectTypes[jSet[_]](
       jset map identity build,
       jset.m build,
       jset.m map identity build,
-      jset.m.map(_._1) map paired build
+      jset.m.map(fst) map paired build
     ),
     expectTypes[jMap[_, _]](
       (jmap map identity).force[jMap[_, _]],
       jmap.m build,
       jmap.m map identity build,
-      jmap.m map (_._1) map identity map paired build
+      jmap.m map fst map identity map paired build
     )
   )
 
   def policyProps: Vec[NamedProp] = {
     import StdEq._
-    val pset = exSet("a" -> 1, "b" -> 2, "c" -> 3)
+    val pset = set("a" -> 1, "b" -> 2, "c" -> 3)
     val pvec = vec("a" -> 1, "b" -> 2, "c" -> 3)
 
     vec(
       expectTypes[ExSet[_]](
         pset.build,
         pset map identity build,
-        pset map (_._1) map paired build,
+        pset map fst map paired build,
         pset union pset
       ),
       expectTypes[Vec[_]](
@@ -284,7 +290,7 @@ class CollectionsSpec extends ScalacheckBundle {
         pvec.tail.force,
         pvec.m.build,
         pvec.m map identity build,
-        pvec.m.map(_._1).map(paired).force[Vec[_]]
+        pvec.m.map(fst).map(paired).force[Vec[_]]
       )
     )
   }

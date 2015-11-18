@@ -87,7 +87,8 @@ object Build extends sbt.Build {
     ),
     console in Compile <<=  console in Compile in consoleOnly,
        console in Test <<=  console in Test in consoleOnly,
-          watchSources <++= sources in Test in testOnly
+          watchSources <++= sources in Test in testOnly,
+          watchSources <++= sources in Compile in testOnly
   )
 
   lazy val api    = project setup "psp's non-standard api"

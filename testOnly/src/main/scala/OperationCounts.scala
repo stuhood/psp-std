@@ -94,9 +94,10 @@ class OperationCounts extends ScalacheckBundle {
     def compare(lhs: Int, rhs: Int): String = "%3s %-2s %-3s".format(lhs, if (lhs <= rhs) "<=" else ">", rhs)
 
     def ops_s             = "%-63s" format (ops map ("%-15s" format _.try_s) mk_s " ")
+    def outcomes_s        = outcomes map (_.to_s)
     def description       = if (passed) passString else failString
-    def passString        = show"| $ops_s  $counts  // ${results.head}"
-    def failString        = show"Inconsistent results for $ops_s:\n  ${outcomes mk_s "\n  "}" mapLines ("| " + _)
+    def passString        = pp"| $ops_s  $counts  // ${results.head}"
+    def failString        = vec("Inconsistent results for:", ops_s) ++ outcomes_s map (" " + _) joinLines
     def distinctCounts    = outcomes.map(_.calls).byEquals.distinct.toVec
     override def toString = description
   }

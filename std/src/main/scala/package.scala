@@ -219,11 +219,12 @@ package object std extends psp.std.StdPackage {
   def fst[A, B](x: A -> B): A = x._1
   def snd[A, B](x: A -> B): B = x._2
 
-  def vec[@spec(SpecTypes) A](xs: A*): Vec[A]           = Vec(xs: _*)
-  def exMap[K: Eq, V](xs: (K -> V)*): ExMap[K, V]       = xs.m.toExMap // ExMap(xs xs.m.toEach.toMap[ExMap]
-  def exSeq[@spec(SpecTypes) A](xs: A*): Vec[A]         = Vec(xs: _*)
-  def exSet[A: Eq](xs: A*): ExSet[A]                    = xs.m.toExSet
-  def exView[A](xs: A*): View[A]                        = Direct[A](xs: _*).m
+  def view[A](xs: A*): View[A]                = xs.toVec.m
+  def vec[@spec(SpecTypes) A](xs: A*): Vec[A] = xs.toVec
+  def set[A: Eq](xs: A*): ExSet[A]            = xs.toExSet
+  def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V] = xs.m.toExMap
+  def list[A](xs: A*): Linear[A]              = Linear(xs: _*)
+
   def inMap[K, V](pf: K ?=> V): InMap[K, V]             = InMap(Fun partial pf)
   def inSet[A](p: ToBool[A]): InSet[A]                  = InSet(p)
   def inView[A](mf: Suspended[A]): View[A]              = Each(mf).m
