@@ -1,4 +1,4 @@
-def libsbtVersion = sys.props.getOrElse("libsbt.version", "0.5.6")
+def libsbtVersion = sys.props.getOrElse("libsbt.version", "0.5.7")
 
 def libsbtRef = addSbtPlugin("org.improving" % "psp-libsbt" % libsbtVersion)
 

@@ -41,7 +41,11 @@ final class ArraySpecificOps[A](val xs: Array[A]) extends AnyVal with HasPrecise
   def size: IntSize                          = Precise(xs.length)
   def apply(idx: Index): A                   = xs(idx.getInt)
   def updated(idx: Index, value: A): xs.type = andThis(xs(idx.getInt) = value)
-  def mapNow[B: CTag](f: A => B): Array[B]   = newArray[B](xs.length) doto (arr => foreachIntIndex(i => arr(i) = f(xs(i))))
+  def mapNow[B: CTag](f: A => B): Array[B]   = {
+    val arr = newArray[B](xs.length)
+    foreachIntIndex(i => arr(i) = f(xs(i)))
+    arr
+  }
   def inPlace: InPlace[A]                    = new InPlace[A](xs)
   private def andThis(op: Unit): xs.type     = xs
 }
