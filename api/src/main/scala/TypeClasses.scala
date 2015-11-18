@@ -13,7 +13,6 @@ trait Hash[-A] extends Any with Eq[A] { def hash(x: A): Int            }
 /** The classic type class for turning typed values into string representations.
  */
 trait Show[-A] extends Any { def show(x: A): String }
-trait Renderer extends Any { def render(x: Doc): String }
 
 /** The original type class for providing the "empty" value of a particular type.
  *  Suitable only for types with a unique (useful) definition of empty - but that's

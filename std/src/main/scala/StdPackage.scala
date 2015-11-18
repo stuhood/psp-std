@@ -76,17 +76,6 @@ abstract class StdPackage
   implicit class SameTuple2Ops[A](val x: (A, A)) {
     def seq: Vec[A] = vec(x._1, x._2)
   }
-  implicit class AnyTargetSeqOps[A: Eq](root: A) {
-    def transitiveClosure(expand: A => Foreach[A]): View[A] = inView { f =>
-      var seen = set[A]()
-      def loop(root: A, f: A => Unit): Unit = if (!seen(root)) {
-        seen = seen add root
-        f(root)
-        expand(root) |> (xs => if (xs != null) xs foreach (x => loop(x, f)))
-      }
-      loop(root, f)
-    }
-  }
 
   implicit class View2DOps[A](val xss: View2D[A]) {
     def flatten: View[A]              = xss flatMap (_.toEach)
@@ -94,6 +83,14 @@ abstract class StdPackage
   }
 
   def classFilter[A: CTag] : Any ?=> A = newPartial(_.isClass[A], _.castTo[A])
+
+  def transitiveClosure[A: Eq](root: A)(expand: A => Foreach[A]): View[A] = inView { f =>
+    def loop(in: View[A], seen: View[A]): Unit = in filterNot seen.contains match {
+      case Each() => ()
+      case in     => in foreach f ; loop(in flatMap expand, seen ++ in)
+    }
+    loop(view(root), view())
+  }
 
   implicit def wrapClass(x: jClass): JavaClass                            = new JavaClassImpl(x)
   implicit def wrapClassLoader(x: jClassLoader): JavaClassLoader          = new JavaClassLoaderImpl(x)

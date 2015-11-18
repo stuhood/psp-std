@@ -4,12 +4,12 @@ import std._, api._, StdShow._
 import ammonite.repl.{ Ref, Repl, Storage }
 
 object ReplMain {
-  def main(args: Array[String]): Unit = {
-    REPL.start()
-  }
+  def main(args: Array[String]): Unit = REPL.start()
 }
 
-
+/** This sets up the ammonite repl with the correct compiler settings
+ *  and desired namespace elements and aesthetics.
+ */
 object REPL extends Repl(System.in, System.out, Ref(Storage(Repl.defaultAmmoniteHome, None)), "", Nil) {
   import interp.replApi._
 
@@ -18,7 +18,8 @@ object REPL extends Repl(System.in, System.out, Ref(Storage(Repl.defaultAmmonite
 
   // Working around ammonite bugs.
   // https://github.com/lihaoyi/Ammonite/issues/213
-  private def workarounds = "type Order[-A] = psp.api.Order[A] ; val Order = psp.std.Order"
+  private def mkNames(name: String) = s"""type $name[-A] = psp.api.$name[A] ; val $name = psp.std.$name"""
+  private def workarounds           = vec("Order", "Eq", "Show") map mkNames mk_s "\n"
 
   def start(): Unit = {
     compiler.settings processArgumentString options
@@ -33,27 +34,19 @@ object REPL extends Repl(System.in, System.out, Ref(Storage(Repl.defaultAmmonite
   }
 }
 
-trait TargetCommon[A] {
-  def target: Vec[A]
-  def >(implicit z: Show[A]): Vec[A]               = target doto (_ foreach (x => println(x)))
-  def !>(implicit z: Show[A], o: Order[A]): Vec[A] = target doto (_.m.sorted foreach (x => println(x)))
-}
-trait ReplPackageLow {
-  implicit final class ReplOps[A](val target: A) {
-    def >(implicit z: Show[A]): A = target doto (x => println(z show x))
-    def >>(): A                   = target doto (x => anyprintln(x))
-  }
-  implicit final class ReplJavaOps[A](val xs: jCollection[A]) extends TargetCommon[A] { def target = xs.toVec }
-}
+/** These classes are imported into the running repl.
+ */
+object INREPL {
+  /** For some type which psp knows how to deconstruct, you can print all its members
+   *  to the console by appending > or >> to the creating expression, depending on whether
+   *  you want to require a Show[A] instance.
+   */
+  implicit final class ReplOpsWithShow[A, R](val xs: R)(implicit val z: UnbuildsAs[A, R]) {
+    private def run(f: Each[A] => Each[String]): R = try xs finally f(z unbuild xs) foreach println
 
-object INREPL extends ReplPackageLow {
-  implicit final class ReplForeachOps[A](val xs: Each[A])            extends TargetCommon[A] { def target = xs.toVec }
-  implicit final class ReplArrayOps[A](val xs: Array[A])             extends TargetCommon[A] { def target = xs.toVec }
-  implicit final class ReplTraversableOps[A](val xs: sCollection[A]) extends TargetCommon[A] { def target = xs.toVec }
-
-  implicit final class ReplMapOps[K, V](val target: ExMap[K, V]) {
-    def >(implicit z1: Show[K], z2: Show[V]): ExMap[K, V]  = target doto (m => println(pp"$m"))
-    def !>(implicit z1: Show[K], z2: Show[V]): ExMap[K, V] = target doto (_ !>)
+    def >                                            = run(_ map (_.any_s))
+    def >>(implicit z: Show[A])                      = run(_ map z.show)
+    def !>(implicit ord: Order[A], z: Show[A]): Unit = run(_.m.sorted map z.show)
   }
 
   implicit def showToAmmonite[A](implicit z: Show[A]): pprint.PPrinter[A] = pprint.PPrinter[A]((t, c) => scIterator(z show t))
