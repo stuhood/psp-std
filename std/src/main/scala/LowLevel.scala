@@ -139,6 +139,8 @@ object CircularBuffer {
   def apply[@spec(SpecTypes) A](capacity: Precise): CircularBuffer[A]              = new CircularBuffer[A](capacity)
 }
 object Streams {
+  final val InputStreamBufferSize = 8192
+
   def slurp(in: BufferedInputStream): Array[Byte] = {
     val out = new ByteArrayOutputStream
     val buf = new Array[Byte](InputStreamBufferSize)

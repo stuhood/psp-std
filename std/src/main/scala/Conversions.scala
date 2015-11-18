@@ -38,14 +38,13 @@ trait ConversionsImpl[A] extends Any {
   def xs: View[A]
   def to[CC[X]](implicit z: Builds[A, CC[A]]): CC[A] = z build xs
 
-  def byEquals: ops.HasEq[A]   = new ops.HasEq[A](xs)(inheritEq)
-  def byRef: ops.HasEq[Ref[A]] = new ops.HasEq[Ref[A]](xs.toRefs)(referenceEq)
-  def byString: ops.HasEq[A]   = new ops.HasEq[A](xs)(stringEq)
+  def byEquals: ops.HasHash[A]   = new ops.HasHash[A](xs)(inheritEq)
+  def byRef: ops.HasHash[Ref[A]] = new ops.HasHash[Ref[A]](xs.toRefs)(referenceEq)
+  def byString: ops.HasHash[A]   = new ops.HasHash[A](xs)(stringEq)
 
   def toArray(implicit z: CTag[A]): Array[A]   = to[Array]
   def toDirect: Direct[A]                      = to[Direct]
   def toEach: Each[A]                          = to[Each]
-  def toEqualsSet: ExSet[A]                    = toHashSet(inheritEq)
   def toExSet(implicit z: Eq[A]): ExSet[A]     = to[ExSet]
   def toHashSet(implicit z: Hash[A]): ExSet[A] = to[ExSet]
   def toJavaList: jList[A]                     = to[jList]
@@ -61,5 +60,5 @@ trait ConversionsImpl[A] extends Any {
   /** Conveniences. */
   def iterator: BiIterator[A] = BiIterator(xs)
   def trav: scTraversable[A]  = to[scTraversable] // flatMap, usually
-  def seq: scSeq[A]           = to[scSeq]         // varargs, usually
+  def seq: scSeq[A]           = to[scSeq]         // varargs or unapplySeq, usually
 }

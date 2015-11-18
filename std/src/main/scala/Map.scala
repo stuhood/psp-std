@@ -5,13 +5,13 @@ import api._
 
 object Fun {
   private val Undefined: Opaque[Any, Nothing] = Opaque[Any, Nothing](x => throw new java.lang.IllegalArgumentException("" + x))
-  private val Empty: FilterIn[Any, Nothing]   = FilterIn[Any, Nothing](_ => false, Undefined)
+  private val Empty: FilterIn[Any, Nothing]   = FilterIn[Any, Nothing](ConstantFalse, Undefined)
 
   def empty[A, B] : Fun[A, B]                     = Empty
   def apply[A, B](f: A => B): Opaque[A, B]        = Opaque(f)
   def partial[A, B](pf: A ?=> B): FilterIn[A, B]  = FilterIn(pf.isDefinedAt, Opaque(pf))
   def const[B](value: B): Opaque[Any, B]          = Opaque(_ => value)
-  def finite[A, B](kvs: (A->B)*): FiniteDom[A, B] = FiniteDom(kvs map fst toEqualsSet, partial(kvs map (x => x._1 -> x._2) toMap))
+  def finite[A, B](kvs: (A->B)*): FiniteDom[A, B] = FiniteDom((kvs map fst).byEquals.toSet, partial(kvs map tuple toMap))
   def orElse[A, B](fs: Fun[A, B]*): Fun[A, B]     = if (fs.isEmpty) empty else fs reduceLeft (OrElse(_, _))
 }
 
@@ -20,7 +20,7 @@ object ExMap {
   def apply[K, V](f: FiniteDom[K, V]): ExMap[K, V]                = new Impl(f)
   def apply[K, V](keys: ExSet[K], lookup: Fun[K, V]): ExMap[K, V] = apply(FiniteDom(keys, lookup))
   def fromJava[K, V](xs: jMap[K, V]): ExMap[K, V]                 = fromScala(xs.m.toScalaMap)
-  def fromScala[K, V](xs: scMap[K, V]): ExMap[K, V]               = apply(xs.keys.toEqualsSet, Opaque(xs))
+  def fromScala[K, V](xs: scMap[K, V]): ExMap[K, V]               = apply(xs.keys.byEquals.toSet, Opaque(xs))
 
   def impl[K, V](xs: ExMap[K, V]): Impl[K, V] = xs match {
     case xs: Impl[K, V] => xs

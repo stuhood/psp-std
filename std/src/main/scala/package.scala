@@ -46,15 +46,6 @@ package object std extends psp.std.StdPackage {
   def orderBy[A] = new psp.impl.OrderBy[A]
   def showBy[A]  = new psp.impl.ShowBy[A]
 
-  // Inlinable.
-  final val InputStreamBufferSize = 8192
-  final val MaxInt                = scala.Int.MaxValue
-  final val MaxLong               = scala.Long.MaxValue
-  final val MinInt                = scala.Int.MinValue
-  final val MinLong               = scala.Long.MinValue
-  final val MaxIndex              = Index(MaxLong)
-  final val PositiveInfinity      = scala.Double.PositiveInfinity
-
   // DMZ.
   final val ::      = psp.dmz.::
   final val Array   = psp.dmz.Array
@@ -95,10 +86,7 @@ package object std extends psp.std.StdPackage {
   final val scmSeq          = scm.Seq
   final val scmSet          = scm.Set
 
-  final val ConstantTrue  = (x: Any) => true
-  final val ConstantFalse = (x: Any) => false
-  final val CTag          = scala.reflect.ClassTag
-  final val EOL           = lineSeparator
+  final val MaxIndex      = Index(MaxLong)
   final val NoFile: jFile = jFile("")
   final val NoPath: Path  = path("")
   final val NoUri: jUri   = jUri("")
@@ -150,12 +138,10 @@ package object std extends psp.std.StdPackage {
   def loaderOf[A: CTag] : ClassLoader       = noNull(classLoaderOf[A], nullLoader)
   def nullLoader(): ClassLoader             = NullClassLoader
   def findLoader(): Option[ClassLoader]     = noNull(contextClassLoader, loaderOf[this.type]) |> (x => option(x ne null, x))
-  def pClassOf[A: CTag](): JavaClass        = new JavaClassImpl(classOf[A])
 
   def resourceNames(root: Path): Direct[String] = findLoader.fold(direct[String]())(cl => Resources.getResourceNames(cl, root).toDirect)
   def resource(name: String): Array[Byte]       = findLoader.fold(Array.empty[Byte])(_ getResourceAsStream name slurp)
   def resourceString(name: String): String      = utf8(resource(name)).to_s
-  def classFilter[A: CTag] : Any ?=> A          = newPartial(_.isClass[A], _.castTo[A])
   def path(s: String): Path                     = Paths get s
   def callable[A](body: => A): jCallable[A]     = new java.util.concurrent.Callable[A] { def call(): A = body }
 
@@ -216,8 +202,9 @@ package object std extends psp.std.StdPackage {
   def jIdMap[K, V](xs: (K -> V)*): jIdMap[K, V]                 = new jIdMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
   def jArrayList[A](xs: A*): jArrayList[A]                      = new jArrayList[A] doto (b => xs foreach (b add _))
 
-  def fst[A, B](x: A -> B): A = x._1
-  def snd[A, B](x: A -> B): B = x._2
+  def fst[A, B](x: A -> B): A          = x._1
+  def snd[A, B](x: A -> B): B          = x._2
+  def tuple[A, B](x: A -> B): ((A, B)) = x._1 -> x._2
 
   def view[A](xs: A*): View[A]                = xs.toVec.m
   def vec[@spec(SpecTypes) A](xs: A*): Vec[A] = xs.toVec

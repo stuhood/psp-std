@@ -93,6 +93,8 @@ abstract class StdPackage
     def mmap[B](f: A => B): View2D[B] = xss map (_ map f)
   }
 
+  def classFilter[A: CTag] : Any ?=> A = newPartial(_.isClass[A], _.castTo[A])
+
   implicit def wrapClass(x: jClass): JavaClass                            = new JavaClassImpl(x)
   implicit def wrapClassLoader(x: jClassLoader): JavaClassLoader          = new JavaClassLoaderImpl(x)
   implicit def wrapEnumeration[A](x: jEnumeration[A]): JavaEnumeration[A] = new JavaEnumeration(x)

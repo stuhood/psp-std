@@ -28,6 +28,6 @@ object Plist {
   def apply[A](xs: A*): Plist[A] = xs.m.zfoldr[Plist[A]](_ :: _)
 
   final class Builder[A] extends Builds[A, Plist[A]] {
-    def build(xs: Each[A]): Plist[A] = xs.zfoldr[Plist[A]](_ :: _)
+    def build(xs: Each[A]): Plist[A] = xs.foldr(empty[A])(_ :: _)
   }
 }

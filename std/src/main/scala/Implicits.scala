@@ -22,10 +22,18 @@ trait StdImplicits extends scala.AnyRef
   implicit def opsPspDirect[A](xs: Direct[A]): ops.DirectOps[A]         = new ops.DirectOps(xs)
   implicit def convertViewEach[A](xs: View[A]): Each[A]                 = Each(xs foreach _)
   implicit def opsSplitView[A](xs: SplitView[A]): Split[A]              = Split(xs.left, xs.right)
-  implicit def opsPspArray[A](xs: Array[A]): ops.InvariantApiViewOps[A] = new ops.InvariantApiViewOps[A](xs.toDirect)
 
+  // Promotion of the api type (which has as few methods as possible) to the
+  // concrete type which has all the other ones.
+
+  implicit def promoteApiIndex(x: Index): IndexImpl                             = Index impl x
+  implicit def promoteApiOrder[A](ord: Order[A]): Order.Impl[A]                 = Order(ord.compare)
+  implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]                   = ExSet impl x
+  implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V]          = ExMap impl x
   implicit def promoteApiView[A](xs: View[A]): BaseView[A, _]                   = xs match { case xs: BaseView[A, _] => xs }
   implicit def promoteInvariantApiView[A](xs: InvariantView[A]): BaseView[A, _] = xs match { case xs: BaseView[A, _] => xs }
+  implicit def promoteApiInSet[A](x: InSet[A]): InSet.Impl[A]                   = InSet impl x
+  implicit def promoteApiInMap[K, V](x: InMap[K, V]): InMap.Impl[K, V]          = InMap impl x
 }
 
 trait GlobalShow0 {
@@ -47,17 +55,17 @@ trait StdOps0 {
 }
 trait StdOps1 extends StdOps0 {
   implicit def convertViewBuilds[A, CC[A]](xs: View[A])(implicit z: Builds[A, CC[A]]): CC[A] = z build xs
+  implicit def opsHasEq[A: Eq](x: View[A]): ops.HasEq[A]       = new ops.HasEq(x)
 }
 trait StdOps2 extends StdOps1 {
   implicit def opsDirectArray[A](xs: Array[A]): ops.DirectOps[A] = new ops.DirectOps(Direct fromArray xs)
   implicit def opsDirectString(s: String): ops.DirectOps[Char]   = new ops.DirectOps(Direct fromString s)
 
   // We buried Predef's {un,}augmentString in favor of these.
-  implicit def pspAugmentString(x: String): PspStringOps           = new PspStringOps(x)
-  implicit def opsAtomicView[A](x: View[A]): ops.ViewOpsImpl[A]    = new ops.ViewOpsImpl(x)
+  implicit def pspAugmentString(x: String): PspStringOps               = new PspStringOps(x)
+  implicit def opsAtomicView[A](x: View[A]): ops.InvariantViewOps[A]   = new ops.InvariantViewOps(x)
   implicit def opsHasOrderInfix[A: Order](x: A): ops.infix.OrderOps[A] = new ops.infix.OrderOps[A](x)
-
-  implicit def opsHasEq[A: Eq](x: View[A]): ops.HasEq[A]          = new ops.HasEq(x)
+  implicit def opsHasHash[A: Hash](x: View[A]): ops.HasHash[A]         = new ops.HasHash(x)
 }
 
 trait StdOps3 extends StdOps2 {
@@ -74,29 +82,23 @@ trait StdOps3 extends StdOps2 {
   implicit def opsHasShowEach[A: Show](x: Each[A]): ops.DocSeqOps = new ops.DocSeqOps(x map (_.doc) toVec)
   implicit def opsHasShowView[A: Show](x: View[A]): ops.DocSeqOps = opsHasShowEach(x)
 
-  implicit def opsBoolean(x: Boolean): ops.BooleanOps                                 = new ops.BooleanOps(x)
-  implicit def opsBooleanAlgebra[A](x: BooleanAlgebra[A]): ops.BooleanAlgebraOps[A]   = new ops.BooleanAlgebraOps[A](x)
-  implicit def opsChar(x: Char): ops.CharOps                                          = new ops.CharOps(x)
-  implicit def opsFileTime(x: jFileTime): ops.FileTimeOps                             = new ops.FileTimeOps(x)
-  implicit def opsFunction1[T, R](f: T => R): ops.Function1Ops[T, R]                  = new ops.Function1Ops(f)
-  implicit def opsFunction2[T1, T2, R](f: (T1, T2) => R): ops.Function2Ops[T1, T2, R] = new ops.Function2Ops(f)
-  implicit def opsHasPreciseSize(x: HasPreciseSize): ops.HasPreciseSizeOps            = new ops.HasPreciseSizeOps(x)
-  implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A]            = new ops.JavaIteratorOps[A](x)
-  implicit def opsInputStream(x: InputStream): ops.InputStreamOps                     = new ops.InputStreamOps(x)
-  implicit def opsInt(x: Int): ops.IntOps                                             = new ops.IntOps(x)
-  implicit def opsLong(x: Long): ops.LongOps                                          = new ops.LongOps(x)
-  implicit def opsOption[A](x: Option[A]): ops.OptionOps[A]                           = new ops.OptionOps[A](x)
-  implicit def opsPartialFunction[A, B](pf: A ?=> B): ops.PartialFunctionOps[A, B]    = new ops.PartialFunctionOps(pf)
-  implicit def opsPrecise(x: Precise): ops.PreciseOps                                 = new ops.PreciseOps(x)
-  implicit def opsPredicate[A](p: ToBool[A]): ops.PredicateOps[A]                     = new ops.PredicateOps(p)
-  implicit def opsSize(x: Size): ops.SizeOps                                          = new ops.SizeOps(x)
-  implicit def opsStdOpt[A](x: Opt[A]): ops.StdOptOps[A]                              = new ops.StdOptOps[A](x)
-  implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                                    = new ops.TryOps[A](x)
-  implicit def opsZipView[A, B](xs: ZipView[A, B]): ops.ZipViewOps[A, B]              = new ops.ZipViewOps(xs)
-  implicit def opsUnit(x: Unit): ops.UnitOps.type                                     = ops.UnitOps
-
-  implicit def promoteApiInSet[A](x: InSet[A]): InSet.Impl[A]          = InSet impl x
-  implicit def promoteApiInMap[K, V](x: InMap[K, V]): InMap.Impl[K, V] = InMap impl x
+  implicit def opsBoolean(x: Boolean): ops.BooleanOps                               = new ops.BooleanOps(x)
+  implicit def opsBooleanAlgebra[A](x: BooleanAlgebra[A]): ops.BooleanAlgebraOps[A] = new ops.BooleanAlgebraOps[A](x)
+  implicit def opsChar(x: Char): ops.CharOps                                        = new ops.CharOps(x)
+  implicit def opsFileTime(x: jFileTime): ops.FileTimeOps                           = new ops.FileTimeOps(x)
+  implicit def opsHasPreciseSize(x: HasPreciseSize): ops.HasPreciseSizeOps          = new ops.HasPreciseSizeOps(x)
+  implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A]          = new ops.JavaIteratorOps[A](x)
+  implicit def opsInputStream(x: InputStream): ops.InputStreamOps                   = new ops.InputStreamOps(x)
+  implicit def opsInt(x: Int): ops.IntOps                                           = new ops.IntOps(x)
+  implicit def opsLong(x: Long): ops.LongOps                                        = new ops.LongOps(x)
+  implicit def opsOption[A](x: Option[A]): ops.OptionOps[A]                         = new ops.OptionOps[A](x)
+  implicit def opsPartialFunction[A, B](pf: A ?=> B): ops.PartialFunctionOps[A, B]  = new ops.PartialFunctionOps(pf)
+  implicit def opsPrecise(x: Precise): ops.PreciseOps                               = new ops.PreciseOps(x)
+  implicit def opsSize(x: Size): ops.SizeOps                                        = new ops.SizeOps(x)
+  implicit def opsStdOpt[A](x: Opt[A]): ops.StdOptOps[A]                            = new ops.StdOptOps[A](x)
+  implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                                  = new ops.TryOps[A](x)
+  implicit def opsZipView[A, B](xs: ZipView[A, B]): ops.ZipViewOps[A, B]            = new ops.ZipViewOps(xs)
+  implicit def opsUnit(x: Unit): ops.UnitOps.type                                   = ops.UnitOps
 }
 
 trait StdOps extends StdOps3 {
@@ -105,13 +107,6 @@ trait StdOps extends StdOps3 {
   implicit def convertPredicatePartialFunction[A](p: ToBool[A]): A ?=> A                  = { case x if p(x) => x }
   implicit def opsViewConversions[A](xs: View[A]): Conversions[A]                         = new Conversions(Each[A](xs foreach _))
   implicit def unbuildableConv[A, R](xs: R)(implicit z: UnbuildsAs[A, R]): Conversions[A] = new Conversions[A](z unbuild xs)
-
-  // Promotion of the api type (which has as few methods as possible) to the
-  // concrete type which has all the other ones.
-  implicit def promoteApiIndex(x: Index): IndexImpl                             = Index impl x
-  implicit def promoteApiOrder[A](ord: Order[A]): Order.Impl[A]                 = Order(ord.compare)
-  implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]                   = ExSet impl x
-  implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V]          = ExMap impl x
 }
 
 trait StdUniversal0 {

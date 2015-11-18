@@ -1,7 +1,7 @@
 package psp
 package impl
 
-import api._, std._
+import api._, std._, StdShow._
 
 trait PrimitiveInstances {
   implicit def boolOrder: Order[Bool]   = orderBy[Bool](x => if (x) 1 else 0)
@@ -49,19 +49,11 @@ trait EmptyInstances0 {
 }
 
 trait EmptyInstances extends EmptyInstances0 {
-  implicit def emptyPlist[A] : Empty[Plist[A]]                    = Empty(Plist.empty[A])
-  implicit def emptyBaseView[A, Repr] : Empty[BaseView[A, Repr]]  = Empty(new DirectView(Direct()))
-  implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R] = Empty(z build Each.empty)
-  implicit def emptyExMap[K: Eq, V] : Empty[ExMap[K, V]]          = Empty(ExMap.empty[K, V])
-  implicit def emptyInMap[K, V] : Empty[InMap[K, V]]              = Empty(InMap.empty[K, V])
-  implicit def emptyExSet[A: Eq] : Empty[ExSet[A]]                = Empty(set[A]())
-  implicit def emptyInSet[A] : Empty[InSet[A]]                    = Empty(inSet[A](false))
-  implicit def emptyJavaList[A] : Empty[jList[A]]                 = Empty(jList[A]())
-  implicit def emptyJavaMap[K, V] : Empty[jMap[K, V]]             = Empty(jMap[K, V]())
-  implicit def emptyJavaSet[A] : Empty[jSet[A]]                   = Empty(jSet[A]())
-  implicit def emptyOption[A] : Empty[Option[A]]                  = Empty(None)
-  implicit def emptyTuple[A: Empty, B: Empty]: Empty[(A, B)]      = Empty(emptyValue[A] -> emptyValue[B])
-  implicit def emptyView[A] : Empty[View[A]]                      = Empty(view())
+  implicit def emptyAtomicView[A, Repr] : Empty[AtomicView[A, Repr]] = Empty(View.each[A, Repr](emptyValue))
+  implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]    = Empty(z build Each.empty)
+  implicit def emptyOption[A] : Empty[Option[A]]                     = Empty(None)
+  implicit def emptyTuple[A: Empty, B: Empty]: Empty[(A, B)]         = Empty(emptyValue[A] -> emptyValue[B])
+  implicit def emptyView[A] : Empty[View[A]]                         = Empty(view())
 
   implicit def emptyFile: Empty[jFile]            = Empty(NoFile)
   implicit def emptyIndex: Empty[Index]           = Empty(NoIndex)
@@ -72,11 +64,11 @@ trait EmptyInstances extends EmptyInstances0 {
 }
 
 trait EqInstances extends OrderInstances {
-  implicit def jTypeEq: Hash[jType]           = inheritEq
-  implicit def offsetEq: Hash[Offset]         = inheritEq
-  implicit def pathEq: Eq[Path]               = eqBy[Path](_.any_s)
-  implicit def policyClassEq: Hash[JavaClass] = inheritEq
-  implicit def sizeEq: Eq[Size]               = Eq(Size.equiv)
+  implicit def classWrapperEq: Hash[JavaClass] = inheritEq
+  implicit def classEq: Hash[Class[_]]         = inheritEq
+  implicit def offsetEq: Hash[Offset]          = inheritEq
+  implicit def pathEq: Eq[Path]                = shownEq[Path]
+  implicit def sizeEq: Hash[Size]              = inheritEq
 
   /** The throwableEq defined above conveniently conflicts with the actual
    *  implicit parameter to the method. W... T... F. On top of this the error
