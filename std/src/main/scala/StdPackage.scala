@@ -30,9 +30,14 @@ abstract class StdPackage
   implicit def pairedCollectionOps[R, A, B](xs: Each[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B]  = new Paired[R, A, B](xs)
 
   // Spire
-  type BooleanAlgebra[R] = spire.algebra.Bool[R]
-  type UInt              = spire.math.UInt
-  type Natural           = spire.math.Natural
+  type Monoid[A]                  = spire.algebra.Monoid[A]
+  type AdditiveMonoid[A]          = spire.algebra.AdditiveMonoid[A]
+  type AdditiveSemigroup[A]       = spire.algebra.AdditiveSemigroup[A]
+  type MultiplicativeMonoid[A]    = spire.algebra.MultiplicativeMonoid[A]
+  type MultiplicativeSemigroup[A] = spire.algebra.MultiplicativeSemigroup[A]
+  type BooleanAlgebra[R]          = spire.algebra.Bool[R]
+  type UInt                       = spire.math.UInt
+  type Natural                    = spire.math.Natural
 
   implicit class CleaveOps[R, A, B](xs: R)(implicit z: Pair.Cleave[R, A, B]) {
     def mapLeft(f: A => A): R  = z.join(f(z left xs), z right xs)
