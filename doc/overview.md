@@ -5,24 +5,15 @@ The subprojects are prefixed with psp- because unprefixed names like api and
 std are too confusing in our world of many interacting namespaces. I'll omit
 the prefix where I can.
 
- - **psp-api**: pure interfaces or pure ADTs. Highest stability.
- - **psp-dmz**: an internal project to enforce staged compilation to work around scalac issues with cyclic references.
- - **psp-std**: what scala-library should have been.
- - **psp-pio**: an IO library. Mostly, wrappers to facilitate consumption of java's IO methods. It should be psp-io, but it's annoying to collide with java.io, scala.io, and every other io.
- - **psp-jvm**: Low-level jvm bytecode library.
- - **psp-scalac**: Code which depends on the scala compiler.
- - **psp-dev**: Various in-progress experiments. There's no unifying theme here.
-
-The first four projects offer release artifacts on bintray. api and dmz each
-have no dependencies, but dmz is not intended for direct consumption: it's an
-implementation detail of std. std depends on api, dmz, spire. pio
-depends on std. None of the others is published for now.
+ - **psp-dmz**: an internal project to enforce staged compilation to work around scalac bugs.
+ - **psp-api**: interfaces, type classes, and sealed ADTs. Highest stability.
+ - **psp-std**: what scala-library should have been. Depends on spire.
 
 naming
 ======
 
-All projects are built with ```-Yno-predef -Yno-imports```. This means even
-seemingly built-in types like ```Array``` and ```Int``` aren't visible until
+All projects are built with `-Yno-predef -Yno-imports`. This means even
+seemingly built-in types like `Array` and `Int` aren't visible until
 we import them. This allows us to deliberately build up a sane namespace from
 consciously chosen elements rather than simply dumping in scala.Predef._,
 java.lang._, and scala._ as scalac does.
@@ -38,10 +29,10 @@ an actual val being stored in an actual object to assist in the "renaming".
 Furthermore, scala provides no way to rename non-value elements at all. For
 instance there's no way which can be imported to alias jnf to the
 java.nio.file package, because "package is not a value". It is only possible
-one file at a time with import renamings like ```import java.nio.{ file => jnf }```.
+one file at a time with import renamings like `import java.nio.{ file => jnf }`.
 That's why we create aliases for the most common scala types which embed
 an abbreviation of their package, such as
-```
+```scala
 type sciTraversable[+A]     = sci.Traversable[A]
 type sciVector[+A]          = sci.Vector[A]
 type scmBuilder[-Elem, +To] = scm.Builder[Elem, To]
