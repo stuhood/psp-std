@@ -4,7 +4,7 @@ package std
 import api._, StdShow._
 import java.lang.System.arraycopy
 import Api.SpecTypes
-import Vec.levelOf
+import Vec._
 
 /** Based on the scala library Vector by Tiark Rompf.
  *    https://issues.scala-lang.org/browse/SI-4442
@@ -13,6 +13,9 @@ import Vec.levelOf
  */
 
 object Vec {
+  final val MASK5  = (1 << 5) - 1 // reduces to the lower five bits
+  final val MASK27 = ~MASK5
+
   def empty[@spec(SpecTypes) A] : Vec[A]                        = NIL.castTo[Vec[A]]
   def apply[@spec(SpecTypes) A](xs: A*): Vec[A]                 = newBuilder[A] build (Direct fromScala xs)
   def unapplySeq[@spec(SpecTypes) A](x: Vec[A]): Some[scSeq[A]] = Some(x.seq)
@@ -206,7 +209,7 @@ final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focu
     val idx = checkRangeConvert(index)
     val s = updateDirty(newVec(startIndex, endIndex, idx))
     s.gotoPosWritable(focus, idx)  // if dirty commit changes; go to new pos and prepare for writing
-    s.display0(idx & 0x1f) = elem.asInstanceOf[AnyRef]
+    s.display0(idx & MASK5) = elem.asInstanceOf[AnyRef]
     s
   }
 
@@ -214,8 +217,8 @@ final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focu
     if (endIndex == startIndex)
       return makeSingletonAtBack(value)
 
-    val blockIndex = (preStartIndex) & ~31
-    val lo         = (preStartIndex) & 31
+    val blockIndex = preStartIndex & MASK27
+    val lo         = preStartIndex & MASK5
 
     if (startIndex != blockIndex + 32) {
       val s = newVecInFront(0, blockIndex)
@@ -296,8 +299,8 @@ final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focu
     if (endIndex == startIndex)
       return makeSingletonAtFront(value)
 
-    val blockIndex = endIndex & ~31
-    val lo         = endIndex & 31
+    val blockIndex = endIndex & MASK27
+    val lo         = endIndex & MASK5
 
     if (endIndex != blockIndex) {
       val s = newVecInBack(0, blockIndex)
@@ -396,30 +399,30 @@ final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focu
     case 0 =>
       zeroLeft(display0, cutIndex)
     case 1 =>
-      zeroLeft(display0, cutIndex & 0x1f)
-      display1 = copyRight(display1, (cutIndex >>>  5))
+      zeroLeft(display0, cutIndex & MASK5)
+      display1 = copyRight(display1, cutIndex >>>  5)
     case 2 =>
-      zeroLeft(display0, cutIndex & 0x1f)
-      display1 = copyRight(display1, (cutIndex >>>  5) & 0x1f)
-      display2 = copyRight(display2, (cutIndex >>> 10))
+      zeroLeft(display0, cutIndex & MASK5)
+      display1 = copyRight(display1, cutIndex >>>  5 & MASK5)
+      display2 = copyRight(display2, cutIndex >>> 10)
     case 3 =>
-      zeroLeft(display0, cutIndex & 0x1f)
-      display1 = copyRight(display1, (cutIndex >>>  5) & 0x1f)
-      display2 = copyRight(display2, (cutIndex >>> 10) & 0x1f)
-      display3 = copyRight(display3, (cutIndex >>> 15))
+      zeroLeft(display0, cutIndex & MASK5)
+      display1 = copyRight(display1, cutIndex >>>  5 & MASK5)
+      display2 = copyRight(display2, cutIndex >>> 10 & MASK5)
+      display3 = copyRight(display3, cutIndex >>> 15)
     case 4 =>
-      zeroLeft(display0, cutIndex & 0x1f)
-      display1 = copyRight(display1, (cutIndex >>>  5) & 0x1f)
-      display2 = copyRight(display2, (cutIndex >>> 10) & 0x1f)
-      display3 = copyRight(display3, (cutIndex >>> 15) & 0x1f)
-      display4 = copyRight(display4, (cutIndex >>> 20))
+      zeroLeft(display0, cutIndex & MASK5)
+      display1 = copyRight(display1, cutIndex >>>  5 & MASK5)
+      display2 = copyRight(display2, cutIndex >>> 10 & MASK5)
+      display3 = copyRight(display3, cutIndex >>> 15 & MASK5)
+      display4 = copyRight(display4, cutIndex >>> 20)
     case 5 =>
-      zeroLeft(display0, cutIndex & 0x1f)
-      display1 = copyRight(display1, (cutIndex >>>  5) & 0x1f)
-      display2 = copyRight(display2, (cutIndex >>> 10) & 0x1f)
-      display3 = copyRight(display3, (cutIndex >>> 15) & 0x1f)
-      display4 = copyRight(display4, (cutIndex >>> 20) & 0x1f)
-      display5 = copyRight(display5, (cutIndex >>> 25))
+      zeroLeft(display0, cutIndex & MASK5)
+      display1 = copyRight(display1, cutIndex >>>  5 & MASK5)
+      display2 = copyRight(display2, cutIndex >>> 10 & MASK5)
+      display3 = copyRight(display3, cutIndex >>> 15 & MASK5)
+      display4 = copyRight(display4, cutIndex >>> 20 & MASK5)
+      display5 = copyRight(display5, cutIndex >>> 25)
     case _ =>
       illegalArgumentException(cutIndex)
   }
@@ -439,54 +442,46 @@ final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focu
       zeroRight(display0, cutIndex)
     } else
     if (cutIndex <= (1 << 10)) {
-      zeroRight(display0, ((cutIndex-1) & 0x1f) + 1)
-      display1 = copyLeft(display1, (cutIndex >>>  5))
+      zeroRight(display0, ((cutIndex-1) & MASK5) + 1)
+      display1 = copyLeft(display1, cutIndex >>>  5)
     } else
     if (cutIndex <= (1 << 15)) {
-      zeroRight(display0, ((cutIndex-1) & 0x1f) + 1)
-      display1 = copyLeft(display1, (((cutIndex-1) >>>  5) & 0x1f) + 1)
-      display2 = copyLeft(display2, (cutIndex >>> 10))
+      zeroRight(display0, ((cutIndex-1) & MASK5) + 1)
+      display1 = copyLeft(display1, (((cutIndex-1) >>>  5) & MASK5) + 1)
+      display2 = copyLeft(display2, cutIndex >>> 10)
     } else
     if (cutIndex <= (1 << 20)) {
-      zeroRight(display0, ((cutIndex-1) & 0x1f) + 1)
-      display1 = copyLeft(display1, (((cutIndex-1) >>>  5) & 0x1f) + 1)
-      display2 = copyLeft(display2, (((cutIndex-1) >>> 10) & 0x1f) + 1)
-      display3 = copyLeft(display3, (cutIndex >>> 15))
+      zeroRight(display0, ((cutIndex-1) & MASK5) + 1)
+      display1 = copyLeft(display1, (((cutIndex-1) >>>  5) & MASK5) + 1)
+      display2 = copyLeft(display2, (((cutIndex-1) >>> 10) & MASK5) + 1)
+      display3 = copyLeft(display3, cutIndex >>> 15)
     } else
     if (cutIndex <= (1 << 25)) {
-      zeroRight(display0, ((cutIndex-1) & 0x1f) + 1)
-      display1 = copyLeft(display1, (((cutIndex-1) >>>  5) & 0x1f) + 1)
-      display2 = copyLeft(display2, (((cutIndex-1) >>> 10) & 0x1f) + 1)
-      display3 = copyLeft(display3, (((cutIndex-1) >>> 15) & 0x1f) + 1)
-      display4 = copyLeft(display4, (cutIndex >>> 20))
+      zeroRight(display0, ((cutIndex-1) & MASK5) + 1)
+      display1 = copyLeft(display1, (((cutIndex-1) >>>  5) & MASK5) + 1)
+      display2 = copyLeft(display2, (((cutIndex-1) >>> 10) & MASK5) + 1)
+      display3 = copyLeft(display3, (((cutIndex-1) >>> 15) & MASK5) + 1)
+      display4 = copyLeft(display4, cutIndex >>> 20)
     } else
     if (cutIndex <= (1 << 30)) {
-      zeroRight(display0, ((cutIndex-1) & 0x1f) + 1)
-      display1 = copyLeft(display1, (((cutIndex-1) >>>  5) & 0x1f) + 1)
-      display2 = copyLeft(display2, (((cutIndex-1) >>> 10) & 0x1f) + 1)
-      display3 = copyLeft(display3, (((cutIndex-1) >>> 15) & 0x1f) + 1)
-      display4 = copyLeft(display4, (((cutIndex-1) >>> 20) & 0x1f) + 1)
-      display5 = copyLeft(display5, (cutIndex >>> 25))
+      zeroRight(display0, ((cutIndex-1) & MASK5) + 1)
+      display1 = copyLeft(display1, (((cutIndex-1) >>>  5) & MASK5) + 1)
+      display2 = copyLeft(display2, (((cutIndex-1) >>> 10) & MASK5) + 1)
+      display3 = copyLeft(display3, (((cutIndex-1) >>> 15) & MASK5) + 1)
+      display4 = copyLeft(display4, (((cutIndex-1) >>> 20) & MASK5) + 1)
+      display5 = copyLeft(display5, cutIndex >>> 25)
     } else {
       throw new IllegalArgumentException()
     }
   }
 
-  private[std] def requiredDepth(xor: Int) = {
-    if (xor < (1 <<  5)) 1
-    else if (xor < (1 << 10)) 2
-    else if (xor < (1 << 15)) 3
-    else if (xor < (1 << 20)) 4
-    else if (xor < (1 << 25)) 5
-    else if (xor < (1 << 30)) 6
-    else throw new IllegalArgumentException()
-  }
+  private def requiredDepth(xor: Int): Int = levelOf(xor) + 1
 
   private[std] def dropFront0(cutIndex: Int): Vec[A] = {
-    val blockIndex = cutIndex & ~31
+    val blockIndex = cutIndex & MASK27
     val xor        = cutIndex ^ (endIndex - 1)
     val d          = requiredDepth(xor)
-    val shift      = (cutIndex & ~((1 << (5*d))-1))
+    val shift      = cutIndex & ~((1 << (5*d))-1)
 
     // need to init with full display iff going to cutIndex requires swapping block at level >= d
     val s = newVec(cutIndex-shift, endIndex-shift, blockIndex-shift)
@@ -498,10 +493,10 @@ final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focu
   }
 
   private[std] def dropBack0(cutIndex: Int): Vec[A] = {
-    val blockIndex = (cutIndex - 1) & ~31
+    val blockIndex = (cutIndex - 1) & MASK27
     val xor = startIndex ^ (cutIndex - 1)
     val d = requiredDepth(xor)
-    val shift = (startIndex & ~((1 << (5*d))-1))
+    val shift = startIndex & ~((1 << 5 * d) - 1)
     val s = newVec(startIndex-shift, cutIndex-shift, blockIndex-shift)
     s.dirty = dirty
     s.gotoPosWritable(focus, blockIndex)
@@ -513,8 +508,8 @@ final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focu
 
 
 final class VectorIterator[@spec(SpecTypes) A](_startIndex: Int, endIndex: Int) extends scIterator[A] with VectorPointer[A @uV] {
-  private[std] var blockIndex: Int = _startIndex & ~31
-  private[std] var lo: Int         = _startIndex & 31
+  private[std] var blockIndex: Int = _startIndex & MASK27
+  private[std] var lo: Int         = _startIndex & MASK5
   private[std] var endLo           = math.min(endIndex - blockIndex, 32)
   private[std] var _hasNext        = blockIndex + lo < endIndex
 
@@ -577,22 +572,22 @@ sealed trait VectorPointer[@spec(SpecTypes) T] {
     // But doesn't quite work somewhere (NPE in Resources test.)
 
     if (xor < (1 << 5)) { // level = 0
-      display0(index & 31).asInstanceOf[T]
+      display0(index & MASK5).asInstanceOf[T]
     } else
     if (xor < (1 << 10)) { // level = 1
-      display1((index >> 5) & 31).asInstanceOf[Array[AnyRef]](index & 31).asInstanceOf[T]
+      display1(index >> 5 & MASK5).asInstanceOf[Array[AnyRef]](index & MASK5).asInstanceOf[T]
     } else
     if (xor < (1 << 15)) { // level = 2
-      display2((index >> 10) & 31).asInstanceOf[Array[AnyRef]]((index >> 5) & 31).asInstanceOf[Array[AnyRef]](index & 31).asInstanceOf[T]
+      display2(index >> 10 & MASK5).asInstanceOf[Array[AnyRef]](index >> 5 & MASK5).asInstanceOf[Array[AnyRef]](index & MASK5).asInstanceOf[T]
     } else
     if (xor < (1 << 20)) { // level = 3
-      display3((index >> 15) & 31).asInstanceOf[Array[AnyRef]]((index >> 10) & 31).asInstanceOf[Array[AnyRef]]((index >> 5) & 31).asInstanceOf[Array[AnyRef]](index & 31).asInstanceOf[T]
+      display3(index >> 15 & MASK5).asInstanceOf[Array[AnyRef]](index >> 10 & MASK5).asInstanceOf[Array[AnyRef]](index >> 5 & MASK5).asInstanceOf[Array[AnyRef]](index & MASK5).asInstanceOf[T]
     } else
     if (xor < (1 << 25)) { // level = 4
-      display4((index >> 20) & 31).asInstanceOf[Array[AnyRef]]((index >> 15) & 31).asInstanceOf[Array[AnyRef]]((index >> 10) & 31).asInstanceOf[Array[AnyRef]]((index >> 5) & 31).asInstanceOf[Array[AnyRef]](index & 31).asInstanceOf[T]
+      display4(index >> 20 & MASK5).asInstanceOf[Array[AnyRef]](index >> 15 & MASK5).asInstanceOf[Array[AnyRef]](index >> 10 & MASK5).asInstanceOf[Array[AnyRef]](index >> 5 & MASK5).asInstanceOf[Array[AnyRef]](index & MASK5).asInstanceOf[T]
     } else
     if (xor < (1 << 30)) { // level = 5
-      display5((index >> 25) & 31).asInstanceOf[Array[AnyRef]]((index >> 20) & 31).asInstanceOf[Array[AnyRef]]((index >> 15) & 31).asInstanceOf[Array[AnyRef]]((index >> 10) & 31).asInstanceOf[Array[AnyRef]]((index >> 5) & 31).asInstanceOf[Array[AnyRef]](index & 31).asInstanceOf[T]
+      display5(index >> 25 & MASK5).asInstanceOf[Array[AnyRef]](index >> 20 & MASK5).asInstanceOf[Array[AnyRef]](index >> 15 & MASK5).asInstanceOf[Array[AnyRef]](index >> 10 & MASK5).asInstanceOf[Array[AnyRef]](index >> 5 & MASK5).asInstanceOf[Array[AnyRef]](index & MASK5).asInstanceOf[T]
     } else { // level = 6
       throw new IllegalArgumentException()
     }
@@ -605,29 +600,29 @@ sealed trait VectorPointer[@spec(SpecTypes) T] {
     if (xor < (1 << 5)) { // level = 0 (could maybe removed)
     } else
     if (xor < (1 << 10)) { // level = 1
-      display0 = display1((index >> 5) & 31).asInstanceOf[Array[AnyRef]]
+      display0 = display1(index >> 5 & MASK5).asInstanceOf[Array[AnyRef]]
     } else
     if (xor < (1 << 15)) { // level = 2
-      display1 = display2((index >> 10) & 31).asInstanceOf[Array[AnyRef]]
-      display0 = display1((index >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display1 = display2(index >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = display1(index >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     } else
     if (xor < (1 << 20)) { // level = 3
-      display2 = display3((index >> 15) & 31).asInstanceOf[Array[AnyRef]]
-      display1 = display2((index >> 10) & 31).asInstanceOf[Array[AnyRef]]
-      display0 = display1((index >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display2 = display3(index >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1 = display2(index >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = display1(index >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     } else
     if (xor < (1 << 25)) { // level = 4
-      display3 = display4((index >> 20) & 31).asInstanceOf[Array[AnyRef]]
-      display2 = display3((index >> 15) & 31).asInstanceOf[Array[AnyRef]]
-      display1 = display2((index >> 10) & 31).asInstanceOf[Array[AnyRef]]
-      display0 = display1((index >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display3 = display4(index >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
+      display2 = display3(index >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1 = display2(index >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = display1(index >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     } else
     if (xor < (1 << 30)) { // level = 5
-      display4 = display5((index >> 25) & 31).asInstanceOf[Array[AnyRef]]
-      display3 = display4((index >> 20) & 31).asInstanceOf[Array[AnyRef]]
-      display2 = display3((index >> 15) & 31).asInstanceOf[Array[AnyRef]]
-      display1 = display2((index >> 10) & 31).asInstanceOf[Array[AnyRef]]
-      display0 = display1((index >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display4 = display5(index >> 25 & MASK5).asInstanceOf[Array[AnyRef]]
+      display3 = display4(index >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
+      display2 = display3(index >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1 = display2(index >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = display1(index >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     } else { // level = 6
       throw new IllegalArgumentException()
     }
@@ -638,25 +633,25 @@ sealed trait VectorPointer[@spec(SpecTypes) T] {
   // xor: oldIndex ^ index
   private[std] final def gotoNextBlockStart(index: Int, xor: Int): Unit = { // goto block start pos
     if (xor < (1 << 10)) { // level = 1
-      display0 = display1((index >> 5) & 31).asInstanceOf[Array[AnyRef]]
+      display0 = display1(index >> 5 & MASK5).asInstanceOf[Array[AnyRef]]
     } else
     if (xor < (1 << 15)) { // level = 2
-      display1 = display2((index >> 10) & 31).asInstanceOf[Array[AnyRef]]
+      display1 = display2(index >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
       display0 = display1(0).asInstanceOf[Array[AnyRef]]
     } else
     if (xor < (1 << 20)) { // level = 3
-      display2 = display3((index >> 15) & 31).asInstanceOf[Array[AnyRef]]
+      display2 = display3(index >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
       display1 = display2(0).asInstanceOf[Array[AnyRef]]
       display0 = display1(0).asInstanceOf[Array[AnyRef]]
     } else
     if (xor < (1 << 25)) { // level = 4
-      display3 = display4((index >> 20) & 31).asInstanceOf[Array[AnyRef]]
+      display3 = display4(index >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
       display2 = display3(0).asInstanceOf[Array[AnyRef]]
       display1 = display2(0).asInstanceOf[Array[AnyRef]]
       display0 = display1(0).asInstanceOf[Array[AnyRef]]
     } else
     if (xor < (1 << 30)) { // level = 5
-      display4 = display5((index >> 25) & 31).asInstanceOf[Array[AnyRef]]
+      display4 = display5(index >> 25 & MASK5).asInstanceOf[Array[AnyRef]]
       display3 = display4(0).asInstanceOf[Array[AnyRef]]
       display2 = display3(0).asInstanceOf[Array[AnyRef]]
       display1 = display2(0).asInstanceOf[Array[AnyRef]]
@@ -669,54 +664,50 @@ sealed trait VectorPointer[@spec(SpecTypes) T] {
   // USED BY BUILDER
 
   // xor: oldIndex ^ index
-  private[std] final def gotoNextBlockStartWritable(index: Int, xor: Int): Unit = { // goto block start pos
-    if (xor < (1 << 10)) { // level = 1
+  // goto block start pos
+  private[std] final def gotoNextBlockStartWritable(index: Int, xor: Int): Unit = (levelOf(xor): @switch) match {
+    case 0 | 1 =>
       if (depth == 1) { display1 = new Array(32); display1(0) = display0; depth+=1}
       display0 = new Array(32)
-      display1((index >>  5) & 31) = display0
-    } else
-    if (xor < (1 << 15)) { // level = 2
+      display1(index >>  5 & MASK5) = display0
+    case 2 =>
       if (depth == 2) { display2 = new Array(32); display2(0) = display1; depth+=1}
       display0 = new Array(32)
       display1 = new Array(32)
-      display1((index >>  5) & 31) = display0
-      display2((index >> 10) & 31) = display1
-    } else
-    if (xor < (1 << 20)) { // level = 3
+      display1(index >>  5 & MASK5) = display0
+      display2(index >> 10 & MASK5) = display1
+    case 3 =>
       if (depth == 3) { display3 = new Array(32); display3(0) = display2; depth+=1}
       display0 = new Array(32)
       display1 = new Array(32)
       display2 = new Array(32)
-      display1((index >>  5) & 31) = display0
-      display2((index >> 10) & 31) = display1
-      display3((index >> 15) & 31) = display2
-    } else
-    if (xor < (1 << 25)) { // level = 4
+      display1(index >>  5 & MASK5) = display0
+      display2(index >> 10 & MASK5) = display1
+      display3(index >> 15 & MASK5) = display2
+    case 4 =>
       if (depth == 4) { display4 = new Array(32); display4(0) = display3; depth+=1}
       display0 = new Array(32)
       display1 = new Array(32)
       display2 = new Array(32)
       display3 = new Array(32)
-      display1((index >>  5) & 31) = display0
-      display2((index >> 10) & 31) = display1
-      display3((index >> 15) & 31) = display2
-      display4((index >> 20) & 31) = display3
-    } else
-    if (xor < (1 << 30)) { // level = 5
+      display1(index >>  5 & MASK5) = display0
+      display2(index >> 10 & MASK5) = display1
+      display3(index >> 15 & MASK5) = display2
+      display4(index >> 20 & MASK5) = display3
+    case 5 =>
       if (depth == 5) { display5 = new Array(32); display5(0) = display4; depth+=1}
       display0 = new Array(32)
       display1 = new Array(32)
       display2 = new Array(32)
       display3 = new Array(32)
       display4 = new Array(32)
-      display1((index >>  5) & 31) = display0
-      display2((index >> 10) & 31) = display1
-      display3((index >> 15) & 31) = display2
-      display4((index >> 20) & 31) = display3
-      display5((index >> 25) & 31) = display4
-    } else { // level = 6
-      throw new IllegalArgumentException()
-    }
+      display1(index >>  5 & MASK5) = display0
+      display2(index >> 10 & MASK5) = display1
+      display3(index >> 15 & MASK5) = display2
+      display4(index >> 20 & MASK5) = display3
+      display5(index >> 25 & MASK5) = display4
+    case _ =>
+      illegalArgumentException(xor)
   }
 
   // STUFF BELOW USED BY APPEND / UPDATE
@@ -740,35 +731,35 @@ sealed trait VectorPointer[@spec(SpecTypes) T] {
       display3 = copyOf(display3)
       display2 = copyOf(display2)
       display1 = copyOf(display1)
-      display5((index >> 25) & 31) = display4
-      display4((index >> 20) & 31) = display3
-      display3((index >> 15) & 31) = display2
-      display2((index >> 10) & 31) = display1
-      display1((index >>  5) & 31) = display0
+      display5(index >> 25 & MASK5) = display4
+      display4(index >> 20 & MASK5) = display3
+      display3(index >> 15 & MASK5) = display2
+      display2(index >> 10 & MASK5) = display1
+      display1(index >>  5 & MASK5) = display0
     case 4 =>
       display4 = copyOf(display4)
       display3 = copyOf(display3)
       display2 = copyOf(display2)
       display1 = copyOf(display1)
-      display4((index >> 20) & 31) = display3
-      display3((index >> 15) & 31) = display2
-      display2((index >> 10) & 31) = display1
-      display1((index >>  5) & 31) = display0
+      display4(index >> 20 & MASK5) = display3
+      display3(index >> 15 & MASK5) = display2
+      display2(index >> 10 & MASK5) = display1
+      display1(index >>  5 & MASK5) = display0
     case 3 =>
       display3 = copyOf(display3)
       display2 = copyOf(display2)
       display1 = copyOf(display1)
-      display3((index >> 15) & 31) = display2
-      display2((index >> 10) & 31) = display1
-      display1((index >>  5) & 31) = display0
+      display3(index >> 15 & MASK5) = display2
+      display2(index >> 10 & MASK5) = display1
+      display1(index >>  5 & MASK5) = display0
     case 2 =>
       display2 = copyOf(display2)
       display1 = copyOf(display1)
-      display2((index >> 10) & 31) = display1
-      display1((index >>  5) & 31) = display0
+      display2(index >> 10 & MASK5) = display1
+      display1(index >>  5 & MASK5) = display0
     case 1 =>
       display1 = copyOf(display1)
-      display1((index >>  5) & 31) = display0
+      display1(index >>  5 & MASK5) = display0
     case 0 =>
   }
 
@@ -781,29 +772,29 @@ sealed trait VectorPointer[@spec(SpecTypes) T] {
   private[std] final def gotoPosWritable0(newIndex: Int): Unit = (depth - 1) match {
     case 5 =>
       display5 = copyOf(display5)
-      display4 = nullSlotAndCopy(display5, (newIndex >> 25) & 31).asInstanceOf[Array[AnyRef]]
-      display3 = nullSlotAndCopy(display4, (newIndex >> 20) & 31).asInstanceOf[Array[AnyRef]]
-      display2 = nullSlotAndCopy(display3, (newIndex >> 15) & 31).asInstanceOf[Array[AnyRef]]
-      display1 = nullSlotAndCopy(display2, (newIndex >> 10) & 31).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, (newIndex >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display4 = nullSlotAndCopy(display5, newIndex >> 25 & MASK5).asInstanceOf[Array[AnyRef]]
+      display3 = nullSlotAndCopy(display4, newIndex >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
+      display2 = nullSlotAndCopy(display3, newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     case 4 =>
       display4 = copyOf(display4)
-      display3 = nullSlotAndCopy(display4, (newIndex >> 20) & 31).asInstanceOf[Array[AnyRef]]
-      display2 = nullSlotAndCopy(display3, (newIndex >> 15) & 31).asInstanceOf[Array[AnyRef]]
-      display1 = nullSlotAndCopy(display2, (newIndex >> 10) & 31).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, (newIndex >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display3 = nullSlotAndCopy(display4, newIndex >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
+      display2 = nullSlotAndCopy(display3, newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     case 3 =>
       display3 = copyOf(display3)
-      display2 = nullSlotAndCopy(display3, (newIndex >> 15) & 31).asInstanceOf[Array[AnyRef]]
-      display1 = nullSlotAndCopy(display2, (newIndex >> 10) & 31).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, (newIndex >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display2 = nullSlotAndCopy(display3, newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     case 2 =>
       display2 = copyOf(display2)
-      display1 = nullSlotAndCopy(display2, (newIndex >> 10) & 31).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, (newIndex >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     case 1 =>
       display1 = copyOf(display1)
-      display0 = nullSlotAndCopy(display1, (newIndex >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     case 0 =>
       display0 = copyOf(display0)
   }
@@ -819,41 +810,41 @@ sealed trait VectorPointer[@spec(SpecTypes) T] {
     } else
     if (xor < (1 << 10)) { // level = 1
       display1 = copyOf(display1)
-      display1((oldIndex >> 5) & 31) = display0
-      display0 = nullSlotAndCopy(display1, (newIndex >>  5) & 31)
+      display1(oldIndex >> 5 & MASK5) = display0
+      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5)
     } else
     if (xor < (1 << 15)) { // level = 2
       display1 = copyOf(display1)
       display2 = copyOf(display2)
-      display1((oldIndex >>  5) & 31) = display0
-      display2((oldIndex >> 10) & 31) = display1
-      display1 = nullSlotAndCopy(display2, (newIndex >> 10) & 31).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, (newIndex >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display1(oldIndex >>  5 & MASK5) = display0
+      display2(oldIndex >> 10 & MASK5) = display1
+      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     } else
     if (xor < (1 << 20)) { // level = 3
       display1 = copyOf(display1)
       display2 = copyOf(display2)
       display3 = copyOf(display3)
-      display1((oldIndex >>  5) & 31) = display0
-      display2((oldIndex >> 10) & 31) = display1
-      display3((oldIndex >> 15) & 31) = display2
-      display2 = nullSlotAndCopy(display3, (newIndex >> 15) & 31).asInstanceOf[Array[AnyRef]]
-      display1 = nullSlotAndCopy(display2, (newIndex >> 10) & 31).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, (newIndex >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display1(oldIndex >>  5 & MASK5) = display0
+      display2(oldIndex >> 10 & MASK5) = display1
+      display3(oldIndex >> 15 & MASK5) = display2
+      display2 = nullSlotAndCopy(display3, newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     } else
     if (xor < (1 << 25)) { // level = 4
       display1 = copyOf(display1)
       display2 = copyOf(display2)
       display3 = copyOf(display3)
       display4 = copyOf(display4)
-      display1((oldIndex >>  5) & 31) = display0
-      display2((oldIndex >> 10) & 31) = display1
-      display3((oldIndex >> 15) & 31) = display2
-      display4((oldIndex >> 20) & 31) = display3
-      display3 = nullSlotAndCopy(display4, (newIndex >> 20) & 31).asInstanceOf[Array[AnyRef]]
-      display2 = nullSlotAndCopy(display3, (newIndex >> 15) & 31).asInstanceOf[Array[AnyRef]]
-      display1 = nullSlotAndCopy(display2, (newIndex >> 10) & 31).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, (newIndex >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display1(oldIndex >>  5 & MASK5) = display0
+      display2(oldIndex >> 10 & MASK5) = display1
+      display3(oldIndex >> 15 & MASK5) = display2
+      display4(oldIndex >> 20 & MASK5) = display3
+      display3 = nullSlotAndCopy(display4, newIndex >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
+      display2 = nullSlotAndCopy(display3, newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     } else
     if (xor < (1 << 30)) { // level = 5
       display1 = copyOf(display1)
@@ -861,16 +852,16 @@ sealed trait VectorPointer[@spec(SpecTypes) T] {
       display3 = copyOf(display3)
       display4 = copyOf(display4)
       display5 = copyOf(display5)
-      display1((oldIndex >>  5) & 31) = display0
-      display2((oldIndex >> 10) & 31) = display1
-      display3((oldIndex >> 15) & 31) = display2
-      display4((oldIndex >> 20) & 31) = display3
-      display5((oldIndex >> 25) & 31) = display4
-      display4 = nullSlotAndCopy(display5, (newIndex >> 25) & 31).asInstanceOf[Array[AnyRef]]
-      display3 = nullSlotAndCopy(display4, (newIndex >> 20) & 31).asInstanceOf[Array[AnyRef]]
-      display2 = nullSlotAndCopy(display3, (newIndex >> 15) & 31).asInstanceOf[Array[AnyRef]]
-      display1 = nullSlotAndCopy(display2, (newIndex >> 10) & 31).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, (newIndex >>  5) & 31).asInstanceOf[Array[AnyRef]]
+      display1(oldIndex >>  5 & MASK5) = display0
+      display2(oldIndex >> 10 & MASK5) = display1
+      display3(oldIndex >> 15 & MASK5) = display2
+      display4(oldIndex >> 20 & MASK5) = display3
+      display5(oldIndex >> 25 & MASK5) = display4
+      display4 = nullSlotAndCopy(display5, newIndex >> 25 & MASK5).asInstanceOf[Array[AnyRef]]
+      display3 = nullSlotAndCopy(display4, newIndex >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
+      display2 = nullSlotAndCopy(display3, newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
     } else { // level = 6
       throw new IllegalArgumentException()
     }
@@ -897,7 +888,7 @@ sealed trait VectorPointer[@spec(SpecTypes) T] {
     if (xor < (1 << 10)) { // level = 1
       if (depth == 1) {
         display1 = new Array(32)
-        display1((oldIndex >>  5) & 31) = display0
+        display1((oldIndex >>  5) & MASK5) = display0
         depth +=1
       }
       display0 = new Array(32)
@@ -905,52 +896,52 @@ sealed trait VectorPointer[@spec(SpecTypes) T] {
     if (xor < (1 << 15)) { // level = 2
       if (depth == 2) {
         display2 = new Array(32)
-        display2((oldIndex >> 10) & 31) = display1
+        display2((oldIndex >> 10) & MASK5) = display1
         depth +=1
       }
-      display1 = display2((newIndex >> 10) & 31).asInstanceOf[Array[AnyRef]]
+      display1 = display2(newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
       if (display1 == null) display1 = new Array(32)
       display0 = new Array(32)
     } else
     if (xor < (1 << 20)) { // level = 3
       if (depth == 3) {
         display3 = new Array(32)
-        display3((oldIndex >> 15) & 31) = display2
+        display3((oldIndex >> 15) & MASK5) = display2
         depth +=1
       }
-      display2 = display3((newIndex >> 15) & 31).asInstanceOf[Array[AnyRef]]
+      display2 = display3(newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
       if (display2 == null) display2 = new Array(32)
-      display1 = display2((newIndex >> 10) & 31).asInstanceOf[Array[AnyRef]]
+      display1 = display2(newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
       if (display1 == null) display1 = new Array(32)
       display0 = new Array(32)
     } else
     if (xor < (1 << 25)) { // level = 4
       if (depth == 4) {
         display4 = new Array(32)
-        display4((oldIndex >> 20) & 31) = display3
+        display4((oldIndex >> 20) & MASK5) = display3
         depth +=1
       }
-      display3 = display4((newIndex >> 20) & 31).asInstanceOf[Array[AnyRef]]
+      display3 = display4(newIndex >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
       if (display3 == null) display3 = new Array(32)
-      display2 = display3((newIndex >> 15) & 31).asInstanceOf[Array[AnyRef]]
+      display2 = display3(newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
       if (display2 == null) display2 = new Array(32)
-      display1 = display2((newIndex >> 10) & 31).asInstanceOf[Array[AnyRef]]
+      display1 = display2(newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
       if (display1 == null) display1 = new Array(32)
       display0 = new Array(32)
     } else
     if (xor < (1 << 30)) { // level = 5
       if (depth == 5) {
         display5 = new Array(32)
-        display5((oldIndex >>  25) & 31) = display4
+        display5((oldIndex >>  25) & MASK5) = display4
         depth +=1
       }
-      display4 = display5((newIndex >> 25) & 31).asInstanceOf[Array[AnyRef]]
+      display4 = display5(newIndex >> 25 & MASK5).asInstanceOf[Array[AnyRef]]
       if (display4 == null) display4 = new Array(32)
-      display3 = display4((newIndex >> 20) & 31).asInstanceOf[Array[AnyRef]]
+      display3 = display4(newIndex >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
       if (display3 == null) display3 = new Array(32)
-      display2 = display3((newIndex >> 15) & 31).asInstanceOf[Array[AnyRef]]
+      display2 = display3(newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
       if (display2 == null) display2 = new Array(32)
-      display1 = display2((newIndex >> 10) & 31).asInstanceOf[Array[AnyRef]]
+      display1 = display2(newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
       if (display1 == null) display1 = new Array(32)
       display0 = new Array(32)
     } else { // level = 6
