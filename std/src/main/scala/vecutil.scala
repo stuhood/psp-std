@@ -21,23 +21,23 @@ final case class Array0[@spec A](xs: Array[A]) extends ArrayN[A] {
 }
 final case class Array1[@spec A](xs: Array2D[A]) extends ArrayN[A] {
   type Elem = Array[A]
-  def apply(n: Int): A = xs(n >> 5 & MASK5)(n & MASK5)
+  def apply(n: Int): A = xs(n >>> 5 & MASK5)(n & MASK5)
 }
 final case class Array2[@spec A](xs: Array3D[A]) extends ArrayN[A] {
   type Elem = Array2D[A]
-  def apply(n: Int): A = xs(n >> 10 & MASK5)(n >> 5 & MASK5)(n & MASK5)
+  def apply(n: Int): A = xs(n >>> 10 & MASK5)(n >>> 5 & MASK5)(n & MASK5)
 }
 final case class Array3[@spec A](xs: Array4D[A]) extends ArrayN[A] {
   type Elem = Array3D[A]
-  def apply(n: Int): A = xs(n >> 15 & MASK5)(n >> 10 & MASK5)(n >> 5 & MASK5)(n & MASK5)
+  def apply(n: Int): A = xs(n >>> 15 & MASK5)(n >>> 10 & MASK5)(n >>> 5 & MASK5)(n & MASK5)
 }
 final case class Array4[@spec A](xs: Array5D[A]) extends ArrayN[A] {
   type Elem = Array4D[A]
-  def apply(n: Int): A = xs(n >> 20 & MASK5)(n >> 15 & MASK5)(n >> 10 & MASK5)(n >> 5 & MASK5)(n & MASK5)
+  def apply(n: Int): A = xs(n >>> 20 & MASK5)(n >>> 15 & MASK5)(n >>> 10 & MASK5)(n >>> 5 & MASK5)(n & MASK5)
 }
 final case class Array5[@spec A](xs: Array6D[A]) extends ArrayN[A] {
   type Elem = Array5D[A]
-  def apply(n: Int): A = xs(n >> 25 & MASK5)(n >> 20 & MASK5)(n >> 15 & MASK5)(n >> 10 & MASK5)(n >> 5 & MASK5)(n & MASK5)
+  def apply(n: Int): A = xs(n >>> 25 & MASK5)(n >>> 20 & MASK5)(n >>> 15 & MASK5)(n >>> 10 & MASK5)(n >>> 5 & MASK5)(n & MASK5)
 }
 
 object ArrayN {
@@ -114,7 +114,7 @@ class ArrayLevels[@spec A: CTag] {
 final class Base32(val index: Int) extends AnyVal {
   def digitAt(place: Int): Int = apply(place)
 
-  def apply(place: Int): Int = index >> place * 5 & 31
+  def apply(place: Int): Int = index >>> place * 5 & 31
 
   def level  = levelOf(index)
   def places = 0 to level
