@@ -95,10 +95,6 @@ final class PreciseOps(val size: Precise) extends AnyRef with HasPreciseSizeMeth
   override def toString = s"$longSize"
 }
 
-final class BooleanAlgebraOps[A](val algebra: BooleanAlgebra[A]) extends AnyVal {
-  def map[B](f: B => A, g: A => B): BooleanAlgebra[B] = new Algebras.Mapped[A, B](algebra, f, g)
-}
-
 final class InputStreamOps(val in: InputStream) extends AnyVal {
   def buffered: BufferedInputStream = in match {
     case in: BufferedInputStream => in

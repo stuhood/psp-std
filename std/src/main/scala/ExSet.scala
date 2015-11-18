@@ -1,7 +1,7 @@
 package psp
 package std
 
-import api._
+import api._, Unsafe.inheritedShow
 
 object ExSet {
   def apply[A: Eq](xs: Each[A]): ExSet[A]  = new Impl[A](xs, ?)
@@ -102,11 +102,11 @@ object InSet {
   def doc[A](xs: InSet[A]): Doc = xs match {
     case Zero                => "∅".s
     case One                 => "U".s
-    case Complement(xs)      => doc"$xs′"
-    case Intersect(lhs, rhs) => doc"$lhs ∩ $rhs"
-    case Union(lhs, rhs)     => doc"$lhs ∪ $rhs"
-    case Diff(lhs, rhs)      => doc"$lhs ∖ $rhs"
-    case Pure(f: ShowDirect) => doc"$f" // f.to_s
+    case Complement(xs)      => pp"$xs′"
+    case Intersect(lhs, rhs) => pp"$lhs ∩ $rhs"
+    case Union(lhs, rhs)     => pp"$lhs ∪ $rhs"
+    case Diff(lhs, rhs)      => pp"$lhs ∖ $rhs"
+    case Pure(f: ShowDirect) => pp"$f" // f.to_s
     case _                   => "{ ... }".s
   }
 

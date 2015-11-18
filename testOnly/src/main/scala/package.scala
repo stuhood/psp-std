@@ -120,6 +120,26 @@ package object tests {
       case x     => x
     }
   }
+
+  /** How to check for function equivalence? In the absence of mathematical breakthroughs,
+   *  recursively throw scalacheck at it again, verifying arbitrary inputs have the same result.
+   */
+  def observationalEq[M[X], A : Arbitrary, B : Eq](f: (M[A], A) => B): Eq[M[A]] = Eq[M[A]] { (xs, ys) =>
+    val prop = forAll((elem: A) => f(xs, elem) === f(ys, elem))
+    (Test check prop)(identity).passed
+  }
+  implicit def pintEq: Hash[Pint]                                        = inheritEq
+  implicit def pintShow: Show[Pint]                                      = inheritShow
+  implicit def predicateEq[A : Arbitrary] : Eq[InvariantPredicate[A]]    = observationalEq[InvariantPredicate, A, Boolean](_ apply _)
+  implicit def intensionalEq[A : Arbitrary : Eq] : Eq[InvariantInSet[A]] = observationalEq[InvariantInSet, A, Boolean](_ apply _)
+
+  implicit object IdentityAlgebra extends BooleanAlgebra[Boolean] {
+    def and(x: Boolean, y: Boolean): Boolean = x && y
+    def or(x: Boolean, y: Boolean): Boolean  = x || y
+    def complement(x: Boolean): Boolean      = !x
+    def zero: Boolean                        = false
+    def one: Boolean                         = true
+  }
 }
 
 package tests {

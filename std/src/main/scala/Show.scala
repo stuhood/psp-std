@@ -13,7 +13,6 @@ class FullRenderer extends Renderer {
     case Split(xs, _)                => (xs take minElements map (_.render) mk_s ", ") + ", ..."
   }) + " ]"
 
-
   def render(x: Doc): String = x match {
     case Doc.NoDoc           => ""
     case Doc.Cat(l, r)       => render(l) + render(r)
@@ -47,10 +46,8 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
   /** The type of args forces all the interpolation variables to
    *  be of a type which is implicitly convertible to Doc.
    */
-
-  def show(args: Doc*): String  = StringContext(stringContext.parts: _*).raw(args.map(_.render): _*)
-  def pp(args: TryDoc*): String = show(args.map(_.doc): _*)
-  def doc(args: TryDoc*): Doc   = Doc.Literal(pp(args: _*))
+  def show(args: Doc*): String = StringContext(stringContext.parts: _*).raw(args.map(_.render): _*)
+  def pp(args: Doc*): String   = show(args: _*)
 
   /** Can't see any way to reuse the standard (type-safe) f-interpolator, will
    *  apparently have to reimplement it entirely.
@@ -75,6 +72,7 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
 
 object Show {
   /** This of course is not implicit as that would defeat the purpose of the endeavor.
+   *  There is however an implicit universal instance in the Unsafe object.
    */
   val Inherited: Show[Any] = apply[Any] {
     case null          => ""
@@ -91,11 +89,6 @@ object Show {
  *  Not printing the way scala does.
  */
 trait ShowInstances extends ShowEach {
-  // implicit def showDoc(implicit z: Renderer): Show[Doc] = Show(z render _)
-  implicit def showTryDoc : Show[TryDoc] = Show {
-    case TryDoc.NoDoc(value, _) => value.any_s
-    case TryDoc.HasDoc(x)       => x.render
-  }
   implicit def showAttributeName : Show[jAttributeName] = inheritShow
   implicit def showBoolean: Show[Boolean]               = inheritShow
   implicit def showChar: Show[Char]                     = inheritShow

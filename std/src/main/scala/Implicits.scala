@@ -19,27 +19,23 @@ trait StdImplicits extends scala.AnyRef
   implicit def typeclassTupleCleave[A, B] : Pair.Cleave[A -> B, A, B]        = Pair.Cleave[A -> B, A, B](_ -> _, fst, snd)
   implicit def typeclassLinearSplit[A] : Pair.Split[Linear[A], A, Linear[A]] = Pair.Split(_.head, _.tail)
 
-  implicit def opsPspDirect[A](xs: Direct[A]): ops.DirectOps[A]         = new ops.DirectOps(xs)
-  implicit def convertViewEach[A](xs: View[A]): Each[A]                 = Each(xs foreach _)
-  implicit def opsSplitView[A](xs: SplitView[A]): Split[A]              = Split(xs.left, xs.right)
+  implicit def opsPspDirect[A](xs: Direct[A]): ops.DirectOps[A] = new ops.DirectOps(xs)
+  implicit def convertViewEach[A](xs: View[A]): Each[A]         = Each(xs foreach _)
+  implicit def opsSplitView[A](xs: SplitView[A]): Split[A]      = Split(xs.left, xs.right)
 
   // Promotion of the api type (which has as few methods as possible) to the
   // concrete type which has all the other ones.
 
-  implicit def promoteApiIndex(x: Index): IndexImpl                             = Index impl x
-  implicit def promoteApiOrder[A](ord: Order[A]): Order.Impl[A]                 = Order(ord.compare)
-  implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]                   = ExSet impl x
-  implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V]          = ExMap impl x
-  implicit def promoteApiView[A](xs: View[A]): BaseView[A, _]                   = xs match { case xs: BaseView[A, _] => xs }
-  implicit def promoteInvariantApiView[A](xs: InvariantView[A]): BaseView[A, _] = xs match { case xs: BaseView[A, _] => xs }
-  implicit def promoteApiInSet[A](x: InSet[A]): InSet.Impl[A]                   = InSet impl x
-  implicit def promoteApiInMap[K, V](x: InMap[K, V]): InMap.Impl[K, V]          = InMap impl x
+  implicit def promoteApiIndex(x: Index): IndexImpl                    = Index impl x
+  implicit def promoteApiOrder[A](ord: Order[A]): Order.Impl[A]        = Order(ord.compare)
+  implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]          = ExSet impl x
+  implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V] = ExMap impl x
+  implicit def promoteApiView[A](xs: View[A]): AtomicView[A, View[A]]  = View impl xs
+  implicit def promoteApiInSet[A](x: InSet[A]): InSet.Impl[A]          = InSet impl x
+  implicit def promoteApiInMap[K, V](x: InMap[K, V]): InMap.Impl[K, V] = InMap impl x
 }
 
-trait GlobalShow0 {
-  implicit def convertHasClassTagTryDoc[A](x: A)(implicit z: CTag[A]): TryDoc = TryDoc.NoDoc(x, z)
-}
-trait GlobalShow extends GlobalShow0 {
+trait GlobalShow {
   implicit def convertHasShowDocOps[A: Show](x: A): DocOps          = new DocOps(Doc(x))
   implicit def convertHasShowDoc[A](x: A)(implicit z: Show[A]): Doc = Doc(x)
 }
@@ -82,23 +78,22 @@ trait StdOps3 extends StdOps2 {
   implicit def opsHasShowEach[A: Show](x: Each[A]): ops.DocSeqOps = new ops.DocSeqOps(x map (_.doc) toVec)
   implicit def opsHasShowView[A: Show](x: View[A]): ops.DocSeqOps = opsHasShowEach(x)
 
-  implicit def opsBoolean(x: Boolean): ops.BooleanOps                               = new ops.BooleanOps(x)
-  implicit def opsBooleanAlgebra[A](x: BooleanAlgebra[A]): ops.BooleanAlgebraOps[A] = new ops.BooleanAlgebraOps[A](x)
-  implicit def opsChar(x: Char): ops.CharOps                                        = new ops.CharOps(x)
-  implicit def opsFileTime(x: jFileTime): ops.FileTimeOps                           = new ops.FileTimeOps(x)
-  implicit def opsHasPreciseSize(x: HasPreciseSize): ops.HasPreciseSizeOps          = new ops.HasPreciseSizeOps(x)
-  implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A]          = new ops.JavaIteratorOps[A](x)
-  implicit def opsInputStream(x: InputStream): ops.InputStreamOps                   = new ops.InputStreamOps(x)
-  implicit def opsInt(x: Int): ops.IntOps                                           = new ops.IntOps(x)
-  implicit def opsLong(x: Long): ops.LongOps                                        = new ops.LongOps(x)
-  implicit def opsOption[A](x: Option[A]): ops.OptionOps[A]                         = new ops.OptionOps[A](x)
-  implicit def opsPartialFunction[A, B](pf: A ?=> B): ops.PartialFunctionOps[A, B]  = new ops.PartialFunctionOps(pf)
-  implicit def opsPrecise(x: Precise): ops.PreciseOps                               = new ops.PreciseOps(x)
-  implicit def opsSize(x: Size): ops.SizeOps                                        = new ops.SizeOps(x)
-  implicit def opsStdOpt[A](x: Opt[A]): ops.StdOptOps[A]                            = new ops.StdOptOps[A](x)
-  implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                                  = new ops.TryOps[A](x)
-  implicit def opsZipView[A, B](xs: ZipView[A, B]): ops.ZipViewOps[A, B]            = new ops.ZipViewOps(xs)
-  implicit def opsUnit(x: Unit): ops.UnitOps.type                                   = ops.UnitOps
+  implicit def opsBoolean(x: Boolean): ops.BooleanOps                              = new ops.BooleanOps(x)
+  implicit def opsChar(x: Char): ops.CharOps                                       = new ops.CharOps(x)
+  implicit def opsFileTime(x: jFileTime): ops.FileTimeOps                          = new ops.FileTimeOps(x)
+  implicit def opsHasPreciseSize(x: HasPreciseSize): ops.HasPreciseSizeOps         = new ops.HasPreciseSizeOps(x)
+  implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A]         = new ops.JavaIteratorOps[A](x)
+  implicit def opsInputStream(x: InputStream): ops.InputStreamOps                  = new ops.InputStreamOps(x)
+  implicit def opsInt(x: Int): ops.IntOps                                          = new ops.IntOps(x)
+  implicit def opsLong(x: Long): ops.LongOps                                       = new ops.LongOps(x)
+  implicit def opsOption[A](x: Option[A]): ops.OptionOps[A]                        = new ops.OptionOps[A](x)
+  implicit def opsPartialFunction[A, B](pf: A ?=> B): ops.PartialFunctionOps[A, B] = new ops.PartialFunctionOps(pf)
+  implicit def opsPrecise(x: Precise): ops.PreciseOps                              = new ops.PreciseOps(x)
+  implicit def opsSize(x: Size): ops.SizeOps                                       = new ops.SizeOps(x)
+  implicit def opsStdOpt[A](x: Opt[A]): ops.StdOptOps[A]                           = new ops.StdOptOps[A](x)
+  implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                                 = new ops.TryOps[A](x)
+  implicit def opsZipView[A, B](xs: ZipView[A, B]): ops.ZipViewOps[A, B]           = new ops.ZipViewOps(xs)
+  implicit def opsUnit(x: Unit): ops.UnitOps.type                                  = ops.UnitOps
 }
 
 trait StdOps extends StdOps3 {
@@ -176,4 +171,86 @@ trait StdBuilds extends StdBuilds2 {
   implicit def unbuildPspString: UnbuildsAs[Char, String]          = Unbuilds[Char, String](Direct fromString _)
   implicit def buildPspString: Builds[Char, String]                = Builds.string
   implicit def viewPspString(xs: String): DirectView[Char, String] = View direct (Direct fromString xs)
+}
+
+trait PrimitiveInstances {
+  implicit def boolOrder: Order[Bool]   = orderBy[Bool](x => if (x) 1 else 0)
+  implicit def byteOrder: Order[Byte]   = Order.fromInt(_ - _)
+  implicit def charOrder: Order[Char]   = Order.fromInt[Char](_ - _)
+  implicit def shortOrder: Order[Short] = Order.fromInt[Short](_ - _)
+  implicit def intOrder: Order[Int]     = Order.fromInt[Int](_ - _)
+  implicit def longOrder: Order[Long]   = Order.fromLong[Long](_ - _)
+  implicit def unitOrder: Order[Unit]   = Order.fromInt[Unit]((x, y) => 0)
+}
+
+trait AlgebraInstances {
+  implicit def predicateAlgebra[A] : BooleanAlgebra[ToBool[A]]     = new Algebras.PredicateAlgebra[A]
+  implicit def intensionalSetAlgebra[A] : BooleanAlgebra[InSet[A]] = new Algebras.InSetAlgebra[A]
+}
+
+trait OrderInstancesLow {
+  // If this is written in the obvious way, i.e.
+  //
+  //   implicit def comparableOrder[A <: Comparable[A]] : Order[A]
+  //
+  // Then it isn't found for infix operations on Comparables. We also can't call
+  // Order.natural[A]() because it has that bound, despite the implicit witness.
+  implicit def comparableOrder[A](implicit ev: A <:< Comparable[A]): Order[A] = Order.fromInt[A](_ compareTo _)
+}
+
+trait OrderInstances extends OrderInstancesLow {
+  // Some unfortunate rocket dentistry necessary here.
+  // This doesn't work because scala comes up with "Any" due to the fbound.
+  // implicit def enumOrder[A <: jEnum[A]]: Order[A] = Order.fromInt[A](_.ordinal - _.ordinal)
+  //
+  // This one doesn't work if it's A <:< jEnum[A], but jEnum[_] is just enough to get what we need.
+  implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A] = orderBy[A](_.ordinal) // Order.fromInt[A](_.ordinal - _.ordinal)
+
+  implicit def indexOrder: Order[Index]                                     = orderBy[Index](_.get)
+  implicit def preciseOrder[A <: Precise]: Order[A]                         = orderBy[Precise](_.longValue)
+  implicit def stringOrder: Order[String]                                   = Order.fromLong[String](_ compareTo _)
+  implicit def tuple2Order[A: Order, B: Order] : Order[(A, B)]              = orderBy[(A, B)](fst) | snd
+  implicit def tuple3Order[A: Order, B: Order, C: Order] : Order[(A, B, C)] = orderBy[(A, B, C)](_._1) | (_._2) | (_._3)
+}
+
+trait EmptyInstances0 {
+  implicit def emptyCanBuild[R](implicit z: CanBuild[_, R]): Empty[R] = Empty(z().result)
+}
+
+trait EmptyInstances extends EmptyInstances0 {
+  implicit def emptyAtomicView[A, Repr] : Empty[AtomicView[A, Repr]] = Empty(View.each[A, Repr](emptyValue))
+  implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]    = Empty(z build Each.empty)
+  implicit def emptyOption[A] : Empty[Option[A]]                     = Empty(None)
+  implicit def emptyTuple[A: Empty, B: Empty]: Empty[(A, B)]         = Empty(emptyValue[A] -> emptyValue[B])
+  implicit def emptyView[A] : Empty[View[A]]                         = Empty(view())
+
+  implicit def emptyFile: Empty[jFile]            = Empty(NoFile)
+  implicit def emptyIndex: Empty[Index]           = Empty(NoIndex)
+  implicit def emptyIndexRange: Empty[IndexRange] = Empty(indexRange(0, 0))
+  implicit def emptyPath: Empty[Path]             = Empty(NoPath)
+  implicit def emptyDoc: Empty[Doc]               = Empty(Doc.empty)
+  implicit def emptyString: Empty[String]         = Empty("")
+}
+
+trait EqInstances extends OrderInstances {
+  import StdShow._
+
+  implicit def classWrapperEq: Hash[JavaClass] = inheritEq
+  implicit def classEq: Hash[Class[_]]         = inheritEq
+  implicit def offsetEq: Hash[Offset]          = inheritEq
+  implicit def pathEq: Eq[Path]                = shownEq[Path]
+  implicit def sizeEq: Hash[Size]              = inheritEq
+
+  /** The throwableEq defined above conveniently conflicts with the actual
+   *  implicit parameter to the method. W... T... F. On top of this the error
+   *  message is simply "value === is not a member of Throwable".
+   */
+  implicit def tryEq[A](implicit z1: Eq[A], z2: Eq[Throwable]): Eq[Try[A]] = Eq {
+    case (Success(x), Success(y)) => x === y
+    case (Failure(x), Failure(y)) => x === y // would be x === y, but.
+    case _                        => false
+  }
+
+  implicit def arrayEq[A: Eq] : Eq[Array[A]]   = eqBy[Array[A]](_.toDirect)
+  implicit def vectorEq[A: Eq] : Eq[Direct[A]] = Eq(_ zip _ corresponds (_ === _))
 }

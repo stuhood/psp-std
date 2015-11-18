@@ -41,10 +41,10 @@ package object std extends psp.std.StdPackage {
   }
 
   // Helpers for inference when calling 'on' on contravariant type classes.
-  def eqBy[A]    = new psp.impl.EqBy[A]
-  def hashBy[A]  = new psp.impl.HashBy[A]
-  def orderBy[A] = new psp.impl.OrderBy[A]
-  def showBy[A]  = new psp.impl.ShowBy[A]
+  def eqBy[A]    = new EqBy[A]
+  def hashBy[A]  = new HashBy[A]
+  def orderBy[A] = new OrderBy[A]
+  def showBy[A]  = new ShowBy[A]
 
   // DMZ.
   final val ::      = psp.dmz.::
@@ -100,19 +100,11 @@ package object std extends psp.std.StdPackage {
   implicit class DocOps(val lhs: Doc) {
     def doc: Doc                             = lhs
     def render(implicit z: Renderer): String = z render lhs
-    def isEmpty: Boolean                     = lhs == Doc.NoDoc
+    def isEmpty: Boolean                     = lhs eq emptyValue[Doc]
 
     def ~(rhs: Doc): Doc   = Doc.Cat(lhs, rhs)
     def <>(rhs: Doc): Doc  = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ rhs
     def <+>(rhs: Doc): Doc = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ " ".s ~ rhs
-  }
-
-  implicit class TryDocOps(val x: TryDoc) {
-    def doc: Doc = x match {
-      case TryDoc.NoDoc(value, _) => ("" + value).s
-      case TryDoc.HasDoc(x)       => x
-    }
-    def render(implicit z: Renderer): String = z render doc
   }
 
   // Methods similar to the more useful ones in scala's Predef.

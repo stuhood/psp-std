@@ -20,7 +20,6 @@ object Eq {
   final class EqImpl[-A](val e: Relation[A]) extends AnyVal with Eq[A] {
     def equiv(x: A, y: A) = e(x, y)
   }
-
   class EqComparator[A: Eq]() extends Comparator[A] {
     def compare(x: A, y: A): Int = if (x === y) 0 else x.id_## - y.id_##
   }
