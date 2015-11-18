@@ -2,7 +2,7 @@ package psp
 package std
 
 import api._, StdShow._
-import scala.compat.Platform.arraycopy
+import java.lang.System.arraycopy
 import Api.SpecTypes
 import Vec.levelOf
 

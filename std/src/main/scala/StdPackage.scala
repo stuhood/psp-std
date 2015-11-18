@@ -16,12 +16,10 @@ import psp.dmz.ScalaDmz
 abstract class StdPackage
       extends impl.EmptyInstances
          with impl.PrimitiveInstances
-         with StdProperties
          with impl.AlgebraInstances
          with GlobalShow
          with StdImplicits
          with api.Aliases
-         with SpireIntegration
          with ScalaDmz {
 
   // Higher than Direct.
@@ -31,7 +29,10 @@ abstract class StdPackage
   implicit def pairedCollectionOps0[R, A, B](xs: View[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B] = new Paired[R, A, B](xs.toEach)
   implicit def pairedCollectionOps[R, A, B](xs: Each[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B]  = new Paired[R, A, B](xs)
 
-  type UnbuildsAs[+A, R] = Unbuilds[R] { type Elem <: A }
+  // Spire
+  type BooleanAlgebra[R] = spire.algebra.Bool[R]
+  type UInt              = spire.math.UInt
+  type Natural           = spire.math.Natural
 
   implicit class CleaveOps[R, A, B](xs: R)(implicit z: Pair.Cleave[R, A, B]) {
     def mapLeft(f: A => A): R  = z.join(f(z left xs), z right xs)
@@ -95,7 +96,6 @@ abstract class StdPackage
   implicit def wrapClass(x: jClass): JavaClass                            = new JavaClassImpl(x)
   implicit def wrapClassLoader(x: jClassLoader): JavaClassLoader          = new JavaClassLoaderImpl(x)
   implicit def wrapEnumeration[A](x: jEnumeration[A]): JavaEnumeration[A] = new JavaEnumeration(x)
-
-  implicit def constantPredicate[A](value: Boolean): ToBool[A] = if (value) ConstantTrue else ConstantFalse
-  implicit def conforms[A] : (A <:< A)                         = new conformance[A]
+  implicit def constantPredicate[A](value: Boolean): ToBool[A]            = if (value) ConstantTrue else ConstantFalse
+  implicit def conforms[A] : (A <:< A)                                    = new conformance[A]
 }

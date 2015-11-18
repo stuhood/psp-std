@@ -50,7 +50,7 @@ trait ConversionsImpl[A] extends Any {
   def toHashSet(implicit z: Hash[A]): ExSet[A] = to[ExSet]
   def toJavaList: jList[A]                     = to[jList]
   def toJavaSet: jSet[A]                       = to[jSet]
-  def toLinear: Linear[A]                      = to[Linear]
+  def toPlist: Plist[A]                        = to[Plist]
   def toRefArray(): Array[Ref[A]]              = Builds.array[Ref[A]] build xs.toRefs
   def toScalaList: sciList[A]                  = to[sciList]
   def toScalaSeq: sciSeq[A]                    = to[sciSeq]

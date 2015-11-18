@@ -26,6 +26,7 @@ trait JavaLibrary extends Any {
   def defaultCharset: Charset         = java.nio.charset.Charset.defaultCharset
   def fileSeparator: String           = java.io.File.separator
   def identityHashCode[A](x: A): Int  = java.lang.System.identityHashCode(x)
+  def lineSeparator: String           = java.lang.System.getProperty("line.separator")
   def milliTime: Long                 = java.lang.System.currentTimeMillis
   def nanoTime: Long                  = java.lang.System.nanoTime
   def systemClassLoader: ClassLoader  = java.lang.ClassLoader.getSystemClassLoader

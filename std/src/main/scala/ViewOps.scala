@@ -8,11 +8,14 @@ import Api.SpecTypes
 trait ApiViewOps[+A] extends Any {
   def xs: View[A]
 
-  private def stringed(sep: String)(f: ToString[A]): String = xs map f zreduce (_ append sep append _)
+  private def stringed(sep: String)(f: ToString[A]): String = xs map f zreducel (_ append sep append _)
   private def directIsEmpty: Boolean = {
     xs foreach (_ => return false)
     true
   }
+
+  private[this] def fromLeft: ViewFromLeft[A]   = new ViewFromLeft(xs)
+  private[this] def fromRight: ViewFromRight[A] = new ViewFromRight(xs)
 
   def foreachWithIndex(f: (A, Index) => Unit): Unit      = foldl(0.index)((idx, x) => try idx.next finally f(x, idx))
   def count(p: ToBool[A]): Int                           = foldl[Int](0)((res, x) => if (p(x)) res + 1 else res)
@@ -99,6 +102,7 @@ trait InvariantViewOps[A] extends Any with ApiViewOps[A] {
   def sortWith(cmp: OrderRelation[A]): View[A]            = orderOps(Order(cmp)).sorted
   def findOr(p: ToBool[A], alt: => A): A                  = find(p) | alt
   def reducel(f: BinOp[A]): A                             = tail.foldl(head)(f)
+  def reducer(f: BinOp[A]): A                             = tail.foldr(head)(f)
 
   def zinit: View[A]                    = if (isEmpty) emptyValue[View[A]] else init
   def ztail: View[A]                    = if (isEmpty) emptyValue[View[A]] else tail
@@ -185,14 +189,31 @@ final class HasOrder[A](xs: View[A])(implicit z: Order[A]) extends HasEq[A](xs) 
   def sorted: View[A]       = xs.toRefArray.inPlace.sort
 }
 final class HasEmpty[A](xs: View[A])(implicit z: Empty[A]) {
-  def zapply(i: Index): A     = xs drop i.sizeExcluding zhead
-  def zfind(p: ToBool[A]): A  = xs.findOr(p, emptyValue)
-  def zhead: A                = if (xs.isEmpty) emptyValue else xs.head
-  def zlast: A                = if (xs.isEmpty) emptyValue else xs.last
-  def zreduce(f: BinOp[A]): A = if (xs.isEmpty) emptyValue else xs reducel f
+  def zapply(i: Index): A      = xs drop i.sizeExcluding zhead
+  def zfind(p: ToBool[A]): A   = xs.findOr(p, emptyValue)
+  def zhead: A                 = if (xs.isEmpty) emptyValue else xs.head
+  def zlast: A                 = if (xs.isEmpty) emptyValue else xs.last
+  def zreducel(f: BinOp[A]): A = if (xs.isEmpty) emptyValue else xs reducel f
+  def zreducer(f: BinOp[A]): A = if (xs.isEmpty) emptyValue else xs reducer f
 }
 final class HasInitialValue[+A, B](xs: View[A], initial: B) {
   def indexed(f: (B, A, Index) => B): B = lowlevel.ll.foldLeftIndexed(xs, initial, f)
   def left(f: (B, A) => B): B           = lowlevel.ll.foldLeft(xs, initial, f)
   def right(f: (A, B) => B): B          = lowlevel.ll.foldRight(xs, initial, f)
+}
+final class ViewFromLeft[A](xs: View[A]) {
+  def first: A = xs.head
+  def fold[B](zero: B)(f: (B, A) => B): B               = xs.foldl(zero)(f)
+  def reduce(f: BinOp[A]): A                            = xs reducel f
+  def zfirst(implicit z: Empty[A]): A                   = if (xs.isEmpty) emptyValue else xs.head
+  def zfold[B](f: (B, A) => B)(implicit z: Empty[B]): B = fold(z.empty)(f)
+  def zreduce(f: BinOp[A])(implicit z: Empty[A]): A     = if (xs.isEmpty) emptyValue else reduce(f)
+}
+final class ViewFromRight[A](xs: View[A]) {
+  def first: A                                          = xs.last
+  def fold[B](zero: B)(f: (A, B) => B): B               = xs.foldr(zero)(f)
+  def reduce(f: BinOp[A]): A                            = xs reducer f
+  def zfirst(implicit z: Empty[A]): A                   = if (xs.isEmpty) emptyValue else xs.last
+  def zfold[B](f: (A, B) => B)(implicit z: Empty[B]): B = fold(z.empty)(f)
+  def zreduce(f: BinOp[A])(implicit z: Empty[A]): A     = if (xs.isEmpty) emptyValue else reduce(f)
 }

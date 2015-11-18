@@ -20,7 +20,6 @@ trait StdImplicits extends scala.AnyRef
   implicit def typeclassLinearSplit[A] : Pair.Split[Linear[A], A, Linear[A]] = Pair.Split(_.head, _.tail)
 
   implicit def opsPspDirect[A](xs: Direct[A]): ops.DirectOps[A]         = new ops.DirectOps(xs)
-  implicit def opsPspLinear[A](xs: Linear[A]): ops.LinearOps[A]         = new ops.LinearOps(xs)
   implicit def convertViewEach[A](xs: View[A]): Each[A]                 = Each(xs foreach _)
   implicit def opsSplitView[A](xs: SplitView[A]): Split[A]              = Split(xs.left, xs.right)
   implicit def opsPspArray[A](xs: Array[A]): ops.InvariantApiViewOps[A] = new ops.InvariantApiViewOps[A](xs.toDirect)
@@ -56,7 +55,7 @@ trait StdOps2 extends StdOps1 {
   // We buried Predef's {un,}augmentString in favor of these.
   implicit def pspAugmentString(x: String): PspStringOps           = new PspStringOps(x)
   implicit def opsAtomicView[A](x: View[A]): ops.ViewOpsImpl[A]    = new ops.ViewOpsImpl(x)
-  implicit def opsHasOrderInfix[A: Order](x: A): infix.OrderOps[A] = new infix.OrderOps[A](x)
+  implicit def opsHasOrderInfix[A: Order](x: A): ops.infix.OrderOps[A] = new ops.infix.OrderOps[A](x)
 
   implicit def opsHasEq[A: Eq](x: View[A]): ops.HasEq[A]          = new ops.HasEq(x)
 }
@@ -65,9 +64,9 @@ trait StdOps3 extends StdOps2 {
   // We're (sickly) using the context bound to reduce the applicability of the implicit,
   // but then discarding it. The only way these can be value classes is if the type class
   // arrives with the method call.
-  implicit def opsHasAlgebraInfix[A: BooleanAlgebra](x: A): infix.AlgebraOps[A] = new infix.AlgebraOps[A](x)
-  implicit def opsHasEqInfix[A: Eq](x: A): infix.EqOps[A]                       = new infix.EqOps[A](x)
-  implicit def opsHasHashInfix[A: Hash](x: A): infix.HashOps[A]                 = new infix.HashOps[A](x)
+  implicit def opsHasAlgebraInfix[A: BooleanAlgebra](x: A): ops.infix.AlgebraOps[A] = new ops.infix.AlgebraOps[A](x)
+  implicit def opsHasEqInfix[A: Eq](x: A): ops.infix.EqOps[A]                       = new ops.infix.EqOps[A](x)
+  implicit def opsHasHashInfix[A: Hash](x: A): ops.infix.HashOps[A]                 = new ops.infix.HashOps[A](x)
 
   implicit def opsHasOrder[A: Order](x: View[A]): ops.HasOrder[A] = new ops.HasOrder(x)
   implicit def opsHasEmpty[A: Empty](x: View[A]): ops.HasEmpty[A] = new ops.HasEmpty[A](x)
@@ -138,8 +137,8 @@ trait JavaBuilds0 {
   implicit def buildJavaSet[A]: Builds[A, jSet[A]]                                                   = Builds.jSet[A]
   implicit def buildJavaList[A]: Builds[A, jList[A]]                                                 = Builds.jList[A]
   implicit def buildJavaMap[K, V]: Builds[K -> V, jMap[K, V]]                                        = Builds.jMap[K, V]
-  implicit def viewJavaIterable[A, CC[X] <: jIterable[X]](xs: CC[A]): LinearView[A, CC[A]]           = View linear (Linear fromJava xs)
-  implicit def viewJavaMap[K, V, CC[K, V] <: jMap[K, V]](xs: CC[K, V]): AtomicView[K -> V, CC[K, V]] = View each (Each fromJavaMap xs)
+  implicit def viewJavaIterable[A, CC[X] <: jIterable[X]](xs: CC[A]): AtomicView[A, CC[A]]           = View(xs)
+  implicit def viewJavaMap[K, V, CC[K, V] <: jMap[K, V]](xs: CC[K, V]): AtomicView[K -> V, CC[K, V]] = View(xs)
   implicit def viewDirectoryStream[A](stream: DirectoryStream[A]): View[A]                           = inView(BiIterable(stream) foreach _)
 
   implicit def unbuildJavaIterable[A, CC[X] <: jIterable[X]] : UnbuildsAs[A, CC[A]]        = Unbuilds[A, CC[A]](Each fromJava _)
@@ -155,7 +154,7 @@ trait JavaBuilds extends JavaBuilds0 {
 trait ScalaBuilds extends JavaBuilds {
   implicit def unbuildScalaCollection[A, CC[X] <: GTOnce[X]] : UnbuildsAs[A, CC[A]]             = Unbuilds[A, CC[A]](Each fromScala _)
   implicit def buildScalaCollection[A, That](implicit z: CanBuild[A, That]): Builds[A, That]    = Builds.sCollection[A, That]
-  implicit def viewScalaCollection[A, CC[X] <: sCollection[X]](xs: CC[A]): LinearView[A, CC[A]] = View linear (Linear fromScala xs)
+  implicit def viewScalaCollection[A, CC[X] <: sCollection[X]](xs: CC[A]): AtomicView[A, CC[A]] = View fromScala xs
 
   implicit def unbuildScalaMap[K, V, CC[X, Y] <: scMap[X, Y]] : UnbuildsAs[K -> V, CC[K, V]]                   = Unbuilds[K -> V, CC[K, V]](Each fromScala _)
   implicit def buildScalaMap[K, V, That](implicit z: CanBuild[scala.Tuple2[K, V], That]): Builds[K -> V, That] = Builds.sMap[K, V, That]
@@ -165,7 +164,7 @@ trait ScalaBuilds extends JavaBuilds {
   implicit def buildPspMap[K: Eq, V]: Builds[K -> V, ExMap[K, V]]                = Builds.exMap[K, V]
 }
 trait StdBuilds0 extends ScalaBuilds {
-  implicit def buildPspLinear[A] : Builds[A, Linear[A]]                          = Builds.linear[A]
+  implicit def buildPspLinear[A] : Builds[A, Plist[A]]                           = Plist.newBuilder[A]
   implicit def viewPspEach[A, CC[X] <: Each[X]](xs: CC[A]): AtomicView[A, CC[A]] = View each xs
   implicit def unbuildPspEach[A, CC[X] <: Each[X]] : UnbuildsAs[A, CC[A]]        = Unbuilds[A, CC[A]](xs => xs)
 }
@@ -175,7 +174,7 @@ trait StdBuilds1 extends StdBuilds0 {
   implicit def viewPspArray[A](xs: Array[A]): DirectView[A, Array[A]] = View direct (Direct fromArray xs)
 }
 trait StdBuilds2 extends StdBuilds1 {
-  implicit def buildPspDirect[A] : Builds[A, Vec[A]]                                 = Builds.direct[A]
+  implicit def buildPspDirect[A] : Builds[A, Vec[A]]                                 = Vec.newBuilder[A] // Builds.direct[A]
   implicit def viewPspDirect[A, CC[X] <: Direct[X]](xs: CC[A]): DirectView[A, CC[A]] = View direct xs
 }
 trait StdBuilds extends StdBuilds2 {
