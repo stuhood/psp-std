@@ -41,7 +41,7 @@ trait JavaClass extends Any {
   def isSynthetic      = clazz.isSynthetic
 
   def ancestorNames: Vec[String]         = ancestors mapNow (_.rawName)
-  def ancestors: Vec[JavaClass]          = this transitiveClosure (_.parents) toVec
+  def ancestors: Vec[JavaClass]          = transitiveClosure(this)(_.parents).toVec
   def exists: Boolean                    = clazz != null
   def fields: Vec[jField]                = clazz.getFields.toVec
   def getCanonicalName: String           = clazz.getCanonicalName

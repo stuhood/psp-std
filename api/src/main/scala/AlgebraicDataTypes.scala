@@ -100,4 +100,5 @@ object Doc {
 
   def empty: Doc = NoDoc
   def apply[A](x: A)(implicit z: Show[A]): Shown[A] = Shown[A](x, z)
+  def apply(s: String): Literal                     = Literal(s)
 }

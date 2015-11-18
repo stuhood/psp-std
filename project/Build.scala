@@ -28,6 +28,10 @@ object Build extends sbt.Build {
       case _      => Seq(scalaParsers)
     }
   }
+  def sourcesIn(p: Project): TaskOf[Seq[jFile]] = Def task {
+    (sources in Test in p).value ++ (sources in Compile in p).value
+  }
+
   implicit class ProjectOps(val p: Project) {
     def setup(): Project             = p.alsoToolsJar also commonSettings(p) also (name := "psp-" + p.id)
     def setup(text: String): Project = setup() also (description := text)
@@ -87,8 +91,8 @@ object Build extends sbt.Build {
     ),
     console in Compile <<=  console in Compile in consoleOnly,
        console in Test <<=  console in Test in consoleOnly,
-          watchSources <++= sources in Test in testOnly,
-          watchSources <++= sources in Compile in testOnly
+          watchSources <++= sourcesIn(testOnly),
+          watchSources <++= sourcesIn(consoleOnly)
   )
 
   lazy val api    = project setup "psp's non-standard api"

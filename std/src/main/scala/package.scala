@@ -11,15 +11,6 @@ package object std extends psp.std.StdPackage {
   import Unsafe.inheritedShow
   private implicit def lexical = lexicalOrder
 
-  /** Scala, so aggravating.
-   *  [error] could not find implicit value for parameter equiv: psp.api.Eq[psp.tests.Pint => psp.std.Boolean]
-   *  The parameter can be given explicitly, it just won't be found unless the function type is invariant.
-   *  The same issue arises with intensional sets.
-   */
-  type InvariantPredicate[A] = A => Boolean
-  type InvariantInSet[A]     = InSet[A]
-  type View2D[+A]            = View[View[A]]
-  type Each2D[+A]            = Each[Each[A]]
   type IndexRange            = Consecutive[Index]
   type IntRange              = Consecutive[Int]
   type BuildsMap[K, V]       = Builds[K -> V, ExMap[K, V]]
@@ -95,11 +86,11 @@ package object std extends psp.std.StdPackage {
   final val ->            = psp.api.Pair
 
   implicit val defaultRenderer: FullRenderer              = new FullRenderer
-  implicit def docOrder(implicit z: Renderer): Order[Doc] = orderBy[Doc](z render _)
+  implicit def docOrder(implicit z: Renderer): Order[Doc] = orderBy[Doc](z show _)
 
   implicit class DocOps(val lhs: Doc) {
     def doc: Doc                             = lhs
-    def render(implicit z: Renderer): String = z render lhs
+    def render(implicit z: Renderer): String = z show lhs
     def isEmpty: Boolean                     = lhs eq emptyValue[Doc]
 
     def ~(rhs: Doc): Doc   = Doc.Cat(lhs, rhs)

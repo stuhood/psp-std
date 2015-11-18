@@ -139,7 +139,7 @@ class ViewBasic extends ScalacheckBundle {
   val s4 = new Bippy("def", 3)
   val strs = sciVector(s1, s2, s3, s4)
 
-  def closure    = parray transitiveClosure (x => view(x.init.force, x.tail.force))
+  def closure    = transitiveClosure(parray)(x => view(x.init.force, x.tail.force))
   def closureBag = closure flatMap (x => x) toBag // That's my closure bag, baby
   def xxNumbers  = (Indexed from 0).m grep """^(.*)\1""".r
 

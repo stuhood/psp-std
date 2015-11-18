@@ -8,15 +8,15 @@ class FullRenderer extends Renderer {
   def minElements: Precise = 3.size
   def maxElements: Precise = 10.size
 
-  def renderEach(xs: Each[Doc]): String = "[ " + (xs splitAt maxElements.lastIndex match {
-    case Split(xs, ys) if ys.isEmpty => xs map (_.render) mk_s ", "
-    case Split(xs, _)                => (xs take minElements map (_.render) mk_s ", ") + ", ..."
+  def showEach(xs: Each[Doc]): String = "[ " + (xs splitAt maxElements.lastIndex match {
+    case Split(xs, ys) if ys.isEmpty => xs map show mk_s ", "
+    case Split(xs, _)                => (xs take minElements map show mk_s ", ") + ", ..."
   }) + " ]"
 
-  def render(x: Doc): String = x match {
+  def show(x: Doc): String = x match {
     case Doc.NoDoc           => ""
-    case Doc.Cat(l, r)       => render(l) + render(r)
-    case Doc.Group(xs)       => renderEach(xs)
+    case Doc.Cat(l, r)       => show(l) + show(r)
+    case Doc.Group(xs)       => showEach(xs)
     case Doc.Shown(value, z) => z show value
     case Doc.Literal(s)      => s
   }
@@ -46,7 +46,7 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
   /** The type of args forces all the interpolation variables to
    *  be of a type which is implicitly convertible to Doc.
    */
-  def show(args: Doc*): String = StringContext(stringContext.parts: _*).raw(args.map(_.render): _*)
+  def show(args: Doc*): String = StringContext(escapedParts: _*).raw(args.map(_.render): _*)
   def pp(args: Doc*): String   = show(args: _*)
 
   /** Can't see any way to reuse the standard (type-safe) f-interpolator, will
@@ -118,10 +118,10 @@ trait ShowInstances extends ShowEach {
 }
 
 trait ShowEach0 {
-  implicit def showView[A: Show](implicit z: FullRenderer): Show[View[A]] = showBy[View[A]](z renderEach _.toEach.map(_.doc))
+  implicit def showView[A: Show](implicit z: FullRenderer): Show[View[A]] = showBy[View[A]](z showEach _.toEach.map(_.doc))
 }
 trait ShowEach1 extends ShowEach0 {
-  implicit def showEach[A: Show](implicit z: FullRenderer): Show[Each[A]] = Show(xs => z renderEach (xs map (_.doc)))
+  implicit def showEach[A: Show](implicit z: FullRenderer): Show[Each[A]] = Show(xs => z showEach (xs map (_.doc)))
 }
 trait ShowEach extends ShowEach1 {
   implicit def showMap[K: Show, V: Show, CC[X, Y] <: InMap[X, Y]] : Show[CC[K, V]] = Show {
