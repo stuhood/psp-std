@@ -40,7 +40,8 @@ class OperationCounts extends ScalacheckBundle {
   def chooseSmall = 1 upTo max / 20
   def chooseRange = gen.indexRangeFrom(max / 2, max)
 
-  private def lop[A](f: A => (String, ViewClass.Op)): A => ViewClass.Op = n => f(n) |> { case (label, f) => label |: f }
+  private def lop[A](f: A => (String, ViewClass.Op)): A => ViewClass.Op =
+    n => f(n) |> { case (label, f) => new LabeledFunction(f, label) }
 
   private def divides(n: Int)  = (_: Int) % n == 0
   private def less(n: Int)     = (_: Int) < n

@@ -17,6 +17,11 @@ object View {
   def fromJava[A, R <: jIterable[A]](xs: R): AtomicView[A, R]    = each(Each fromJava xs)
   def fromString(s: String): DirectView[Char, String]            = direct(Direct fromString s)
   def fromArray[A](xs: Array[A]): DirectView[A, Array[A]]        = direct(Direct fromArray xs)
-  def each[A, Repr](xs: Each[A]): AtomicView[A, Repr]            = new LinearView(xs)
-  def direct[A, Repr](xs: Direct[A]): DirectView[A, Repr]        = new DirectView(xs)
+
+  def each[A, Repr](xs: Each[A]): AtomicView[A, Repr]     = new LinearView(xs)
+  def direct[A, Repr](xs: Direct[A]): DirectView[A, Repr] = new DirectView(xs)
+  def view[A](xs: View[A]): AtomicView[A, View[A]] = xs match {
+    case xs: AtomicView[A @unchecked, View[A] @unchecked] => xs
+    case _                                                => each[A, View[A]](Each(f => xs foreach f))
+  }
 }

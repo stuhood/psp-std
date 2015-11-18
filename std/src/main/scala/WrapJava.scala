@@ -77,7 +77,7 @@ trait JavaClassLoader extends Any {
   }
   def uris: Each[jUri] = loader match {
     case cl: URLClassLoader => cl.getURLs map (_.toURI)
-    case _                  => emptyValue
+    case _                  => vec()
   }
   def to_s: String = s"$loader"
 }
