@@ -5,6 +5,7 @@ import scala.Predef.{ conforms => _ }
 import sbt._, Keys._, psp.libsbt._, Deps._
 import psp.std._
 import com.typesafe.sbt.JavaVersionCheckPlugin.autoImport._
+import scoverage.ScoverageKeys._
 
 object Build extends sbt.Build {
   def consoleDependencies = List(jsr305, ammonite)
@@ -85,9 +86,12 @@ object Build extends sbt.Build {
       aggregateIn(compile in Compile, compileOnly),
       aggregateIn(test, testOnly),
       aggregateIn(key.packageTask, publishOnly),
+      aggregateIn(coverageReport, compileOnly),
+      aggregateIn(coverageAggregate, compileOnly),
       aggregateIn(publish, publishOnly),
       aggregateIn(publishLocal, publishOnly),
-      aggregateIn(publishM2, publishOnly)
+      aggregateIn(publishM2, publishOnly),
+      Command.command("cov")(_ justRun (coverageAggregate in compileOnly))
     ),
     console in Compile <<=  console in Compile in consoleOnly,
        console in Test <<=  console in Test in consoleOnly,

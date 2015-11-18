@@ -211,8 +211,8 @@ final class FunOps[A, B](val f: Fun[A, B]) extends AnyVal {
   }
 
   def traced(in: A => Unit, out: B => Unit): Fun[A, B] = ( f
-     mapIn[A] { x => in(x) ; x }
-    mapOut[B] { x => out(x) ; x }
+    .   mapIn[A] { x => in(x) ; x }
+    .  mapOut[B] { x => out(x) ; x }
   )
   def memoized: Fun[A, B] = {
     val cache = scala.collection.mutable.Map[A, B]()

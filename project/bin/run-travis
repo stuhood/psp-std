@@ -4,12 +4,14 @@
 uname="$(uname -a)"
 
 runTests () {
-  sbt -J-Xmx3784m clean test || exit 1
+  sbt -J-Xmx3784m clean coverage test || exit 1
   echo "[info] $(date) - finished sbt test"
+  sbt coverageReport
 
   # Tricks to avoid unnecessary cache updates
-  find $HOME/.sbt -name "*.lock" -delete
-  find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+  find "$HOME/.sbt" -name "*.lock" -print -delete
+  find "$HOME/.ivy2" -name "ivydata-*.properties" -print -delete
+  exit 0
 }
 
 stripTerminalEscapeCodes () {
