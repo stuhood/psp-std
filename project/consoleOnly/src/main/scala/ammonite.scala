@@ -18,8 +18,12 @@ object REPL extends Repl(System.in, System.out, Ref(Storage(Repl.defaultAmmonite
 
   // Working around ammonite bugs.
   // https://github.com/lihaoyi/Ammonite/issues/213
-  private def mkNames(name: String) = s"""type $name[-A] = psp.api.$name[A] ; val $name = psp.std.$name"""
-  private def workarounds           = vec("Order", "Eq", "Show", "Empty") map mkNames mk_s "\n"
+  private def mkNames(name: String, variance: String): String =
+    s"""type $name[${variance}A] = psp.api.$name[A] ; val $name = psp.std.$name"""
+
+  private def cov         = vec("Order", "Eq", "Show") map (mkNames(_, "-"))
+  private def inv         = vec("Empty") map (mkNames(_, ""))
+  private def workarounds = cov ++ inv joinLines
 
   def start(): Unit = {
     compiler.settings processArgumentString options
