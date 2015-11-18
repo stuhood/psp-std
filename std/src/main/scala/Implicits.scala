@@ -57,6 +57,8 @@ trait StdOps2 extends StdOps1 {
   implicit def pspAugmentString(x: String): PspStringOps           = new PspStringOps(x)
   implicit def opsAtomicView[A](x: View[A]): ops.ViewOpsImpl[A]    = new ops.ViewOpsImpl(x)
   implicit def opsHasOrderInfix[A: Order](x: A): infix.OrderOps[A] = new infix.OrderOps[A](x)
+
+  implicit def opsHasEq[A: Eq](x: View[A]): ops.HasEq[A]          = new ops.HasEq(x)
 }
 
 trait StdOps3 extends StdOps2 {
@@ -66,6 +68,9 @@ trait StdOps3 extends StdOps2 {
   implicit def opsHasAlgebraInfix[A: BooleanAlgebra](x: A): infix.AlgebraOps[A] = new infix.AlgebraOps[A](x)
   implicit def opsHasEqInfix[A: Eq](x: A): infix.EqOps[A]                       = new infix.EqOps[A](x)
   implicit def opsHasHashInfix[A: Hash](x: A): infix.HashOps[A]                 = new infix.HashOps[A](x)
+
+  implicit def opsHasOrder[A: Order](x: View[A]): ops.HasOrder[A] = new ops.HasOrder(x)
+  implicit def opsHasEmpty[A: Empty](x: View[A]): ops.HasEmpty[A] = new ops.HasEmpty[A](x)
 
   implicit def opsHasShowEach[A: Show](x: Each[A]): ops.DocSeqOps = new ops.DocSeqOps(x map (_.doc) toVec)
   implicit def opsHasShowView[A: Show](x: View[A]): ops.DocSeqOps = opsHasShowEach(x)

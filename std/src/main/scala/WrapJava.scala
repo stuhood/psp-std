@@ -68,7 +68,7 @@ trait JavaClassLoader extends Any {
 
   def parentChain: Each[jClassLoader] = {
     def loop(cl: jClassLoader): View[jClassLoader] = cl match {
-      case null => exView()
+      case null => emptyValue
       case _    => cl +: loop(cl.getParent)
     }
     loop(loader)

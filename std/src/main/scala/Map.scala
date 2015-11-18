@@ -11,7 +11,7 @@ object Fun {
   def apply[A, B](f: A => B): Opaque[A, B]        = Opaque(f)
   def partial[A, B](pf: A ?=> B): FilterIn[A, B]  = FilterIn(pf.isDefinedAt, Opaque(pf))
   def const[B](value: B): Opaque[Any, B]          = Opaque(_ => value)
-  def finite[A, B](kvs: (A->B)*): FiniteDom[A, B] = FiniteDom(kvs.map(_._1).toEqualsSet, partial(kvs map (x => x._1 -> x._2) toMap))
+  def finite[A, B](kvs: (A->B)*): FiniteDom[A, B] = FiniteDom(kvs map fst toEqualsSet, partial(kvs map (x => x._1 -> x._2) toMap))
   def orElse[A, B](fs: Fun[A, B]*): Fun[A, B]     = if (fs.isEmpty) empty else fs reduceLeft (OrElse(_, _))
 }
 
