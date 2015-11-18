@@ -70,6 +70,7 @@ trait Aliases extends scala.Any {
   type ToSelf[A]            = A => A
   type ToString[-A]         = A => String
   type ToUnit[-A]           = A => Unit
+  type UnbuildsAs[+A, R]    = Unbuilds[R] { type Elem <: A }
 
   // You can't use string interpolation without a StringContext term in scope.
   def StringContext = scala.StringContext

@@ -122,7 +122,7 @@ class GridSpec extends ScalacheckBundle {
 class ViewBasic extends ScalacheckBundle {
   def bundle = "Views, Basic"
 
-  def plist   = Linear(1, 2, 3)
+  def plist   = list(1, 2, 3)
   def pvector = vec(1, 2, 3)
   def parray  = Array(1, 2, 3)
   def pseq    = Each.elems(1, 2, 3)
@@ -147,7 +147,7 @@ class ViewBasic extends ScalacheckBundle {
     showsAs("[ 1, 2, 3 ]", plist),
     showsAs("[ 1, 2, 3 ]", pvector),
     showsAs("[ 1, 2, 3 ]", parray),
-    showsAs("[ 1, 2, 3, 1, 2, 3 ]", plist ++ plist force),
+    showsAs("[ 1, 2, 3, 1, 2, 3 ]", plist.m ++ plist.m force),
     showsAs("[ 1, 2, 3, 1, 2, 3 ]", pvector ++ pvector force),
     showsAs("[ 1, 2, 3, 1, 2, 3 ]", parray ++ parray force),
     showsAs("[ 1, 2, 3, 1, 2, 3 ]", parray.m ++ parray.m force),

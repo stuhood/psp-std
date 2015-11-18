@@ -1,7 +1,7 @@
 package psp
 package std
 
-import scala.compat.Platform.arraycopy
+import java.lang.System.arraycopy
 import Vec.levelOf
 
 sealed trait ArrayN[@spec A] extends AnyRef {

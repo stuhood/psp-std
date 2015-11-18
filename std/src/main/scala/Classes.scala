@@ -60,26 +60,25 @@ final class LabeledFunction[-T, +R](f: T => R, val to_s: String) extends (T ?=> 
   def apply(x: T): R = f(x)
 }
 
-final case class Split[A](left: View[A], right: View[A]) extends api.SplitView[A] {
-  def mapLeft(f: View[A] => View[A]): Split[A]  = Split(f(left), right)
-  def mapRight(f: View[A] => View[A]): Split[A] = Split(left, f(right))
-  def rejoin: View[A]                           = left ++ right
+trait Assertions {
+  def failed(msg: => String): Unit
+  def assert(assertion: Boolean, msg: => String): Unit = if (!assertion) failed(msg)
 }
-
-/** Zipped0 means we're using a Pair.Split to interpret a collection holding As.
- *  Zipped1 means there's only one underlying View[A1->A2].
- *  Zipped2 means there are two collections, a View[A1] and a View[A2].
- *  This is plus or minus only a performance-related implementation detail.
- */
-final case class Zipped0[A, A1, A2](xs: View[A])(implicit z: Pair.Split[A, A1, A2]) extends ZipView[A1, A2] {
-  def lefts  = xs map z.left
-  def rights = xs map z.right
-  def pairs  = xs map z.split
+object Assertions {
+  private[this] var instance: Assertions = DefaultAssertions
+  def using[A](x: Assertions)(assertion: => Boolean, msg: => String): Unit = {
+    val saved = instance
+    instance = x
+    try instance.assert(assertion, msg) finally instance = saved
+  }
+  implicit object DefaultAssertions extends Assertions {
+    def failed(msg: => String): Unit = assertionError(msg)
+  }
 }
-final case class Zipped1[A1, A2](pairs: View[A1 -> A2]) extends ZipView[A1, A2] {
-  def lefts  = pairs map fst
-  def rights = pairs map snd
-}
-final case class Zipped2[A1, A2](lefts: View[A1], rights: View[A2]) extends ZipView[A1, A2] {
-  def pairs: View[A1 -> A2] = inView(mf => this.foreach((x, y) => mf(x -> y)))
+object ImmediateTraceAssertions extends Assertions {
+  def failed(msg: => String): Unit = {
+    val t = new AssertionError(msg)
+    t.printStackTrace
+    throw t
+  }
 }

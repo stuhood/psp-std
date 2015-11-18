@@ -98,7 +98,7 @@ package object std extends psp.std.StdPackage {
   final val ConstantTrue  = (x: Any) => true
   final val ConstantFalse = (x: Any) => false
   final val CTag          = scala.reflect.ClassTag
-  final val EOL           = sysprop.lineSeparator
+  final val EOL           = lineSeparator
   final val NoFile: jFile = jFile("")
   final val NoPath: Path  = path("")
   final val NoUri: jUri   = jUri("")
@@ -223,7 +223,7 @@ package object std extends psp.std.StdPackage {
   def vec[@spec(SpecTypes) A](xs: A*): Vec[A] = xs.toVec
   def set[A: Eq](xs: A*): ExSet[A]            = xs.toExSet
   def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V] = xs.m.toExMap
-  def list[A](xs: A*): Linear[A]              = Linear(xs: _*)
+  def list[A](xs: A*): Plist[A]               = xs.toPlist
 
   def inMap[K, V](pf: K ?=> V): InMap[K, V]             = InMap(Fun partial pf)
   def inSet[A](p: ToBool[A]): InSet[A]                  = InSet(p)

@@ -3,7 +3,7 @@ package std
 package ops
 
 import api._
-import scala.compat.Platform.arraycopy
+import java.lang.System.arraycopy
 import Api.SpecTypes
 
 final class InPlace[A](val xs: Array[A]) extends AnyVal {
@@ -59,9 +59,4 @@ final class DirectOps[A](val xs: Direct[A]) extends AnyVal {
   def apply(i: Index): A               = xs elemAt i
   def length: Int                      = xs.intSize
   def mapNow[B](f: A => B): Vec[B]     = xs.indices map (i => f(xs(i))) toVec
-}
-
-final class LinearOps[A](val xs: Linear[A]) extends AnyVal {
-  def ::(x: A): Linear[A]            = Linear.cons(x, xs)
-  def ++(that: Linear[A]): Linear[A] = Linear.join(xs, that)
 }
