@@ -7,37 +7,12 @@ import api._
  *  always-the-same logic which accompanies it, without virtual classes?
  */
 object Algebras {
-  final case class Mapped[R, S](algebra: BooleanAlgebra[R], f: S => R, g: R => S) extends BooleanAlgebra[S] {
-    def and(x: S, y: S): S  = g(algebra.and(f(x), f(y)))
-    def or(x: S, y: S): S   = g(algebra.or(f(x), f(y)))
-    def complement(x: S): S = g(algebra.complement(f(x)))
-    def zero: S             = g(algebra.zero)
-    def one: S              = g(algebra.one)
-  }
-  object Identity extends BooleanAlgebra[Boolean] {
-    def and(x: Boolean, y: Boolean): Boolean = x && y
-    def or(x: Boolean, y: Boolean): Boolean  = x || y
-    def complement(x: Boolean): Boolean      = !x
-    def zero: Boolean                        = false
-    def one: Boolean                         = true
-  }
-  object LabelAlgebra extends BooleanAlgebra[Label] {
-    private def maybeParens(lhs: Label, op: String, rhs: Label): String =
-      if (lhs.isSafe && rhs.isSafe) s"$lhs $op $rhs" else s"($lhs $op $rhs)"
-
-    def and(x: Label, y: Label): Label = if (x.isZero || y.isZero) zero else if (x.isOne) y else if (y.isOne) x else Label(maybeParens(x, "&&", y))
-    def or(x: Label, y: Label): Label  = if (x.isBool && !y.isBool) y else if (y.isBool && !x.isBool) x else Label(maybeParens(x, "||", y))
-    def complement(x: Label): Label    = Label( if (x.isSafe) s"!$x" else "!($x)" )
-    def zero                           = Label.Zero
-    def one                            = Label.One
-  }
-
-  final case class PredicateComplement[A](f: psp.std.ToBool[A]) extends psp.std.ToBool[A] with ForceShowDirect {
+  final case class Not[A](f: ToBool[A]) extends ToBool[A] with ForceShowDirect {
     def apply(x: A): Boolean = !f(x)
     def to_s = "!" + f
   }
-  final class ToBool[A] extends BooleanAlgebra[psp.std.ToBool[A]] {
-    private type R = psp.std.ToBool[A]
+  final class PredicateAlgebra[A] extends BooleanAlgebra[ToBool[A]] {
+    private type R = ToBool[A]
 
     /** TODO - one of of the benefits of having constant true and false is an
      *  opportunity to optimize expressions away entirely with no evaluation,
@@ -49,11 +24,11 @@ object Algebras {
     def or(x: R, y: R): R  = p => x(p) || y(p)
     def zero: R            = ConstantFalse
     def one: R             = ConstantTrue
-    def complement(f: R): R       = f match {
-      case ConstantFalse          => ConstantTrue
-      case ConstantTrue           => ConstantFalse
-      case PredicateComplement(f) => f
-      case _                      => PredicateComplement(f)
+    def complement(f: R): R = f match {
+      case ConstantFalse => ConstantTrue
+      case ConstantTrue  => ConstantFalse
+      case Not(f)        => f
+      case _             => Not(f)
     }
   }
 

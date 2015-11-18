@@ -14,12 +14,12 @@ import psp.dmz.ScalaDmz
  *  like inheritance, specificity, method dispatch, and so forth.
  */
 abstract class StdPackage
-      extends impl.EmptyInstances
-         with impl.PrimitiveInstances
-         with impl.AlgebraInstances
+      extends EmptyInstances
+         with PrimitiveInstances
+         with AlgebraInstances
          with GlobalShow
          with StdImplicits
-         with api.Aliases
+         with Aliases
          with ScalaDmz {
 
   // Higher than Direct.

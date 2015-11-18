@@ -132,3 +132,10 @@ trait ZipView[@spec(SpecTypes) +A1, @spec(SpecTypes) +A2] {
   def rights: View[A2]       // the right element of each pair. Moral equivalent of pairs map snd.
   def pairs: View[A1 -> A2]  // the pairs. Moral equivalent of lefts zip rights.
 }
+
+/** When a Show type class is more trouble than it's worth.
+ *  Not overriding toString here to leave open the possibility of
+ *  using a synthetic toString, e.g. of case classes.
+ */
+trait ShowDirect extends Any { def to_s: String }
+trait ForceShowDirect extends Any with ShowDirect { override def toString = to_s }

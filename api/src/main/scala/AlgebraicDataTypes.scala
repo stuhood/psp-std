@@ -85,3 +85,19 @@ final case class FilterIn[-A, +B](p: A => Boolean, u: Fun[A, B]) extends Fun[A, 
 final case class OrElse[-A, +B](f: Fun[A, B], g: Fun[A, B])      extends Fun[A, B]
 final case class AndThen[-A, B, +C](f: Fun[A, B], g: Fun[B, C])  extends Fun[A, C]
 final case class FiniteDom[A, +B](keys: ExSet[A], f: Fun[A, B])  extends Fun[A, B]
+
+/** A not very impressive attempt to improve on string
+ *  representations.
+ */
+sealed abstract class Doc
+
+object Doc {
+  final case object NoDoc                             extends Doc
+  final case class Group(xs: View[Doc])               extends Doc
+  final case class Cat(left: Doc, right: Doc)         extends Doc
+  final case class Shown[A](value: A, shows: Show[A]) extends Doc
+  final case class Literal(value: String)             extends Doc
+
+  def empty: Doc = NoDoc
+  def apply[A](x: A)(implicit z: Show[A]): Shown[A] = Shown[A](x, z)
+}

@@ -19,7 +19,7 @@ object Empty {
   final class Impl[A](val empty: A) extends AnyVal with Empty[A]
 }
 
-object StdEq extends impl.EqInstances
+object StdEq extends EqInstances
 object StdShow extends ShowInstances
 object Unsafe extends LowPriorityUnsafe {
   implicit def inheritedEq[A] : Hash[A]       = inheritEq
@@ -82,3 +82,8 @@ object ImmediateTraceAssertions extends Assertions {
     throw t
   }
 }
+
+final class OrderBy[A] { def apply[B](f: A => B)(implicit z: Order[B]): Order[A] = z on f }
+final class ShowBy[A]  { def apply[B](f: A => B)(implicit z: Show[B]): Show[A]   = z on f }
+final class HashBy[A]  { def apply[B](f: A => B)(implicit z: Hash[B]): Hash[A]   = z on f }
+final class EqBy[A]    { def apply[B](f: A => B)(implicit z: Eq[B]): Eq[A]       = z on f }

@@ -1,7 +1,7 @@
 package psp
 package std
 
-import impl.Size._, api._
+import impl.Size._, api._, Unsafe.inheritedShow
 import lowlevel.CircularBuffer
 
 sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] {
@@ -191,14 +191,14 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
   }
 }
 
-final case class Joined [A, B >: A, Repr](prev: BaseView[A, Repr], ys: View[B])     extends CompositeView[A, B, Repr](doc"++ $ys",      _ + ys.size)
-final case class Filtered    [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](doc"filter $p",   _.atMost)
-final case class Dropped     [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](doc"drop $n",     _ - n)
-final case class DroppedR    [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](doc"dropR $n",    _ - n)
-final case class Taken       [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](doc"take $n",     _ min n)
-final case class TakenR      [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](doc"takeR $n",    _ min n)
-final case class TakenWhile  [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](doc"takeW $p",    _.atMost)
-final case class DropWhile   [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](doc"dropW $p",    _.atMost)
-final case class Mapped      [A, B, Repr](prev: BaseView[A, Repr], f: A => B)       extends CompositeView[A, B, Repr](doc"map $f",      x => x)
-final case class FlatMapped  [A, B, Repr](prev: BaseView[A, Repr], f: A => Foreach[B]) extends CompositeView[A, B, Repr](doc"flatMap $f",  x => if (x.isZero) x else Unknown)
-final case class Collected   [A, B, Repr](prev: BaseView[A, Repr], pf: A ?=> B)     extends CompositeView[A, B, Repr](doc"collect $pf", _.atMost)
+final case class Joined [A, B >: A, Repr](prev: BaseView[A, Repr], ys: View[B])     extends CompositeView[A, B, Repr](pp"++ $ys",      _ + ys.size)
+final case class Filtered    [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](pp"filter $p",   _.atMost)
+final case class Dropped     [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"drop $n",     _ - n)
+final case class DroppedR    [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"dropR $n",    _ - n)
+final case class Taken       [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"take $n",     _ min n)
+final case class TakenR      [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"takeR $n",    _ min n)
+final case class TakenWhile  [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](pp"takeW $p",    _.atMost)
+final case class DropWhile   [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](pp"dropW $p",    _.atMost)
+final case class Mapped      [A, B, Repr](prev: BaseView[A, Repr], f: A => B)       extends CompositeView[A, B, Repr](pp"map $f",      x => x)
+final case class FlatMapped  [A, B, Repr](prev: BaseView[A, Repr], f: A => Foreach[B]) extends CompositeView[A, B, Repr](pp"flatMap $f",  x => if (x.isZero) x else Unknown)
+final case class Collected   [A, B, Repr](prev: BaseView[A, Repr], pf: A ?=> B)     extends CompositeView[A, B, Repr](pp"collect $pf", _.atMost)
