@@ -7,7 +7,7 @@ cache:
     - $HOME/.sbt
 
 language: scala
-script: bin/run-travis
+script: project/bin/run-travis
 jdk:
   - oraclejdk7
   - oraclejdk8
