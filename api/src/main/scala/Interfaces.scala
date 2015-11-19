@@ -127,7 +127,7 @@ trait SplitInvariantM[M[X], @spec(SpecTypes) A] extends Any {
 /** When a View presents as a sequence of pairs.
  *  There may be two underlying views being zipped, or one view holding pairs.
  */
-trait ZipView[@spec(SpecTypes) +A1, @spec(SpecTypes) +A2] {
+trait ZipView[@spec(SpecTypes) +A1, @spec(SpecTypes) +A2] extends Any {
   def lefts: View[A1]        // the left element of each pair. Moral equivalent of pairs map fst.
   def rights: View[A2]       // the right element of each pair. Moral equivalent of pairs map snd.
   def pairs: View[A1 -> A2]  // the pairs. Moral equivalent of lefts zip rights.

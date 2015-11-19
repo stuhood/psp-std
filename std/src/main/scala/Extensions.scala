@@ -10,9 +10,14 @@ import api._
  *  "Ops" classes, where we control the underlying class.
  */
 
-final class PartialFunctionOps[A, B](val pf: A ?=> B) extends AnyVal {
+class Partial[A, B](val pf: A ?=> B) extends AnyVal {
   def zapply(x: A)(implicit z: Empty[B]): B = if (pf isDefinedAt x) pf(x) else z.empty
 }
+object Partial {
+  implicit def liftPartial[A, B](pf: A ?=> B): Partial[A, B] = apply(pf)
+  def apply[A, B](pf: A ?=> B): Partial[A, B]                = new Partial(pf)
+}
+
 
 final class OptionOps[A](val x: Option[A]) extends AnyVal {
   def | (alt: => A): A                             = x getOrElse alt
@@ -46,12 +51,6 @@ final class TryOps[A](val x: Try[A]) extends AnyVal {
 
 final class JavaIteratorOps[A](it: jIterator[A]) {
   def foreach(f: A => Unit): Unit = while (it.hasNext) f(it.next)
-}
-
-final class FileTimeOps(val time: FileTime) extends AnyVal {
-  def isNewer(that: FileTime) = (time compareTo that) > 0
-  def isOlder(that: FileTime) = (time compareTo that) < 0
-  def isSame(that: FileTime)  = (time compareTo that) == 0
 }
 
 object infix {

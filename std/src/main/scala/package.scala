@@ -23,6 +23,8 @@ package object std extends psp.std.StdPackage {
   def stringEq[A] : Hash[A]              = Eq.ToString
   def shownEq[A: Show] : Hash[A]         = inheritEq[String] on (_.render)
 
+  def sideEffect[A](result: A, exprs: Any*): A = result
+
   implicit def opsFun[A, B](f: Fun[A, B]): ops.FunOps[A, B] = new ops.FunOps(f)
   implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = new (A ?=> B) {
     def isDefinedAt(x: A) = f isDefinedAt x

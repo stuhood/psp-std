@@ -52,7 +52,7 @@ object Size {
 }
 object PreciseInt {
   private val Max = scala.Int.MaxValue.toLong
-  def unapply(x: Precise): Option[Int] = if (x.value <= Max) some(x.value.toInt) else none
+  def unapply(x: Precise): Option[Int] = if (x.value <= Max) some(x.value.toInt) else none()
 }
 
 

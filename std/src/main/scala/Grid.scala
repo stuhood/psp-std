@@ -9,7 +9,7 @@ final case class FunctionGrid[A, B](values: View[A], functions: View[A => B]) {
 
   def renderLines(implicit z: Show[B]): Vec[String]               = {
     val widths = columns map (col => col map (x => (z show x).length) max)
-    val rowFormat = widths map (_.size.leftFormatString) mkString " "
+    val rowFormat = widths map (_.size.leftFormatString) mk_s ' '
     rows map (row => rowFormat.format(row.seq: _*))
   }
   def render(implicit z: Show[B]): String = renderLines.joinLines

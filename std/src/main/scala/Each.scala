@@ -58,7 +58,7 @@ object Each {
     def size = Infinite
   }
   object KnownSize {
-    def unapply[A](xs: Each[A]) = xs.size optionally { case x: Atomic => x }
+    def unapply[A](xs: Each[A]) = xs.size matchOpt { case x: Atomic => x }
   }
 
   final case class Sized[A](underlying: Each[A], override val size: Precise) extends Each[A] with HasPreciseSize {

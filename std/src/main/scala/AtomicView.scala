@@ -151,7 +151,7 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
   private def foreachTakeWhile[A](xs: Each[A], f: A => Unit, p: ToBool[A]): Int = {
     var taken = 0
     xs foreach { x =>
-      if (p(x)) f(x) sideEffect (taken += 1)
+      if (p(x)) sideEffect(f(x), taken += 1)
       else return taken
     }
     taken

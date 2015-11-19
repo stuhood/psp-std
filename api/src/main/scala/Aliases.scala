@@ -32,7 +32,7 @@ trait Aliases extends scala.Any {
 
   // Missing pieces of scala-library.
   // Caveat: ?=> associates to the left instead of the right.
-  type Ref[+A]     = A with AnyRef               // Promotes an A <: Any into an A <: AnyRef.
+  type Ref[+A]     = AnyRef with A               // Promotes an A <: Any into an A <: AnyRef.
   type Id[X]       = X                           // The identity type constructor.
   type ->[+A, +B]  = scala.Product2[A, B]        // A less overconstrained product type.
   type ?=>[-A, +B] = scala.PartialFunction[A, B] // Less clumsy syntax for the all-important partial function.
@@ -85,7 +85,7 @@ trait Aliases extends scala.Any {
   def implicitly[A](implicit x: A): A          = x
   def longCmp(diff: Long): Cmp                 = if (diff < 0) Cmp.LT else if (diff > 0) Cmp.GT else Cmp.EQ
   def newArray[A: CTag](length: Int): Array[A] = new Array[A](length)
-  def none: Option[Nothing]                    = scala.None
+  def none[A](): Option[A]                     = scala.None
   def show[A: Show] : Show[A]                  = ?
   def some[A](x: A): Some[A]                   = scala.Some(x)
 }

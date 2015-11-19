@@ -109,7 +109,7 @@ final class CircularBuffer[@spec(SpecTypes) A](capacity: Precise) extends Direct
   private[this] var seen                = 0L
   private[this] def writePointer: Int   = (seen % cap).safeInt
   private[this] def readPointer         = if (isFull) writePointer else 0
-  private[this] def setHead(x: A): Unit = buffer(writePointer) = x sideEffect (seen += 1)
+  private[this] def setHead(x: A): Unit = sideEffect(buffer(writePointer) = x, seen += 1)
 
   @inline def foreach(f: A => Unit): Unit = this foreachIndex (i => f(elemAt(i)))
 
@@ -119,7 +119,7 @@ final class CircularBuffer[@spec(SpecTypes) A](capacity: Precise) extends Direct
   def size: Precise               = capacity min Size(seen)
   def ++=(xs: Each[A]): this.type = andThis(xs foreach setHead)
   def += (x: A): this.type        = andThis(this setHead x)
-  def push(x: A): A               = if (isFull) head sideEffect setHead(x) else abort("push on non-full buffer")
+  def push(x: A): A               = if (isFull) sideEffect(head, setHead(x)) else abort("push on non-full buffer")
 }
 final class ByteBufferInputStream(b: ByteBuffer) extends InputStream {
   private def empty = !b.hasRemaining
