@@ -76,10 +76,10 @@ class StringExtensions extends ScalacheckBundle {
   def props: Direct[NamedProp] = Direct(
     "stripSuffix" -> newProp2[String](_ stripSuffix _)(_ stripSuffix _),
     "stripPrefix" -> newProp2[String](_ stripPrefix _)(_ stripPrefix _),
-    "take"        -> newProp2[Int](_ take _)(_ take _.size build),
-    "drop"        -> newProp2[Int](_ drop _)(_ drop _.size build),
-    "takeRight"   -> newProp2[Int](_ takeRight _)(_ takeRight _.size build)(mostInts, ?),
-    "dropRight"   -> newProp2[Int](_ dropRight _)(_ dropRight _.size build)(mostInts, ?),
+    "take"        -> newProp2[Int](_ take _)(_ take _ build),
+    "drop"        -> newProp2[Int](_ drop _)(_ drop _ build),
+    "takeRight"   -> newProp2[Int](_ takeRight _)(_ takeRight _ build)(mostInts, ?),
+    "dropRight"   -> newProp2[Int](_ dropRight _)(_ dropRight _ build)(mostInts, ?),
     // Not quite the same - "0xc".toInt is 12 for us, exception for them. XXX.
     // "toInt"       -> newProp[Int](_.toInt, _.toInt),
     "tail"        -> newProp[String](_.tail, _.tail.force),
@@ -93,12 +93,12 @@ class GridSpec extends ScalacheckBundle {
   def bundle = "Policy, Grid Operations"
 
   def primePartition = (Indexed from 2).m mpartition (xs => _ % xs.head == 0)
-  def primePartitionGrid(n: Int): View2D[Int]   = primePartition take n.size map (_ take n.size)
-  def primePartitionGrid_t(n: Int): View2D[Int] = primePartition.transpose take n.size map (_ take n.size)
+  def primePartitionGrid(n: Int): View2D[Int]   = primePartition take n map (_ take n)
+  def primePartitionGrid_t(n: Int): View2D[Int] = primePartition.transpose take n map (_ take n)
   def showGrid(xss: View2D[Int]): String = {
     val yss = xss mmap (_.render)
-    val width = yss.flatMap(x => x).mapNow(_.length).m.max.size
-    (yss mmap (x => width.leftFormatString format x) map (_ mk_s " ") mk_s "\n").trim.trimLines
+    val width = yss.flatMap(x => x).mapNow(_.length).m.max
+    (yss mmap leftFormatString(width) map (_ mk_s " ") mk_s "\n").trim.trimLines
   }
   def primePartition6 = sm"""
     |2   4   6   8   10  12
@@ -118,7 +118,7 @@ class GridSpec extends ScalacheckBundle {
   """
 
   def props = Direct(
-    seqShows("[ 2, 4, 6, ... ], [ 3, 9, 15, ... ], [ 5, 25, 35, ... ]", primePartition take 3.size),
+    seqShows("[ 2, 4, 6, ... ], [ 3, 9, 15, ... ], [ 5, 25, 35, ... ]", primePartition take 3),
     showsAs(primePartition6, showGrid(primePartitionGrid(6))),
     showsAs(primePartition6_t, showGrid(primePartitionGrid_t(6)))
   )
@@ -133,7 +133,7 @@ class ViewBasic extends ScalacheckBundle {
   def pseq    = Each.elems(1, 2, 3)
   def punfold = Indexed from 1
 
-  val vec1  = Each const 1 take 32.size toVec
+  val vec1  = Each const 1 take 32 toVec
   val vec2  = vec1 map (_ => vec1) reducel (_ ++ _)
   val vec3  = vec1 map (_ => vec2) reducel (_ ++ _)
   val vec4  = vec3 :+ 1
@@ -167,16 +167,16 @@ class ViewBasic extends ScalacheckBundle {
     // showsAs("1 -> 3, 2 -> 4, 3 -> 3", closureBag.entries mk_s ", "),
     seqShows("1 -> 0, 2 -> 1, 3 -> 2", pvector.m.mapWithIndex(_ -> _)),
     seqShows("11, 22, 33, 44", indexRange(1, 50) grep """(.)\1""".r),
-    seqShows("99, 1010, 1111", xxNumbers slice (8 takeNext 3.size).asIndices),
-    expectValue[Size](4.size)(strs.byRef.distinct.force.size),
-    expectValue[Size](3.size)(strs.byEquals.distinct.force.size),
-    expectValue[Size](2.size)(strs.byString.distinct.force.size),
+    seqShows("99, 1010, 1111", xxNumbers slice (8 takeNext 3).asIndices),
+    expectValue[Size](4)(strs.byRef.distinct.force.size),
+    expectValue[Size](3)(strs.byEquals.distinct.force.size),
+    expectValue[Size](2)(strs.byString.distinct.force.size),
     expectValue[Int](vec4 drop 10 length)(size4 - 10),
     expectValue[Int](vec4 dropRight 10 length)(size4 - 10),
     expectValue[Int](vec4.updated(100.index, 12345).apply(100))(12345),
-    expectValue[Int](vec4 take (size4 + 10).size length)(size4),
-    expectValue[Int](vec4 take (size4 - 10).size length)(size4 - 10),
-    expectValue[Int](vec4 takeRight (size4 - 10).size length)(size4 - 10)
+    expectValue[Int](vec4 take size4 + 10 length)(size4),
+    expectValue[Int](vec4 take size4 - 10 length)(size4 - 10),
+    expectValue[Int](vec4 takeRight size4 - 10 length)(size4 - 10)
   )
 }
 

@@ -44,15 +44,16 @@ object Size {
   val Zero    = Precise(0)
   val Unknown = Bounded(Zero, Infinite)
 
+  object Int {
+    private val Max = scala.Int.MaxValue.toLong
+    def unapply(x: Precise): Option[Int] = if (x.value <= Max) some(x.value.toInt) else none()
+  }
+
   /** Preserving associativity/commutativity of Size prevents us from
    *  modifying values to enforce any invariants on Bounded.
    */
   def apply(size: Long): Precise              = Precise( if (size < 0L) 0L else size )
   def apply(lo: Precise, hi: Atomic): Bounded = Bounded(lo, hi)
-}
-object PreciseInt {
-  private val Max = scala.Int.MaxValue.toLong
-  def unapply(x: Precise): Option[Int] = if (x.value <= Max) some(x.value.toInt) else none()
 }
 
 
