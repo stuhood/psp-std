@@ -2,6 +2,7 @@ package psp
 package std
 
 import api._
+import scala.math.Ordering
 
 object Eq {
   val Inherited = hash[Any](_ == _)(_.##)

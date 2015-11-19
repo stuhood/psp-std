@@ -5,6 +5,8 @@ package lowlevel
 import api._
 import scala.Tuple2
 import Api.SpecTypes
+import java.nio.ByteBuffer
+import java.io.{ ByteArrayOutputStream, BufferedInputStream }
 
 object ll {
   /** Can't refer directly to fields because scala bloats all the bytecode
@@ -142,7 +144,7 @@ object Streams {
   final val InputStreamBufferSize = 8192
 
   def slurp(in: BufferedInputStream): Array[Byte] = {
-    val out = new java.io.ByteArrayOutputStream
+    val out = new ByteArrayOutputStream
     val buf = new Array[Byte](InputStreamBufferSize)
     def loop(): Array[Byte] = in read buf match {
       case -1 => out.toByteArray

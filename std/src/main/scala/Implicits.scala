@@ -99,7 +99,6 @@ trait StdOps3 extends StdOps2 {
 trait StdOps extends StdOps3 {
   implicit def opsStringContext(sc: StringContext): ShowInterpolator                      = new ShowInterpolator(sc)
   implicit def convertPredicateStreamFilter[A](p: ToBool[A]): DirectoryStreamFilter[A]    = new DirectoryStreamFilter[A] { def accept(entry: A) = p(entry) }
-  implicit def convertPredicatePartialFunction[A](p: ToBool[A]): A ?=> A                  = { case x if p(x) => x }
   implicit def opsViewConversions[A](xs: View[A]): Conversions[A]                         = new Conversions(Each[A](xs foreach _))
   implicit def unbuildableConv[A, R](xs: R)(implicit z: UnbuildsAs[A, R]): Conversions[A] = new Conversions[A](z unbuild xs)
 }

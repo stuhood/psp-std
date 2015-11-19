@@ -38,9 +38,9 @@ package object std extends psp.std.StdPackage {
   // DMZ.
   final val ::      = psp.dmz.::
   final val Array   = psp.dmz.Array
-  final val Failure = psp.dmz.Failure
-  final val Success = psp.dmz.Success
-  final val Try     = psp.dmz.Try
+  final val Failure = scala.util.Failure
+  final val Success = scala.util.Success
+  final val Try     = scala.util.Try
 
   final val NameTransformer = scala.reflect.NameTransformer
   final val Nil             = sci.Nil
@@ -103,20 +103,19 @@ package object std extends psp.std.StdPackage {
     result
   }
 
-  def abort(msg: String): Nothing                           = runtimeException(msg)
-  def abortTrace(msg: String): Nothing                      = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
-  def andClose[A <: Closeable, B](x: A)(f: A => B): B       = try f(x) finally x.close()
-  def andFalse(x: Unit, xs: Unit*): Boolean                 = false
-  def andTrue(x: Unit, xs: Unit*): Boolean                  = true
-  def bufferMap[A, B: Empty](): scmMap[A, B]                = scmMap[A, B]() withDefaultValue emptyValue[B]
-  def fullIndexRange: IndexRange                            = indexRange(0, MaxInt)
-  def indexRange(start: Int, end: Int): IndexRange          = Consecutive.until(start, end, Index(_))
-  def intRange(start: Int, end: Int): IntRange              = Consecutive.until(start, end)
-  def newPartial[K, V](p: K => Boolean, f: K => V): K ?=> V = { case x if p(x) => f(x) }
-  def noNull[A](value: A, orElse: => A): A                  = if (value == null) orElse else value
-  def nullAs[A] : A                                         = null.asInstanceOf[A]
-  def option[A](p: Boolean, x: => A): Option[A]             = if (p) Some(x) else None
-  def randomNat(max: Int): Int                              = scala.util.Random.nextInt(max)
+  def abort(msg: String): Nothing                      = runtimeException(msg)
+  def abortTrace(msg: String): Nothing                 = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
+  def andClose[A <: jCloseable, B](x: A)(f: A => B): B = try f(x) finally x.close()
+  def andFalse(x: Unit, xs: Unit*): Boolean            = false
+  def andTrue(x: Unit, xs: Unit*): Boolean             = true
+  def bufferMap[A, B: Empty](): scmMap[A, B]           = scmMap[A, B]() withDefaultValue emptyValue[B]
+  def fullIndexRange: IndexRange                       = indexRange(0, MaxInt)
+  def indexRange(start: Int, end: Int): IndexRange     = Consecutive.until(start, end, Index(_))
+  def intRange(start: Int, end: Int): IntRange         = Consecutive.until(start, end)
+  def noNull[A](value: A, orElse: => A): A             = if (value == null) orElse else value
+  def nullAs[A] : A                                    = null.asInstanceOf[A]
+  def option[A](p: Boolean, x: => A): Option[A]        = if (p) Some(x) else None
+  def randomNat(max: Int): Int                         = scala.util.Random.nextInt(max)
 
   // Java.
   def jConcurrentMap[K, V](xs: (K -> V)*): jConcurrentMap[K, V] = new jConcurrentHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
@@ -140,6 +139,10 @@ package object std extends psp.std.StdPackage {
 }
 
 package std {
+  object ?=> {
+    def apply[A, B](p: ToBool[A], f: A => B): A ?=> B = { case x if p(x) => f(x) }
+    def unapply[A, B](f: Fun[A, B]) = Some((f isDefinedAt _, f apply _))
+  }
   object sys {
     def error(msg: java.lang.String): Nothing = scala.sys.error(msg)
     def props                                 = scala.sys.props

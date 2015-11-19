@@ -2,6 +2,7 @@ package psp
 package impl
 
 import api._, std._, StdEq._
+import scala.{ collection => sc }
 
 object Size {
   val Empty    = 0.size
@@ -28,11 +29,11 @@ object Size {
   def apply(n: Long): LongSize = Precise(n)
   def apply(n: Int): IntSize   = Precise(n)
   def apply(x: Any): Size = x match {
-    case xs: HasSize                                => xs.size
-    case xs: jCollection[_]                         => xs.size.size
-    case xs: scIndexedSeq[_]                        => xs.size.size
-    case xs: scTraversable[_] if xs.hasDefiniteSize => if (xs.isEmpty) Empty else NonEmpty
-    case _                                          => Unknown
+    case xs: HasSize                                 => xs.size
+    case xs: jCollection[_]                          => xs.size.size
+    case xs: sc.IndexedSeq[_]                        => xs.size.size
+    case xs: sc.Traversable[_] if xs.hasDefiniteSize => if (xs.isEmpty) Empty else NonEmpty
+    case _                                           => Unknown
   }
 
   object GenBounded {

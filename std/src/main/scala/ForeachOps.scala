@@ -22,7 +22,7 @@ final class InPlace[A](val xs: Array[A]) extends AnyVal {
   }
 
   def map(f: ToSelf[A]): Array[A]           = andThis(0 to lastIndex foreach (i => xs(i) = f(xs(i))))
-  def sort(implicit z: Order[A]): Array[A]  = andThis(if (isReference) sortRef(z.toComparator) else Array sortInPlace xs)
+  def sort(implicit z: Order[A]): Array[A]  = andThis(if (isReference) sortRef(Order.comparator) else Array sortInPlace xs)
   def sortBy[B: Order](f: A => B): Array[A] = sort(orderBy[A](f))
   def reverse(): Array[A]                   = andThis(0 until midpoint foreach (i => swap(i, lastIndex - i)))
   def shuffle(): Array[A]                   = andThis(0 until lastIndex foreach (i => swap(i, i + randomNat(lastIndex - i))))
