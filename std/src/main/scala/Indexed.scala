@@ -2,6 +2,7 @@ package psp
 package std
 
 import api._, StdEq._
+import java.util.concurrent.LinkedBlockingQueue
 
 /** Indexed is somewhere between Each and Direct.
  *  There's an apply(index) method, but its size may not be known and may be infinite.
@@ -27,6 +28,12 @@ object Indexed {
     @volatile private[this] var index: Index = Index(0)
     def hasNext = memo isDefinedAt index
     def next: A = try memo(index) finally index += 1
+  }
+
+  private def spawn[A](body: => A): Unit = {
+    val t = new Thread() { override def run(): Unit = body }
+    t setDaemon true
+    t.start()
   }
 
   final class Memo[+A](xs: Each[A]) extends Indexed[A] {

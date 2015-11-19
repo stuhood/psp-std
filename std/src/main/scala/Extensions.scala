@@ -48,10 +48,10 @@ final class JavaIteratorOps[A](it: jIterator[A]) {
   def foreach(f: A => Unit): Unit = while (it.hasNext) f(it.next)
 }
 
-final class FileTimeOps(val time: jFileTime) extends AnyVal {
-  def isNewer(that: jFileTime) = (time compareTo that) > 0
-  def isOlder(that: jFileTime) = (time compareTo that) < 0
-  def isSame(that: jFileTime)  = (time compareTo that) == 0
+final class FileTimeOps(val time: FileTime) extends AnyVal {
+  def isNewer(that: FileTime) = (time compareTo that) > 0
+  def isOlder(that: FileTime) = (time compareTo that) < 0
+  def isSame(that: FileTime)  = (time compareTo that) == 0
 }
 
 object infix {

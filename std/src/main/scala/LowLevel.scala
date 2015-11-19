@@ -142,7 +142,7 @@ object Streams {
   final val InputStreamBufferSize = 8192
 
   def slurp(in: BufferedInputStream): Array[Byte] = {
-    val out = new ByteArrayOutputStream
+    val out = new java.io.ByteArrayOutputStream
     val buf = new Array[Byte](InputStreamBufferSize)
     def loop(): Array[Byte] = in read buf match {
       case -1 => out.toByteArray

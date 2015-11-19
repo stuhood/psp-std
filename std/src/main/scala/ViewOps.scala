@@ -35,7 +35,7 @@ trait ApiViewOps[+A] extends Any {
   def zfoldl[B](f: (B, A) => B)(implicit z: Empty[B]): B = foldl(z.empty)(f)
   def zfoldr[B](f: (A, B) => B)(implicit z: Empty[B]): B = foldr(z.empty)(f)
 
-  def tee(f: A => String): View[A] = xs map (_ doto (x => echoOut(f(x))))
+  def tee(f: A => String): View[A] = xs map (_ doto (x => println(f(x))))
   def mapNow[B](f: A => B): Vec[B] = xs map f toVec
 
   def filter(p: ToBool[A]): View[A]         = xs withFilter p

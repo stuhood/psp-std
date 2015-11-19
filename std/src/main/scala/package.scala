@@ -6,16 +6,15 @@ import scala.{ collection => sc }
 import sc.{ mutable => scm, immutable => sci }
 import psp.api._
 import Api.SpecTypes
+import psp.dmz.Console
 
 package object std extends psp.std.StdPackage {
   import Unsafe.inheritedShow
   private implicit def lexical = lexicalOrder
 
-  type IndexRange            = Consecutive[Index]
-  type IntRange              = Consecutive[Int]
-  type BuildsMap[K, V]       = Builds[K -> V, ExMap[K, V]]
-
-  val StringOrder = orderBy[Any](_.any_s)
+  type IndexRange      = Consecutive[Index]
+  type IntRange        = Consecutive[Int]
+  type BuildsMap[K, V] = Builds[K -> V, ExMap[K, V]]
 
   def lexicalOrder: Order[String] = Order.fromInt(_ compareTo _)
 
@@ -33,52 +32,33 @@ package object std extends psp.std.StdPackage {
 
   // Helpers for inference when calling 'on' on contravariant type classes.
   def eqBy[A]    = new EqBy[A]
-  def hashBy[A]  = new HashBy[A]
   def orderBy[A] = new OrderBy[A]
   def showBy[A]  = new ShowBy[A]
 
   // DMZ.
   final val ::      = psp.dmz.::
   final val Array   = psp.dmz.Array
-  final val Console = psp.dmz.Console
   final val Failure = psp.dmz.Failure
-  final val Set     = psp.dmz.Set
   final val Success = psp.dmz.Success
   final val System  = psp.dmz.System
   final val Try     = psp.dmz.Try
   final val math    = psp.dmz.math
   final val sys     = psp.dmz.sys
 
-  final val BigDecimal      = scala.math.BigDecimal
-  final val BigInt          = scala.math.BigInt
-  final val ClassTag        = scala.reflect.ClassTag
   final val NameTransformer = scala.reflect.NameTransformer
   final val Nil             = sci.Nil
   final val None            = scala.None
   final val Option          = scala.Option
-  final val Ordering        = scala.math.Ordering
   final val Some            = scala.Some
-  final val scIterator      = sc.Iterator
-  final val scSeq           = sc.Seq
-  final val sciBitSet       = sci.BitSet
-  final val sciIndexedSeq   = sci.IndexedSeq
-  final val sciIterable     = sci.Iterable
-  final val sciLinearSeq    = sci.LinearSeq
   final val sciList         = sci.List
   final val sciMap          = sci.Map
-  final val sciNumericRange = sci.NumericRange
-  final val sciRange        = sci.Range
   final val sciSeq          = sci.Seq
   final val sciSet          = sci.Set
-  final val sciStream       = sci.Stream
-  final val sciTraversable  = sci.Traversable
   final val sciVector       = sci.Vector
   final val scmMap          = scm.Map
-  final val scmSeq          = scm.Seq
-  final val scmSet          = scm.Set
 
   final val MaxIndex      = Index(MaxLong)
-  final val NoFile: jFile = jFile("")
+  final val NoFile: jFile = new jFile("")
   final val NoPath: Path  = path("")
   final val NoUri: jUri   = jUri("")
   final val NoIndex       = Index.undefined
@@ -98,35 +78,16 @@ package object std extends psp.std.StdPackage {
     def <+>(rhs: Doc): Doc = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ " ".s ~ rhs
   }
 
-  // Methods similar to the more useful ones in scala's Predef.
-  def ??? : Nothing                                                                        = throw new scala.NotImplementedError
-  def assert(assertion: => Boolean)(implicit z: Assertions): Unit                          = Assertions.using(z)(assertion, "assertion failed")
-  def assert(assertion: => Boolean, msg: => Any)(implicit z: Assertions): Unit             = Assertions.using(z)(assertion, s"assertion failed: $msg")
-  def asserting[A](x: A)(assertion: => Boolean, msg: => String)(implicit z: Assertions): A = x sideEffect assert(assertion, msg)
-  def require(requirement: Boolean): Unit                                                  = if (!requirement) illegalArgumentException("requirement failed")
-  def require(requirement: Boolean, msg: => Any): Unit                                     = if (!requirement) illegalArgumentException(s"requirement failed: $msg")
+  def print[A: Show](x: A): Unit   = Console putOut show"$x"
+  def println[A: Show](x: A): Unit = Console echoOut show"$x"
+  def anyprintln(x: Any): Unit     = Console echoOut x.any_s
 
-  def echoErr(x: Doc): Unit                                        = Console echoErr x.render
-  def echoOut(x: Doc): Unit                                        = Console echoOut x.render
-  def printResult[A: Show](msg: String)(result: A): A              = result doto (r => println(show"$msg: $r"))
-  def printResultIf[A: Show : Eq](x: A, msg: String)(result: A): A = result doto (r => if (r === x) println(show"$msg: $r"))
-  def print[A: Show](x: A): Unit                                   = Console putOut show"$x"
-  def println[A: Show](x: A): Unit                                 = Console echoOut show"$x"
-  def anyprintln(x: Any): Unit                                     = Console echoOut x.any_s
+  def ??? : Nothing                                                            = throw new scala.NotImplementedError
+  def assert(assertion: => Boolean, msg: => Any)(implicit z: Assertions): Unit = Assertions.using(z)(assertion, s"assertion failed: $msg")
 
-  // Operations involving classes, classpaths, and classloaders.
-  def classLoaderOf[A: CTag](): ClassLoader = classOf[A].getClassLoader
   def classOf[A: CTag](): Class[_ <: A]     = classTag[A].runtimeClass.castTo[Class[_ <: A]]
-  def classTag[T: CTag] : CTag[T]           = implicitly[CTag[T]]
-  def loaderOf[A: CTag] : ClassLoader       = noNull(classLoaderOf[A], nullLoader)
-  def nullLoader(): ClassLoader             = NullClassLoader
-  def findLoader(): Option[ClassLoader]     = noNull(contextClassLoader, loaderOf[this.type]) |> (x => option(x ne null, x))
-
-  def resourceNames(root: Path): Direct[String] = findLoader.fold(direct[String]())(cl => Resources.getResourceNames(cl, root).toDirect)
-  def resource(name: String): Array[Byte]       = findLoader.fold(Array.empty[Byte])(_ getResourceAsStream name slurp)
-  def resourceString(name: String): String      = utf8(resource(name)).to_s
-  def path(s: String): Path                     = Paths get s
-  def callable[A](body: => A): jCallable[A]     = new java.util.concurrent.Callable[A] { def call(): A = body }
+  def classTag[A: CTag] : CTag[A]           = implicitly[CTag[A]]
+  def path(s: String): Path                 = Paths get s
 
   // Operations involving encoding/decoding of string data.
   def utf8(xs: Array[Byte]): Utf8   = new Utf8(xs)
@@ -145,64 +106,38 @@ package object std extends psp.std.StdPackage {
     result
   }
 
-  // Operations involving Null, Nothing, and casts.
   def abortTrace(msg: String): Nothing     = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
   def abort(msg: String): Nothing          = runtimeException(msg)
   def noNull[A](value: A, orElse: => A): A = if (value == null) orElse else value
   def nullAs[A] : A                        = null.asInstanceOf[A]
-
   def andFalse(x: Unit, xs: Unit*): Boolean        = false
-  def andResult[A](x: A, xs: Unit*): A             = x
   def andTrue(x: Unit, xs: Unit*): Boolean         = true
-  def direct[A](xs: A*): Direct[A]                 = Direct fromScala xs
-  def each[A](xs: sCollection[A]): Each[A]         = Each fromScala xs
   def fullIndexRange: IndexRange                   = indexRange(0, MaxInt)
   def indexRange(start: Int, end: Int): IndexRange = Consecutive.until(start, end, Index(_))
   def intRange(start: Int, end: Int): IntRange     = Consecutive.until(start, end)
-  def nthRange(start: Int, end: Int): IntRange     = Consecutive.to(start, end)
-  def nullStream(): InputStream                    = NullInputStream
-  def offset(x: Int): Offset                       = Offset(x)
-  def option[A](p: Boolean, x: => A): Option[A]    = if (p) Some(x) else None
-  def partial[A, B](f: A ?=> B): A ?=> B           = f
-  def regex(re: String): Regex                     = Regex(re)
-
+  def option[A](p: Boolean, x: => A): Option[A]       = if (p) Some(x) else None
   def andClose[A <: Closeable, B](x: A)(f: A => B): B = try f(x) finally x.close()
-
-  def spawn[A](body: => A): Unit = {
-    val t = new Thread() { override def run(): Unit = body }
-    t setDaemon true
-    t.start()
-  }
+  def randomNat(max: Int): Int                              = scala.util.Random.nextInt(max)
+  def bufferMap[A, B: Empty](): scmMap[A, B]                = scmMap[A, B]() withDefaultValue emptyValue[B]
+  def newPartial[K, V](p: K => Boolean, f: K => V): K ?=> V = { case x if p(x) => f(x) }
 
   // Java.
   def jConcurrentMap[K, V](xs: (K -> V)*): jConcurrentMap[K, V] = new jConcurrentHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
-  def jFile(s: String): jFile                                   = path(s).toFile
   def jList[A](xs: A*): jList[A]                                = java.util.Arrays.asList(xs: _*)
   def jMap[K, V](xs: (K -> V)*): jMap[K, V]                     = new jHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
   def jSet[A](xs: A*): jSet[A]                                  = new jHashSet[A] doto (b => xs foreach b.add)
   def jUri(x: String): jUri                                     = java.net.URI create x
   def jUrl(x: String): jUrl                                     = jUri(x).toURL
-  def jIdMap[K, V](xs: (K -> V)*): jIdMap[K, V]                 = new jIdMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
-  def jArrayList[A](xs: A*): jArrayList[A]                      = new jArrayList[A] doto (b => xs foreach (b add _))
 
   def fst[A, B](x: A -> B): A          = x._1
   def snd[A, B](x: A -> B): B          = x._2
   def tuple[A, B](x: A -> B): ((A, B)) = x._1 -> x._2
 
-  def view[A](xs: A*): View[A]                = xs.toVec.m
-  def vec[@spec(SpecTypes) A](xs: A*): Vec[A] = xs.toVec
-  def set[A: Eq](xs: A*): ExSet[A]            = xs.toExSet
-  def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V] = xs.m.toExMap
-  def list[A](xs: A*): Plist[A]               = xs.toPlist
-
-  def inMap[K, V](pf: K ?=> V): InMap[K, V]             = InMap(Fun partial pf)
-  def inSet[A](p: ToBool[A]): InSet[A]                  = InSet(p)
-  def inView[A](mf: Suspended[A]): View[A]              = Each(mf).m
-  def mutableMap[K, V](xs: (K -> V)*): MutableMap[K, V] = MutableMap(jConcurrentMap(xs: _*))
-  def zipView[A, B](xs: (A, B)*): ZipView[A, B]         = Zipped1(xs.seq)
-
-  def randomNat(max: Int): Int                              = scala.util.Random.nextInt(max)
-  def bufferMap[A, B: Empty](): scmMap[A, B]                = scmMap[A, B]() withDefaultValue emptyValue[B]
-  def newPartial[K, V](p: K => Boolean, f: K => V): K ?=> V = { case x if p(x) => f(x) }
-  def newSize(n: Long): Precise                             = if (n < 0) Precise(0) else if (n > MaxInt) Precise(n) else Precise(n.toInt)
+  def view[A](xs: A*): View[A]                  = xs.toVec.m
+  def vec[@spec(SpecTypes) A](xs: A*): Vec[A]   = xs.toVec
+  def set[A: Eq](xs: A*): ExSet[A]              = xs.toExSet
+  def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V]   = xs.m.toExMap
+  def list[A](xs: A*): Plist[A]                 = xs.toPlist
+  def inView[A](mf: Suspended[A]): View[A]      = Each(mf).m
+  def zipView[A, B](xs: (A, B)*): ZipView[A, B] = Zipped1(xs.seq)
 }

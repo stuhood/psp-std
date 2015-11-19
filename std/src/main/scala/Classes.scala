@@ -21,14 +21,10 @@ object Empty {
 
 object StdEq extends EqInstances
 object StdShow extends ShowInstances
-object Unsafe extends LowPriorityUnsafe {
+object Unsafe {
   implicit def inheritedEq[A] : Hash[A]       = inheritEq
   implicit def inheritedShow[A] : Show[A]     = inheritShow
   implicit def shownOrder[A: Show] : Order[A] = orderBy[A](_.render)
-}
-trait LowPriorityUnsafe {
-  // We may as well derive some convenience from the absence of parametricity.
-  implicit def universalAdHocOrdering[A] : Order[A] = StringOrder | (_.##)
 }
 
 /** Motley classes for which a file of residence is not obvious.

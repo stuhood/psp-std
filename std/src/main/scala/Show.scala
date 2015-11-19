@@ -89,24 +89,23 @@ object Show {
  *  Not printing the way scala does.
  */
 trait ShowInstances extends ShowEach {
-  implicit def showAttributeName : Show[jAttributeName] = inheritShow
-  implicit def showBoolean: Show[Boolean]               = inheritShow
-  implicit def showChar: Show[Char]                     = inheritShow
-  implicit def showDouble: Show[Double]                 = inheritShow
-  implicit def showInt: Show[Int]                       = inheritShow
-  implicit def showLong: Show[Long]                     = inheritShow
-  implicit def showPath: Show[Path]                     = inheritShow
-  implicit def showScalaNumber: Show[ScalaNumber]       = inheritShow
-  implicit def showString: Show[String]                 = inheritShow
+  implicit def showBoolean: Show[Boolean]         = inheritShow
+  implicit def showChar: Show[Char]               = inheritShow
+  implicit def showDouble: Show[Double]           = inheritShow
+  implicit def showInt: Show[Int]                 = inheritShow
+  implicit def showLong: Show[Long]               = inheritShow
+  implicit def showPath: Show[Path]               = inheritShow
+  implicit def showScalaNumber: Show[ScalaNumber] = inheritShow
+  implicit def showString: Show[String]           = inheritShow
 
-  implicit def showClass: Show[jClass]                        = Show(_.shortName)
-  implicit def showDirect: Show[ShowDirect]                   = Show(_.to_s)
-  implicit def showIndex: Show[Index]                         = showBy(_.get)
-  implicit def showNth: Show[Nth]                             = showBy[Nth](_.nth)
-  implicit def showOption[A: Show] : Show[Option[A]]          = Show(_.fold("-")(_.render))
-  implicit def showStackTraceElement: Show[StackTraceElement] = Show("\tat" + _ + "\n")
-  implicit def showPair[A: Show, B: Show] : Show[A -> B]      = Show(x => x._1 ~ " -> " ~ x._2 render)
-  implicit def showThrowable: Show[Throwable]                 = Show(x => "" + x)
+  implicit def showClass: Show[jClass]                                  = Show(_.shortName)
+  implicit def showDirect: Show[ShowDirect]                             = Show(_.to_s)
+  implicit def showIndex: Show[Index]                                   = showBy(_.get)
+  implicit def showNth: Show[Nth]                                       = showBy[Nth](_.nth)
+  implicit def showOption[A: Show] : Show[Option[A]]                    = Show(_.fold("-")(_.render))
+  implicit def showStackTraceElement: Show[java.lang.StackTraceElement] = Show("\tat" + _ + "\n")
+  implicit def showPair[A: Show, B: Show] : Show[A -> B]                = Show(x => x._1 ~ " -> " ~ x._2 render)
+  implicit def showThrowable: Show[Throwable]                           = Show(x => "" + x)
 
   implicit def showSize: Show[Size] = Show[Size] {
     case IntSize(size)         => show"$size"

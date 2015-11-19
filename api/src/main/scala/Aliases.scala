@@ -54,36 +54,26 @@ trait Aliases extends scala.Any {
   type UShort = Char     // unsigned short
 
   // Original type aliases.
-  type Array0D[A]           = A
-  type Array1D[A]           = Array[A]
-  type Array2D[A]           = Array[Array[A]]
-  type Array3D[A]           = Array[Array[Array[A]]]
-  type Array4D[A]           = Array[Array[Array[Array[A]]]]
-  type Array5D[A]           = Array[Array[Array[Array[Array[A]]]]]
-  type Array6D[A]           = Array[Array[Array[Array[Array[Array[A]]]]]]
-  type Bag[A]               = ExMap[A, Precise]
-  type BinOp[A]             = (A, A) => A // binary operation
-  type Each2D[+A]           = Each[Each[A]]
-  type OrderRelation[-A]    = (A, A) => Cmp
-  type Predicate2[-A1, -A2] = (A1, A2) => Bool
-  type Relation[-A]         = (A, A) => Bool
-  type Renderer             = Show[Doc]
-  type Suspended[+A]        = ToUnit[ToUnit[A]]
-  type ToBool[-A]           = A => Bool
-  type ToInt[-A]            = A => Int
-  type ToSelf[A]            = A => A
-  type ToString[-A]         = A => String
-  type ToUnit[-A]           = A => Unit
-  type UnbuildsAs[+A, R]    = Unbuilds[R] { type Elem <: A }
-  type View2D[+A]           = View[View[A]]
-
-  /** Scala, so aggravating.
-   *  [error] could not find implicit value for parameter equiv: Eq[A => Bool]
-   *  The parameter can be given explicitly, it just won't be found unless the
-   *  function type is invariant. The same issue arises with intensional sets.
-   */
-  type InvariantPredicate[A] = A => Bool
-  type InvariantInSet[A]     = InSet[A]
+  type Array0D[A]        = A
+  type Array1D[A]        = Array[A]
+  type Array2D[A]        = Array[Array[A]]
+  type Array3D[A]        = Array[Array[Array[A]]]
+  type Array4D[A]        = Array[Array[Array[Array[A]]]]
+  type Array5D[A]        = Array[Array[Array[Array[Array[A]]]]]
+  type Array6D[A]        = Array[Array[Array[Array[Array[Array[A]]]]]]
+  type Bag[A]            = ExMap[A, Precise]
+  type BinOp[A]          = (A, A) => A // binary operation
+  type OrderRelation[-A] = (A, A) => Cmp
+  type Relation[-A]      = (A, A) => Bool
+  type Renderer          = Show[Doc]
+  type Suspended[+A]     = ToUnit[ToUnit[A]]
+  type ToBool[-A]        = A => Bool
+  type ToInt[-A]         = A => Int
+  type ToSelf[A]         = A => A
+  type ToString[-A]      = A => String
+  type ToUnit[-A]        = A => Unit
+  type UnbuildsAs[+A, R] = Unbuilds[R] { type Elem <: A }
+  type View2D[+A]        = View[View[A]]
 
   // You can't use string interpolation without a StringContext term in scope.
   def StringContext = scala.StringContext

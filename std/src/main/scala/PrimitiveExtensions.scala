@@ -28,7 +28,7 @@ final class AnyOps[A](val x: A) extends AnyVal {
   @inline def toRef: Ref[A]                    = castTo[Ref[A]]
   @inline def |>[B](f: A => B): B              = f(x)  // The famed forward pipe.
   @inline def id_==(y: Any): Boolean           = x.asInstanceOf[AnyRef] eq y.asInstanceOf[AnyRef]  // Calling eq on Anys.
-  @inline def id_## : Int                      = identityHashCode(x)
+  @inline def id_## : Int                      = java.lang.System.identityHashCode(x)
 
   def reflect[B](m: jMethod)(args: Any*): B = m.invoke(x, args.map(_.castTo[AnyRef]): _*).castTo[B]
 
