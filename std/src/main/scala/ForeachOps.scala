@@ -22,15 +22,14 @@ final class InPlace[A](val xs: Array[A]) extends AnyVal {
     xs(i2) = tmp
   }
 
-  def quickSort(implicit z: Order[A], tag: CTag[A]): Array[A]     = andThis(Sorting.quickSort[A](xs)(z, tag))
-  def mergeSort(implicit z: Order[A], tag: CTag[A]): Array[A]     = andThis(Sorting.mergeSort[A](xs)(z, tag))
   def insertionSort(implicit z: Order[A], tag: CTag[A]): Array[A] = andThis(Sorting.insertionSort[A](xs)(z, tag))
-
-  def map(f: ToSelf[A]): Array[A]           = andThis(0 to lastIndex foreach (i => xs(i) = f(xs(i))))
-  def sort(implicit z: Order[A]): Array[A]  = andThis(if (isReference) sortRef(Order.comparator) else Array sortInPlace xs)
-  def sortBy[B: Order](f: A => B): Array[A] = sort(orderBy[A](f))
-  def reverse(): Array[A]                   = andThis(0 until midpoint foreach (i => swap(i, lastIndex - i)))
-  def shuffle(): Array[A]                   = andThis(0 until lastIndex foreach (i => swap(i, i + randomNat(lastIndex - i))))
+  def map(f: ToSelf[A]): Array[A]                                 = andThis(0 to lastIndex foreach (i => xs(i) = f(xs(i))))
+  def mergeSort(implicit z: Order[A], tag: CTag[A]): Array[A]     = andThis(Sorting.mergeSort[A](xs)(z, tag))
+  def quickSort(implicit z: Order[A], tag: CTag[A]): Array[A]     = andThis(Sorting.quickSort[A](xs)(z, tag))
+  def reverse(): Array[A]                                         = andThis(0 until midpoint foreach (i => swap(i, lastIndex - i)))
+  def shuffle(): Array[A]                                         = andThis(0 until lastIndex foreach (i => swap(i, i + randomNat(lastIndex - i))))
+  def sort(implicit z: Order[A]): Array[A]                        = andThis(if (isReference) sortRef(Order.comparator) else Array sortInPlace xs)
+  def sortBy[B: Order](f: A => B): Array[A]                       = sort(orderBy[A](f))
 }
 
 final class ArrayClassTagOps[A: CTag](val xs: Array[A]) {
@@ -53,14 +52,6 @@ final class ArraySpecificOps[A](val xs: Array[A]) extends AnyVal with HasPrecise
   }
   def inPlace: InPlace[A]                    = new InPlace[A](xs)
   private def andThis(op: Unit): xs.type     = xs
-}
-
-final class ForeachOps[A](val xs: Each[A]) extends AnyVal {
-  def sized(size: Precise): Each[A] = new Each.Sized(xs, size)
-  def memo: Indexed.Memo[A] = xs match {
-    case xs: Indexed.Memo[A] => xs
-    case _                   => new Indexed.Memo(xs)
-  }
 }
 
 final class DirectOps[A](val xs: Direct[A]) extends AnyVal {

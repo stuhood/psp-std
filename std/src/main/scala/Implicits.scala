@@ -47,7 +47,6 @@ trait SetAndMapOps {
 
 trait StdOps0 {
   implicit def opsPspUnbuilt[A, R](xs: R)(implicit z: UnbuildsAs[A, R]): Unbuilder[A, R] = new Unbuilder(xs)
-  implicit def opsForeach[A](xs: Each[A]): ops.ForeachOps[A]                             = new ops.ForeachOps(xs)
 }
 trait StdOps1 extends StdOps0 {
   implicit def convertViewBuilds[A, CC[A]](xs: View[A])(implicit z: Builds[A, CC[A]]): CC[A] = z build xs

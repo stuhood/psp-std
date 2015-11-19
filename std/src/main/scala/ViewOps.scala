@@ -115,8 +115,10 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
     Each.indices map col
   }
 
+  def memo: Indexed.Memo[A] = new Indexed.Memo(xs)
+
   def mpartition(p: View[A] => ToBool[A]): View2D[A] = (
-    inView[View[A]](mf => xs.toEach partition p(xs.toEach.memo) match {
+    inView[View[A]](mf => xs.toEach partition p(memo) match {
       case Split(xs, ys) =>
         mf(xs)
         ys mpartition p foreach mf
