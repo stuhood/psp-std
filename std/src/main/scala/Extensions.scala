@@ -10,15 +10,6 @@ import api._
  *  "Ops" classes, where we control the underlying class.
  */
 
-class Partial[A, B](val pf: A ?=> B) extends AnyVal {
-  def zapply(x: A)(implicit z: Empty[B]): B = if (pf isDefinedAt x) pf(x) else z.empty
-}
-object Partial {
-  implicit def liftPartial[A, B](pf: A ?=> B): Partial[A, B] = apply(pf)
-  def apply[A, B](pf: A ?=> B): Partial[A, B]                = new Partial(pf)
-}
-
-
 final class OptionOps[A](val x: Option[A]) extends AnyVal {
   def | (alt: => A): A                             = x getOrElse alt
   def ||(alt: => A): Option[A]                     = x orElse Some(alt)

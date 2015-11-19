@@ -91,7 +91,7 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
 
   private[this] def orderOps(z: Order[A]): HasOrder[A] = new HasOrder[A](xs)(z)
 
-  def sortBy[B](f: A => B)(implicit z: Order[B]): View[A] = orderOps(z on f).sorted
+  def sortBy[B](f: A => B)(implicit z: Order[B]): View[A] = orderOps(orderBy[A](f)).sorted
   def sortWith(cmp: OrderRelation[A]): View[A]            = orderOps(Order(cmp)).sorted
   def findOr(p: ToBool[A], alt: => A): A                  = find(p) | alt
 

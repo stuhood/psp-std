@@ -9,46 +9,35 @@ import Api.SpecTypes
 import psp.dmz.Console
 
 package object std extends psp.std.StdPackage {
-  import Unsafe.inheritedShow
-  private implicit def lexical = lexicalOrder
+  type AdditiveMonoid[A]          = spire.algebra.AdditiveMonoid[A]
+  type AdditiveSemigroup[A]       = spire.algebra.AdditiveSemigroup[A]
+  type BooleanAlgebra[R]          = spire.algebra.Bool[R]
+  type Monoid[A]                  = spire.algebra.Monoid[A]
+  type MultiplicativeMonoid[A]    = spire.algebra.MultiplicativeMonoid[A]
+  type MultiplicativeSemigroup[A] = spire.algebra.MultiplicativeSemigroup[A]
+  type Natural                    = spire.math.Natural
+  type UInt                       = spire.math.UInt
 
-  type IndexRange = Consecutive[Index]
   type IntRange   = Consecutive[Int]
+  type IndexRange = Consecutive[Index]
 
-  // Ugh. XXX
-  implicit def promoteSize(x: Int): Precise = Size(x)
-
-  def lexicalOrder: Order[String] = Order.fromInt(_ compareTo _)
-
-  def inheritShow[A] : Show[A]           = Show.Inherited
-  def inheritEq[A] : Hash[A]             = Eq.Inherited
-  def referenceEq[A <: AnyRef] : Hash[A] = Eq.Reference
-  def stringEq[A] : Hash[A]              = Eq.ToString
-  def shownEq[A: Show] : Hash[A]         = inheritEq[String] on (_.render)
-
-  implicit def opsFun[A, B](f: Fun[A, B]): ops.FunOps[A, B] = new ops.FunOps(f)
-  implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = new (A ?=> B) {
-    def isDefinedAt(x: A) = f isDefinedAt x
-    def apply(x: A)       = f(x)
-  }
-
-  // Helpers for inference when calling 'on' on contravariant type classes.
-  def eqBy[A]    = new EqBy[A]
-  def orderBy[A] = new OrderBy[A]
-  def showBy[A]  = new ShowBy[A]
-
-  // DMZ.
-  final val ::      = psp.dmz.::
-  final val Array   = psp.dmz.Array
-  final val Failure = scala.util.Failure
-  final val Success = scala.util.Success
-  final val Try     = scala.util.Try
-
+  final val ->              = psp.api.Pair
+  final val ::              = psp.dmz.::
+  final val Array           = psp.dmz.Array
+  final val Failure         = scala.util.Failure
+  final val MaxIndex        = Index(MaxLong)
   final val NameTransformer = scala.reflect.NameTransformer
   final val Nil             = sci.Nil
+  final val NoFile: jFile   = new jFile("")
+  final val NoIndex         = Index.undefined
+  final val NoNth           = Nth.undefined
+  final val NoPath: Path    = path("")
+  final val NoUri: jUri     = jUri("")
   final val None            = scala.None
   final val Option          = scala.Option
   final val Some            = scala.Some
+  final val Success         = scala.util.Success
+  final val Try             = scala.util.Try
   final val sciList         = sci.List
   final val sciMap          = sci.Map
   final val sciSeq          = sci.Seq
@@ -56,26 +45,36 @@ package object std extends psp.std.StdPackage {
   final val sciVector       = sci.Vector
   final val scmMap          = scm.Map
 
-  final val MaxIndex      = Index(MaxLong)
-  final val NoFile: jFile = new jFile("")
-  final val NoPath: Path  = path("")
-  final val NoUri: jUri   = jUri("")
-  final val NoIndex       = Index.undefined
-  final val NoNth         = Nth.undefined
-  final val ->            = psp.api.Pair
-
-  implicit val defaultRenderer: FullRenderer              = new FullRenderer
-  implicit def docOrder(implicit z: Renderer): Order[Doc] = orderBy[Doc](z show _)
-
-  implicit class DocOps(val lhs: Doc) {
-    def doc: Doc                             = lhs
-    def render(implicit z: Renderer): String = z show lhs
-    def isEmpty: Boolean                     = lhs eq emptyValue[Doc]
-
-    def ~(rhs: Doc): Doc   = Doc.Cat(lhs, rhs)
-    def <>(rhs: Doc): Doc  = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ rhs
-    def <+>(rhs: Doc): Doc = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ " ".s ~ rhs
+  // Ugh. XXX
+  implicit def promoteSize(x: Int): Precise = Size(x)
+  implicit def opsFun[A, B](f: Fun[A, B]): ops.FunOps[A, B] = new ops.FunOps(f)
+  implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = new (A ?=> B) {
+    def isDefinedAt(x: A) = f isDefinedAt x
+    def apply(x: A)       = f(x)
   }
+
+  def lexicalOrder: Order[String] = Order.fromInt(_ compareTo _)
+
+  def inheritShow[A] : Show[A]           = Show.Inherited
+  def inheritEq[A] : Hash[A]             = Eq.Inherited
+  def referenceEq[A <: AnyRef] : Hash[A] = Eq.Reference
+  def stringEq[A] : Hash[A]              = Eq.ToString
+  def shownEq[A: Show] : Hash[A]         = hashBy[A](x => render(x))(Eq.ToString)
+
+   //Hash[String] on render
+  // Hash[A](x => render(x)
+
+
+  // Show[B](x => z show f(x))
+  // inheritEq[String] on (x => render(x))
+
+  def render[A](x: A)(implicit z: Show[A]): String = z show x
+
+  // Helpers for inference when calling 'on' on contravariant type classes.
+  def eqBy[A]    = new EqBy[A]
+  def orderBy[A] = new OrderBy[A]
+  def showBy[A]  = new ShowBy[A]
+  def hashBy[A]  = new HashBy[A]
 
   def print[A: Show](x: A): Unit   = Console putOut show"$x"
   def println[A: Show](x: A): Unit = Console echoOut show"$x"
@@ -84,9 +83,19 @@ package object std extends psp.std.StdPackage {
   def ??? : Nothing                                                            = throw new scala.NotImplementedError
   def assert(assertion: => Boolean, msg: => Any)(implicit z: Assertions): Unit = Assertions.using(z)(assertion, s"assertion failed: $msg")
 
-  def classOf[A: CTag](): Class[_ <: A]     = classTag[A].runtimeClass.castTo[Class[_ <: A]]
-  def classTag[A: CTag] : CTag[A]           = implicitly[CTag[A]]
-  def path(s: String): Path                 = Paths get s
+  def classOf[A: CTag](): Class[_ <: A]      = classTag[A].runtimeClass.castTo[Class[_ <: A]]
+  def classTag[A: CTag] : CTag[A]            = implicitly[CTag[A]]
+  def classFilter[A: CTag] : Partial[Any, A] = Partial(_.isClass[A], _.castTo[A])
+  def path(s: String): Path                  = Paths get s
+
+  def transitiveClosure[A: Eq](root: A)(expand: A => Foreach[A]): View[A] = inView { f =>
+    def loop(in: View[A], seen: View[A]): Unit = in filterNot seen.contains match {
+      case Each() => ()
+      case in     => in foreach f ; loop(in flatMap expand, seen ++ in)
+    }
+    loop(view(root), view())
+  }
+
 
   // Operations involving encoding/decoding of string data.
   def utf8(xs: Array[Byte]): Utf8   = new Utf8(xs)
@@ -119,7 +128,7 @@ package object std extends psp.std.StdPackage {
   def option[A](p: Boolean, x: => A): Option[A]        = if (p) Some(x) else None
   def randomPosInt(max: Int): Int                      = scala.util.Random.nextInt(max + 1)
   def sideEffect[A](result: A, exprs: Any*): A         = result
-  def leftFormatString(n: Int): Any => String          = cond(n == 0, "%s", "%%-%ds" format n) format _
+  def leftFormatString[A](n: Int): FormatFun           = new FormatFun(cond(n == 0, "%s", "%%-%ds" format n))
 
   // Java.
   def jConcurrentMap[K, V](xs: (K -> V)*): jConcurrentMap[K, V] = new jConcurrentHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
@@ -141,16 +150,4 @@ package object std extends psp.std.StdPackage {
   def list[A](xs: A*): Plist[A]                     = xs.toPlist
   def inView[A](mf: Suspended[A]): View[A]          = Each(mf).m
   def zipView[A, B](xs: (A, B)*): ZipView[A, B]     = Zipped1(xs.seq)
-}
-
-package std {
-  object ?=> {
-    def apply[A, B](p: ToBool[A], f: A => B): A ?=> B = { case x if p(x) => f(x) }
-    def unapply[A, B](f: Fun[A, B]) = Some((f isDefinedAt _, f apply _))
-  }
-  object sys {
-    def error(msg: java.lang.String): Nothing = scala.sys.error(msg)
-    def props                                 = scala.sys.props
-    def env                                   = scala.sys.env
-  }
 }

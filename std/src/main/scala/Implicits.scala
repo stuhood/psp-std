@@ -81,6 +81,9 @@ trait StdOps3 extends StdOps2 {
   implicit def opsPrecise(x: Precise): ops.PreciseOps                               = new ops.PreciseOps(x)
   implicit def opsSize(x: Size): ops.SizeOps                                        = new ops.SizeOps(x)
   implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                                  = new ops.TryOps[A](x)
+
+  implicit def opsPairSplit[R, A, B](xs: Foreach[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B] =
+    new Paired[R, A, B](Each(xs foreach _))
 }
 
 trait StdOps extends StdOps3 {
