@@ -97,7 +97,7 @@ object FileTime {
 }
 
 object Files {
-  def readAllBytes(path: jnf.Path): Array[Byte]                = jnf.Files.readAllBytes(path)
-  def readAllLines(path: jnf.Path, cs: Charset): jList[String] = jnf.Files.readAllLines(path, cs)
-  def readAllLines(path: jnf.Path): jList[String]              = readAllLines(path, defaultCharset)
+  def readAllBytes(path: Path): Array[Byte]                 = jnf.Files.readAllBytes(path)
+  def readAllLines(path: Path, cs: jCharset): jList[String] = jnf.Files.readAllLines(path, cs)
+  def readAllLines(path: Path): jList[String]               = readAllLines(path, defaultCharset)
 }

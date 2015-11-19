@@ -2,6 +2,7 @@ package psp
 package std
 
 import api._
+import scala.collection.mutable.WrappedArray
 
 object Direct {
   final val Empty: Direct[Nothing] = Pure(Precise(0), _ => sys error "<empty>")
@@ -49,7 +50,7 @@ object Direct {
   def reversed[A](xs: Direct[A]): Direct[A]            = Pure(xs.size, i => xs(xs.lastIndex - i.get))
 
   def apply[A](xs: A*): Direct[A] = xs match {
-    case xs: scmWrappedArray[_] => fromArray[A](xs.array.castTo[Array[A]])
-    case _                      => fromScala(xs)
+    case xs: WrappedArray[_] => fromArray[A](xs.array.castTo[Array[A]])
+    case _                   => fromScala(xs)
   }
 }

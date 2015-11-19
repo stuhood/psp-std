@@ -81,7 +81,8 @@ class StringExtensions extends ScalacheckBundle {
     "drop"        -> newProp2[Int](_ drop _)(_ drop _.size build),
     "takeRight"   -> newProp2[Int](_ takeRight _)(_ takeRight _.size build)(mostInts, ?),
     "dropRight"   -> newProp2[Int](_ dropRight _)(_ dropRight _.size build)(mostInts, ?),
-    "toInt"       -> newProp[Int](_.toInt, _.toInt),
+    // Not quite the same - "0xc".toInt is 12 for us, exception for them. XXX.
+    // "toInt"       -> newProp[Int](_.toInt, _.toInt),
     "tail"        -> newProp[String](_.tail, _.tail.force),
     "head"        -> newProp(_.head, _.head),
     "drop"        -> newProp[Char](_.head, _.head),

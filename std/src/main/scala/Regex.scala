@@ -12,7 +12,7 @@ import api._
 //
 // The regular expression . matches any character except a line terminator unless the DOTALL flag is specified.
 final class Regex(val pattern: Pattern) extends AnyVal {
-  def matcher(input: CharSequence): Matcher = pattern matcher input
+  def matcher(input: jCharSequence): Matcher = pattern matcher input
   def to_s = pattern.toString
 
   def flags: Int      = pattern.flags
@@ -40,12 +40,12 @@ final class Regex(val pattern: Pattern) extends AnyVal {
   def surround(s: String, e: String): Regex = mapRegex(s + _ + e)
   def append(e: String)                     = mapRegex(_ + e)
 
-  def isMatch[A: Show](x: A): Boolean        = isMatch(x.render)
-  def isMatch(input: CharSequence): Boolean  = matcher(input).matches
-  def hasMatch(input: CharSequence): Boolean = matcher(input).find()
-  def all(input: CharSequence)               = matcher(input) |> (m => option(m.matches(), 1 to m.groupCount map m.group))
-  def first(input: CharSequence)             = matcher(input) |> (m => option(m.find, m.group()))
-  def unapplySeq(input: CharSequence)        = all(input) map (_.seq)
+  def isMatch[A: Show](x: A): Boolean         = isMatch(x.render)
+  def isMatch(input: jCharSequence): Boolean  = matcher(input).matches
+  def hasMatch(input: jCharSequence): Boolean = matcher(input).find()
+  def all(input: jCharSequence)               = matcher(input) |> (m => option(m.matches(), 1 to m.groupCount map m.group))
+  def first(input: jCharSequence)             = matcher(input) |> (m => option(m.find, m.group()))
+  def unapplySeq(input: jCharSequence)        = all(input) map (_.seq)
 
   override def toString = s"$pattern"
 }

@@ -3,6 +3,7 @@ package std
 package ops
 
 import api._, StdEq._
+import java.io.BufferedInputStream
 
 final class DocSeqOps(xs: Direct[Doc]) {
   private def strs: Direct[String]       = xs mapNow (_.render)

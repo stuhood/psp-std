@@ -2,7 +2,6 @@ package psp
 package std
 
 import api._
-import psp.dmz.ScalaDmz
 
 /** Yes I know all about implicit classes.
  *  There's no way to write an implicit value class which doesn't hardcode
@@ -20,7 +19,8 @@ abstract class StdPackage
          with GlobalShow
          with StdImplicits
          with Aliases
-         with ScalaDmz {
+         with psp.dmz.ScalaDmz
+         with psp.dmz.JavaDmz {
 
   // Higher than Direct.
   implicit def arraySpecificOps[A](xs: Array[A]): ops.ArraySpecificOps[A]       = new ops.ArraySpecificOps[A](xs)
@@ -61,9 +61,6 @@ abstract class StdPackage
     def toEq: Eq[A]                      = Eq[A]((x, y) => ord.compare(x, y) == Cmp.EQ)
     def reverse: Order[A]                = Order[A]((x, y) => ord.compare(x, y).flip)
     def on[B](f: B => A): Order[B]       = Order[B]((x, y) => ord.compare(f(x), f(y)))
-
-    def toOrdering[A1 <: A] : Ordering[A1]     = Order.ordering[A1](ord)
-    def toComparator[A1 <: A] : Comparator[A1] = Order.comparator[A1](ord)
   }
   implicit class CmpEnumOps(val cmp: Cmp) {
     def || (that: => Cmp): Cmp = if (cmp == Cmp.EQ) that else cmp
@@ -87,7 +84,7 @@ abstract class StdPackage
     def mmap[B](f: A => B): View2D[B] = xss map (_ map f)
   }
 
-  def classFilter[A: CTag] : Any ?=> A = newPartial(_.isClass[A], _.castTo[A])
+  def classFilter[A: CTag] : Any ?=> A = ?=>(_.isClass[A], _.castTo[A])
 
   def transitiveClosure[A: Eq](root: A)(expand: A => Foreach[A]): View[A] = inView { f =>
     def loop(in: View[A], seen: View[A]): Unit = in filterNot seen.contains match {

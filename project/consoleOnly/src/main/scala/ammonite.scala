@@ -2,6 +2,7 @@ package psp
 
 import std._, api._, StdShow._
 import ammonite.repl.{ Ref, Repl, Storage }
+import java.lang.System
 
 object ReplMain {
   def main(args: Array[String]): Unit = REPL.start()
@@ -53,5 +54,5 @@ object INREPL {
     def !>(implicit ord: Order[A], z: Show[A]): Unit = run(_.m.sorted map z.show)
   }
 
-  implicit def showToAmmonite[A](implicit z: Show[A]): pprint.PPrinter[A] = pprint.PPrinter[A]((t, c) => scIterator(z show t))
+  implicit def showToAmmonite[A](implicit z: Show[A]): pprint.PPrinter[A] = pprint.PPrinter[A]((t, c) => BiIterator[String](vec(z show t)))
 }

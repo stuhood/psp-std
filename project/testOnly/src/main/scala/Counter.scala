@@ -1,5 +1,8 @@
 package psp
-package std
+package tests
+
+import std._
+import java.util.concurrent.atomic.AtomicInteger
 
 trait Counter[+A] {
   def peek: A

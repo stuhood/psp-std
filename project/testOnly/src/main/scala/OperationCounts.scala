@@ -57,7 +57,7 @@ class OperationCounts extends ScalacheckBundle {
     chooseSmall ^^ lop(n => s"*$n"       -> (_ map multiply(n))),
     chooseSmall ^^ lop(n => s"/$n"       -> (_ withFilter divides(n))),
     chooseSmall ^^ lop(n => s"!/$n"      -> (_ filterNot divides(n))),
-    chooseSmall ^^ lop(n => s"%/$n"      -> (_ collect newPartial(divides(n), _ / n))),
+    chooseSmall ^^ lop(n => s"%/$n"      -> (_ collect ?=>(divides(n), _ / n))),
     chooseSmall ^^ lop(n => s"x=>(x, x)" -> (_ flatMap (x => (x, x).seq))),
     chooseRange ^^ lop(r => s"slice $r"  -> (_ slice r))
   )
