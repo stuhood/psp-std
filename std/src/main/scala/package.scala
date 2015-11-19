@@ -12,9 +12,8 @@ package object std extends psp.std.StdPackage {
   import Unsafe.inheritedShow
   private implicit def lexical = lexicalOrder
 
-  type IndexRange      = Consecutive[Index]
-  type IntRange        = Consecutive[Int]
-  type BuildsMap[K, V] = Builds[K -> V, ExMap[K, V]]
+  type IndexRange = Consecutive[Index]
+  type IntRange   = Consecutive[Int]
 
   def lexicalOrder: Order[String] = Order.fromInt(_ compareTo _)
 
@@ -115,7 +114,7 @@ package object std extends psp.std.StdPackage {
   def noNull[A](value: A, orElse: => A): A             = if (value == null) orElse else value
   def nullAs[A] : A                                    = null.asInstanceOf[A]
   def option[A](p: Boolean, x: => A): Option[A]        = if (p) Some(x) else None
-  def randomNat(max: Int): Int                         = scala.util.Random.nextInt(max)
+  def randomPosInt(max: Int): Int                      = scala.util.Random.nextInt(max + 1)
 
   // Java.
   def jConcurrentMap[K, V](xs: (K -> V)*): jConcurrentMap[K, V] = new jConcurrentHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
