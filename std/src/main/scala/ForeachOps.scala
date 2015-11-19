@@ -5,6 +5,7 @@ package ops
 import api._
 import java.lang.System.arraycopy
 import Api.SpecTypes
+import spire.math.Sorting
 
 final class InPlace[A](val xs: Array[A]) extends AnyVal {
   private def andThis(op: Unit): Array[A] = xs
@@ -20,6 +21,10 @@ final class InPlace[A](val xs: Array[A]) extends AnyVal {
     xs(i1) = xs(i2)
     xs(i2) = tmp
   }
+
+  def quickSort(implicit z: Order[A], tag: CTag[A]): Array[A]     = andThis(Sorting.quickSort[A](xs)(z, tag))
+  def mergeSort(implicit z: Order[A], tag: CTag[A]): Array[A]     = andThis(Sorting.mergeSort[A](xs)(z, tag))
+  def insertionSort(implicit z: Order[A], tag: CTag[A]): Array[A] = andThis(Sorting.insertionSort[A](xs)(z, tag))
 
   def map(f: ToSelf[A]): Array[A]           = andThis(0 to lastIndex foreach (i => xs(i) = f(xs(i))))
   def sort(implicit z: Order[A]): Array[A]  = andThis(if (isReference) sortRef(Order.comparator) else Array sortInPlace xs)

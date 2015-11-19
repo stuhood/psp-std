@@ -42,10 +42,13 @@ object Order {
   def fromInt[A](f: (A, A) => Int): Impl[A]    = apply[A]((x, y) => longCmp(f(x, y)))
   def fromLong[A](f: (A, A) => Long): Impl[A]  = apply[A]((x, y) => longCmp(f(x, y)))
 
+  def impl[A](order: api.Order[A]): Impl[A] = new FromApiOrder(order)
+
   sealed abstract class Impl[A](f: OrderRelation[A]) extends sa.Order[A] with api.Order[A] {
     def cmp(x: A, y: A): Cmp = f(x, y)
     def compare(x: A, y: A): Int = cmp(x, y).intValue
   }
+  final class FromApiOrder[A](z: api.Order[A])        extends Impl[A](z.cmp)
   final class FromComparator[A](c: Comparator[A])     extends Impl[A]((x, y) => longCmp(c.compare(x, y)))
   final class FromRelation[A](f: OrderRelation[A])    extends Impl[A](f)
   final class ToOrdering[A](z: Order[A])              extends Ordering[A] { def compare(x: A, y: A): Int = z.compare(x, y) }
