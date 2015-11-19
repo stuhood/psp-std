@@ -57,7 +57,7 @@ final class FileTimeOps(val time: FileTime) extends AnyVal {
 object infix {
   final class OrderOps[A](val lhs: A) extends AnyVal {
     import Cmp._
-    def compare(rhs: A)(implicit ord: Order[A]): Cmp = ord.compare(lhs, rhs)
+    def compare(rhs: A)(implicit ord: Order[A]): Cmp = ord.cmp(lhs, rhs)
 
     def < (rhs: A)(implicit ord: Order[A]): Boolean = compare(rhs) eq LT
     def <=(rhs: A)(implicit ord: Order[A]): Boolean = compare(rhs) ne GT

@@ -56,7 +56,7 @@ trait JavaClass extends Any {
   def getSuperclass: Option[JavaClass]   = Option(clazz.getSuperclass) map toPolicy
   def hasModuleName: Boolean             = rawName endsWith "$"
   def methods: Vec[jMethod]              = clazz.getMethods.toVec
-  def nameSegments: Vec[String]          = rawName.dottedSegments
+  def nameSegments: Vec[String]          = rawName splitChar '.'
   def parentInterfaces: Vec[JavaClass]   = clazz.getInterfaces.toVec mapNow toPolicy
   def parents: Vec[JavaClass]            = getSuperclass.toVec ++ parentInterfaces
   def qualifiedName: String              = rawName.mapSplit('.')(decodeName)

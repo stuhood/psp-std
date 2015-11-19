@@ -27,7 +27,7 @@ trait StdImplicits extends scala.AnyRef
   // concrete type which has all the other ones.
 
   implicit def promoteApiIndex(x: Index): IndexImpl                    = Index impl x
-  implicit def promoteApiOrder[A](ord: Order[A]): Order.Impl[A]        = Order(ord.compare)
+  implicit def promoteApiOrder[A](ord: Order[A]): Order.Impl[A]        = Order(ord.cmp)
   implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]          = ExSet impl x
   implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V] = ExMap impl x
   implicit def promoteApiView[A](xs: View[A]): AtomicView[A, View[A]]  = View impl xs
@@ -58,7 +58,7 @@ trait StdOps2 extends StdOps1 {
   implicit def opsDirectString(s: String): ops.DirectOps[Char]   = new ops.DirectOps(Direct fromString s)
 
   // We buried Predef's {un,}augmentString in favor of these.
-  implicit def pspAugmentString(x: String): PspStringOps               = new PspStringOps(x)
+  implicit def opsWrapString(x: String): Pstring                       = new Pstring(x)
   implicit def opsAtomicView[A](x: View[A]): ops.InvariantViewOps[A]   = new ops.InvariantViewOps(x)
   implicit def opsHasOrderInfix[A: Order](x: A): ops.infix.OrderOps[A] = new ops.infix.OrderOps[A](x)
   implicit def opsHasHash[A: Hash](x: View[A]): ops.HasHash[A]         = new ops.HasHash(x)

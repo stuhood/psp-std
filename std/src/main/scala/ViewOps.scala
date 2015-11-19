@@ -28,6 +28,7 @@ trait ApiViewOps[+A] extends Any {
   def last: A                                            = xs takeRight 1.size optionally { case Each(x) => x } orFail "empty.last"
   def mkString(sep: String): String                      = stringed(sep)(_.any_s)
   def mk_s(sep: String)(implicit z: Show[A]): String     = stringed(sep)(_.render)
+  def mk_s(sep: Char)(implicit z: Show[A]): String       = mk_s(sep.any_s)(z)
   def nonEmpty: Boolean                                  = xs.size.isNonZero || !directIsEmpty
   def tabular(columns: ToString[A]*): String             = if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toVec, columns.m).render else ""
   def toRefs: View[Ref[A]]                               = xs map (_.toRef)
