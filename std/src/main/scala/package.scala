@@ -26,9 +26,6 @@ package object std extends psp.std.StdPackage {
   def stringEq[A] : Hash[A]              = Eq.ToString
   def shownEq[A: Show] : Hash[A]         = inheritEq[String] on (_.render)
 
-  def sideEffect[A](result: A, exprs: Any*): A = result
-  def leftFormatString(n: Int): Any => String = ( if (n == 0) "%s" else "%%-%ds" format n ) format _
-
   implicit def opsFun[A, B](f: Fun[A, B]): ops.FunOps[A, B] = new ops.FunOps(f)
   implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = new (A ?=> B) {
     def isDefinedAt(x: A) = f isDefinedAt x
@@ -121,6 +118,8 @@ package object std extends psp.std.StdPackage {
   def nullAs[A] : A                                    = null.asInstanceOf[A]
   def option[A](p: Boolean, x: => A): Option[A]        = if (p) Some(x) else None
   def randomPosInt(max: Int): Int                      = scala.util.Random.nextInt(max + 1)
+  def sideEffect[A](result: A, exprs: Any*): A         = result
+  def leftFormatString(n: Int): Any => String          = cond(n == 0, "%s", "%%-%ds" format n) format _
 
   // Java.
   def jConcurrentMap[K, V](xs: (K -> V)*): jConcurrentMap[K, V] = new jConcurrentHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
@@ -134,13 +133,14 @@ package object std extends psp.std.StdPackage {
   def snd[A, B](x: A -> B): B          = x._2
   def tuple[A, B](x: A -> B): ((A, B)) = x._1 -> x._2
 
-  def view[A](xs: A*): View[A]                  = xs.toVec.m
-  def vec[@spec(SpecTypes) A](xs: A*): Vec[A]   = xs.toVec
-  def set[A: Eq](xs: A*): ExSet[A]              = xs.toExSet
-  def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V]   = xs.m.toExMap
-  def list[A](xs: A*): Plist[A]                 = xs.toPlist
-  def inView[A](mf: Suspended[A]): View[A]      = Each(mf).m
-  def zipView[A, B](xs: (A, B)*): ZipView[A, B] = Zipped1(xs.seq)
+  def cond[A](p: Bool, thenp: => A, elsep: => A): A = if (p) thenp else elsep
+  def view[A](xs: A*): View[A]                      = xs.toVec.m
+  def vec[@spec(SpecTypes) A](xs: A*): Vec[A]       = xs.toVec
+  def set[A: Eq](xs: A*): ExSet[A]                  = xs.toExSet
+  def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V]       = xs.m.toExMap
+  def list[A](xs: A*): Plist[A]                     = xs.toPlist
+  def inView[A](mf: Suspended[A]): View[A]          = Each(mf).m
+  def zipView[A, B](xs: (A, B)*): ZipView[A, B]     = Zipped1(xs.seq)
 }
 
 package std {

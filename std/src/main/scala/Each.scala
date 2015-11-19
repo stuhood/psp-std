@@ -33,7 +33,7 @@ object Each {
    *  scala's rampant overspecification.
    */
   final class ToScalaSeq[A](xs: Each[A]) extends sciSeq[A] {
-    override def length: Int                 = xs.size match { case Precise(n) => n.toInt }
+    override def length: Int                 = xs.sizeInt
     def iterator: scIterator[A]              = xs.iterator
     def apply(index: Int): A                 = xs drop index.size head
     override def foreach[U](f: A => U): Unit = xs foreach (x => f(x))
@@ -67,7 +67,7 @@ object Each {
       underlying foreach { x =>
         if (count >= size) return
         f(x)
-        count = count++
+        count += 1
       }
     }
   }

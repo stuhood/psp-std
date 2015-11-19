@@ -32,8 +32,7 @@ final case class Precise private[api] (value: Long)             extends AnyVal w
 
   def +(n: Long): Precise = Size(value + n)
   def -(n: Long): Precise = Size(value - n)
-  def -- : Precise        = Size(value - 1)
-  def ++ : Precise        = Size(value + 1)
+  def toInt: Int          = value.toInt
   def intValue: Int       = value.toInt
   def longValue: Long     = value
   override def toString   = s"$value"

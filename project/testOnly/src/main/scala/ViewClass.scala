@@ -32,13 +32,16 @@ trait ViewClass extends ForceShowDirect {
   def withFilter(p: ToBool[Int]): This
 }
 
+/** Don't lose the toInt calls or we land in an infinite
+ *  loop of some kind.
+ */
 final case class ScalaViewClass(name: String, xs: scIterable[Int]) extends ViewClass {
   type This = ScalaViewClass
   private implicit def liftResult(xs: scIterable[Int]): This = copy(xs = xs)
 
   def collect(pf: Int ?=> Int)        = xs collect pf
-  def drop(n: Precise)                = xs drop n.getInt
-  def dropRight(n: Precise)           = xs dropRight n.getInt
+  def drop(n: Precise)                = xs drop n.toInt
+  def dropRight(n: Precise)           = xs dropRight n.toInt
   def dropWhile(p: ToBool[Int])       = xs dropWhile p
   def filter(p: ToBool[Int])          = xs filter p
   def filterNot(p: ToBool[Int])       = xs filterNot p
@@ -46,11 +49,11 @@ final case class ScalaViewClass(name: String, xs: scIterable[Int]) extends ViewC
   def foreach(f: Int => Unit)         = xs foreach f
   def map(f: Int => Int)              = xs map f
   def slice(range: IndexRange)        = xs slice (range.startInt, range.endInt)
-  def take(n: Precise)                = xs take n.getInt
-  def takeRight(n: Precise)           = xs takeRight n.getInt
+  def take(n: Precise)                = xs take n.toInt
+  def takeRight(n: Precise)           = xs takeRight n.toInt
   def takeWhile(p: ToBool[Int])       = xs takeWhile p
   def withFilter(p: ToBool[Int])      = xs filter p
-  def to_s: String                    = xs mkString ("[ ", ", ", " ]")
+  def to_s: String                    = "[ " + (xs mkString ", ") + " ]"
 }
 
 final case class PolicyViewClass(name: String, xs: View[Int]) extends ViewClass {

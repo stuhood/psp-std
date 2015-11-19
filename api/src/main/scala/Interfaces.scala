@@ -26,10 +26,10 @@ trait HasPreciseSize extends Any with HasAtomicSize        { def size: Precise  
 trait IsEmpty extends Any              { def isEmpty: Boolean }
 trait Opt[+A] extends Any with IsEmpty { def get: A           }
 
-trait Each[@spec(SpecTypes) +A]    extends Any with HasSize with Foreach[A] with NotView { def foreach(f: A => Unit): Unit   }
-trait Indexed[@spec(SpecTypes) +A] extends Any with Each[A]                              { def elemAt(i: Index): A           }
+trait Each[@spec(SpecTypes) +A]    extends Any with Foreach[A] with NotView        { def foreach(f: A => Unit): Unit   }
+trait Indexed[@spec(SpecTypes) +A] extends Any with Each[A]                        { def elemAt(i: Index): A           }
 trait Direct[@spec(SpecTypes) +A]  extends Any with Indexed[A] with HasPreciseSize
-trait Linear[@spec(SpecTypes) +A]  extends Any with Each[A]    with IsEmpty              { def head: A ; def tail: Linear[A] }
+trait Linear[@spec(SpecTypes) +A]  extends Any with Each[A]    with IsEmpty        { def head: A ; def tail: Linear[A] }
 
 trait InSet[-A]     extends Any                            { def apply(x: A): Boolean       }
 trait InMap[-K, +V] extends Any                            { def lookup: Fun[K, V]          }
@@ -45,10 +45,10 @@ sealed trait MaybeView extends Any                { def isView: Boolean      }
 trait IsView           extends Any with MaybeView { final def isView = true  }
 trait NotView          extends Any with MaybeView { final def isView = false }
 
-trait Foreach[+A] extends Any with MaybeView {
+trait Foreach[+A] extends Any with MaybeView with HasSize {
   def foreach(f: A => Unit): Unit
 }
-trait AnyView[@spec(SpecTypes) +A] extends Any with HasSize with IsView with Foreach[A] {
+trait AnyView[@spec(SpecTypes) +A] extends Any with IsView with Foreach[A] {
   type MapTo[+X] <: AnyView[X]
 }
 
