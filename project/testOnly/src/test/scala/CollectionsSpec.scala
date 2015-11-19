@@ -59,9 +59,8 @@ class ADTSpec extends ScalacheckBundle {
 class StringExtensions extends ScalacheckBundle {
   def bundle = "String Extensions"
 
-  def s = "123 monkey dog ^^.* hello mother 456"
-  def scalaOps(s: String)  = new StringOps(s)
-  def policyOps(s: String) = new PspStringOps(s)
+  def s                   = "123 monkey dog ^^.* hello mother 456"
+  def scalaOps(s: String) = new StringOps(s)
 
   def newProp[A: Eq](f: StringOps => A, g: String => A): Prop = forAll((s: String) => sameBehavior(f(scalaOps(s)), g(s)))
 
@@ -134,6 +133,12 @@ class ViewBasic extends ScalacheckBundle {
   def pseq    = Each.elems(1, 2, 3)
   def punfold = Indexed from 1
 
+  val vec1  = Each const 1 take 32.size toVec
+  val vec2  = vec1 map (_ => vec1) reducel (_ ++ _)
+  val vec3  = vec1 map (_ => vec2) reducel (_ ++ _)
+  val vec4  = vec3 :+ 1
+  val size4 = (32 * 32 * 32) + 1
+
   case class Bippy(s: String, i: Int) {
     override def toString = s
   }
@@ -157,7 +162,7 @@ class ViewBasic extends ScalacheckBundle {
     showsAs("[ 1, 2, 3, 1, 2, 3 ]", pvector ++ pvector force),
     showsAs("[ 1, 2, 3, 1, 2, 3 ]", parray ++ parray force),
     showsAs("[ 1, 2, 3, 1, 2, 3 ]", parray.m ++ parray.m force),
-    // showsAs("[ 1, 2, 3, ... ]", punfold),
+    showsAs("[ 1, 2, 3, ... ]", punfold),
     // showsAs("[ 1, 2, 3 ], [ 1, 2 ], [ 1 ], [  ], [ 2 ], [ 2, 3 ], [ 3 ]", closure mk_s ", "),
     // showsAs("1 -> 3, 2 -> 4, 3 -> 3", closureBag.entries mk_s ", "),
     seqShows("1 -> 0, 2 -> 1, 3 -> 2", pvector.m.mapWithIndex(_ -> _)),
@@ -165,7 +170,13 @@ class ViewBasic extends ScalacheckBundle {
     seqShows("99, 1010, 1111", xxNumbers slice (8 takeNext 3.size).asIndices),
     expectValue[Size](4.size)(strs.byRef.distinct.force.size),
     expectValue[Size](3.size)(strs.byEquals.distinct.force.size),
-    expectValue[Size](2.size)(strs.byString.distinct.force.size)
+    expectValue[Size](2.size)(strs.byString.distinct.force.size),
+    expectValue[Int](vec4 drop 10 length)(size4 - 10),
+    expectValue[Int](vec4 dropRight 10 length)(size4 - 10),
+    expectValue[Int](vec4.updated(100.index, 12345).apply(100))(12345),
+    expectValue[Int](vec4 take (size4 + 10).size length)(size4),
+    expectValue[Int](vec4 take (size4 - 10).size length)(size4 - 10),
+    expectValue[Int](vec4 takeRight (size4 - 10).size length)(size4 - 10)
   )
 }
 
