@@ -27,9 +27,16 @@ sealed trait Atomic extends Any with Size
 final case object Infinite                                      extends Atomic
 final case class Bounded private[api] (lo: Precise, hi: Atomic) extends Size
 final case class Precise private[api] (value: Long)             extends AnyVal with Atomic {
-  def intValue: Int     = value.toInt
-  def longValue: Long   = value
-  override def toString = s"$value"
+  def min(that: Precise): Precise = if (value <= that.value) this else that
+  def max(that: Precise): Precise = if (value >= that.value) this else that
+
+  def +(n: Long): Precise = Size(value + n)
+  def -(n: Long): Precise = Size(value - n)
+  def -- : Precise        = Size(value - 1)
+  def ++ : Precise        = Size(value + 1)
+  def intValue: Int       = value.toInt
+  def longValue: Long     = value
+  override def toString   = s"$value"
 }
 
 

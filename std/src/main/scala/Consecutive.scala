@@ -15,7 +15,7 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
     else new Consecutive[A](startInt, startInt + size.getInt - 1, f)
 
   def endInt: Int         = lastInt + 1
-  def size: Precise       = Size(hops + 1)
+  def size                = Size(hops + 1)
   def isEmpty: Boolean    = lastInt < startInt
   def elemAt(i: Index): A = f(startInt + i.getInt)
   def map[B](g: A => B)   = new Consecutive[B](startInt, lastInt, f andThen g)

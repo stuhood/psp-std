@@ -136,7 +136,7 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
 
   def boundedClosure(maxDepth: Precise, f: A => View[A]): View[A] = (
     if (maxDepth.isZero) xs
-    else xs ++ (xs flatMap f).boundedClosure(maxDepth - 1, f)
+    else xs ++ (xs flatMap f).boundedClosure(maxDepth--, f)
   )
 }
 

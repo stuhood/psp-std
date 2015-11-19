@@ -27,8 +27,8 @@ final class IndexImpl private[std] (val index: Long) extends AnyVal with Index {
   def prev: Index                   = this - 1
   def next: Index                   = this + 1
   def until(end: Index): IndexRange = indexRange(getInt, end.getInt)
-  def sizeExcluding: Precise        = index.size
-  def sizeIncluding: Precise        = index.size + 1
+  def sizeExcluding: Precise        = Size(index)
+  def sizeIncluding: Precise        = Size(index + 1)
   def toIndex: Index                = this
   def toNth: Nth                    = Nth(index + 1)
   def toOffset: Offset              = if (isUndefined) abort("undefined") else Offset(getInt)

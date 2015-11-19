@@ -2,7 +2,7 @@ package psp
 package std
 package ops
 
-import api._, StdEq._
+import api._, StdEq._, StdShow._
 import java.io.BufferedInputStream
 
 final class DocSeqOps(xs: Direct[Doc]) {
@@ -39,60 +39,33 @@ final class ExSetOps[A](xs: ExSet[A]) {
 trait HasPreciseSizeMethods extends Any {
   def size: Precise
 
-  def longSize: Long       = size.longValue
-  def intSize: Int         = size.intValue
-  def isZero: Boolean      = longSize == 0L
-  def isPositive: Boolean  = longSize > 0L
-  def indices: IndexRange  = indexRange(0, intSize)
-  def nths: Direct[Nth]    = indices mapNow (_.toNth)
-  def lastIntIndex: Int    = lastIndex.getInt
-  def lastIndex: Index     = Index(longSize - 1)  // effectively maps both undefined and zero to no index.
-  def lastNth: Nth         = lastIndex.toNth
+  def longSize: Long      = size.longValue
+  def intSize: Int        = size.intValue
+  def isPositive: Boolean = longSize > 0L
+  def indices: IndexRange = indexRange(0, intSize)
+  def lastIndex: Index    = Index(longSize - 1)  // effectively maps both undefined and zero to no index.
 
-  def containsIndex(index: Index): Boolean = indices.m contains index
-
-  @inline def foreachIndex(f: Index => Unit): Unit     = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIntIndex, i => f(Index(i)))
-  @inline def foreachIntIndex(f: Int => Unit): Unit    = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIntIndex, f)
-  @inline def mapIndices[A](f: Index => A): Direct[A]  = indices mapNow f
+  def containsIndex(index: Index): Boolean          = indices.m contains index
+  @inline def foreachIndex(f: Index => Unit): Unit  = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, i => f(Index(i)))
+  @inline def foreachIntIndex(f: Int => Unit): Unit = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, f)
 }
 
 final class HasPreciseSizeOps(val x: HasPreciseSize) extends HasPreciseSizeMethods {
   def size: Precise = x.size
 }
 
+final class TimesBuilder(val times: Precise) {
+  def const[A](elem: A): Each[A]   = Each const elem take times
+  def eval[A](body: => A): Each[A] = Each continually body take times
+}
+
 final class PreciseOps(val size: Precise) extends AnyRef with HasPreciseSizeMethods {
-  def get: Long        = size.longValue
   def getInt: Int      = size.intValue
-  def toDouble: Double = get.toDouble
+  def times            = new TimesBuilder(size)
+  def leftFormatString = if (getInt == 0) "%s" else "%%-%ds" format getInt
 
-  def + (n: Int): Precise = (longSize + n).size
-  def - (n: Int): Precise = (longSize - n).size
-  def * (n: Int): Precise = (longSize * n).size
-  def / (n: Int): Precise = (longSize / n).size
-  def % (n: Int): Precise = (longSize % n).size
-
-  def /+ (n: Int): Precise = (this / n) + ( if ((this % n).isZero) 0 else 1 )
-
-  def + (n: Precise): Precise = (longSize + n.longSize).size
-  def - (n: Precise): Precise = (longSize - n.longSize).size
-  def * (n: Precise): Precise = (longSize * n.longSize).size
-  def / (n: Precise): Precise = (longSize / n.longSize).size
-  def % (n: Precise): Precise = (longSize % n.longSize).size
-
-  def min(that: Precise): Precise = (longSize min that.longSize).size
-  def max(that: Precise): Precise = (longSize max that.longSize).size
-  def increment: Precise          = (longSize + 1L).size
-  def decrement: Precise          = (longSize - 1L).size
-
-  def timesConst[A](elem: A): Each[A]   = Each const elem take size
-  def timesEval[A](body: => A): Each[A] = Each continually body take size
-
-  def toIntRange                           = intRange(0, intSize)
-  def padLeft(s: String, ch: Char): String = if (s.length >= longSize) s else (this - s.length timesConst ch mkString "") append s
-
-  def leftFormatString  = if (size.isZero) "%s" else "%%-%ds" format intSize
-  def rightFormatString = if (size.isZero) "%s" else "%%%ds" format intSize
-
+  def + (n: Precise): Precise = size + n.longValue
+  def - (n: Precise): Precise = size - n.longValue
   override def toString = s"$longSize"
 }
 
@@ -114,27 +87,14 @@ final class SizeOps(val lhs: Size) extends AnyVal {
   import impl.Size._
   import StdEq._
 
-  def isNonZero    = !loBound.isZero
-  def isZero       = lhs match {
-    case Precise(0L) => true
-    case _           => false
-  }
-  def isFinite         = lhs.hiBound !== Infinite
-  def atLeast: Size    = bounded(lhs, Infinite)
-  def atMost: Size     = bounded(Empty, lhs)
-  def upTo(hi: Atomic) = bounded(lhs, hi)
-  def hiBound: Atomic = lhs match {
-    case Bounded(_, hi) => hi
-    case x: Atomic      => x
-  }
+  def isNonZero     = loBound !== Size.Zero
+  def isZero        = lhs === Size.Zero
+  def atLeast: Size = bounded(lhs, Infinite)
+  def atMost: Size  = bounded(Empty, lhs)
+
   def loBound: Atomic = lhs match {
     case Bounded(lo, _) => lo
     case x: Atomic      => x
-  }
-
-  def mapAtomic(f: Precise => Precise, g: Atomic => Atomic): Size = lhs match {
-    case x: Atomic       => g(x)
-    case Bounded(lo, hi) => bounded(f(lo), g(hi))
   }
 
   def slice(range: IndexRange): Size = (this - range.toDrop) min range.toTake

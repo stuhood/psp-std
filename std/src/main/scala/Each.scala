@@ -67,11 +67,11 @@ object Each {
 
     def isEmpty = size.isZero
     @inline def foreach(f: A => Unit): Unit = {
-      var count: Precise = 0.size
+      var count = Size(0)
       underlying foreach { x =>
         if (count >= size) return
         f(x)
-        count += 1
+        count = count++
       }
     }
   }
