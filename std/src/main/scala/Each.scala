@@ -9,15 +9,18 @@ final class LongSizeException(msg: String) extends CollectionSizeException(msg)
 
 object Each {
   final case class WrapJavaMap[K, V](xs: jMap[K, V]) extends AnyVal with Each[K -> V] {
-    def size = xs.size.size
+    def size = Size(xs.size)
     @inline def foreach(f: ToUnit[K -> V]): Unit = xs.keySet foreach (k => f(k -> (xs get k)))
   }
   final case class WrapJava[A](xs: jIterable[A]) extends AnyVal with Each[A] {
-    def size = impl.Size(xs)
+    def size = xs match {
+      case xs: jCollection[_] => Size(xs.size)
+      case _                  => api.Size.Unknown
+    }
     @inline def foreach(f: A => Unit): Unit = xs.iterator foreach f
   }
   final case class WrapScala[A](xs: sCollection[A]) extends AnyVal with Each[A] {
-    def size = impl.Size(xs)
+    def size: Size = if (xs.hasDefiniteSize) Size(xs.size) else api.Size.Unknown
     @inline def foreach(f: A => Unit): Unit = xs foreach f
   }
 
@@ -64,11 +67,11 @@ object Each {
 
     def isEmpty = size.isZero
     @inline def foreach(f: A => Unit): Unit = {
-      var count: Precise = 0.size
+      var count = Size(0)
       underlying foreach { x =>
         if (count >= size) return
         f(x)
-        count += 1
+        count = count++
       }
     }
   }

@@ -2,32 +2,21 @@ package psp
 package std
 package ops
 
-import api._, StdEq._
+import api._, StdEq._, StdShow._
 import java.io.BufferedInputStream
 
 final class DocSeqOps(xs: Direct[Doc]) {
-  private def strs: Direct[String]       = xs mapNow (_.render)
-  private def nonEmpties: Direct[String] = strs filterNot (_.isEmpty) mapNow (_.trim)
-
-  def inParens: String    = "(" append joinComma append ")"
-  def joinLines: String   = strs mkString EOL
-  def joinComma: String   = nonEmpties mkString ", "
-  def joinParents: String = nonEmpties mkString " with "
-  def joinWords: String   = nonEmpties mkString " "
+  def joinLines: String = xs mapNow (_.render) mk_s EOL
 }
 final class ExMapOps[K, V](xs: ExMap[K, V]) {
   type Entry = K -> V
 
-  def keys: View[K]             = keySet.m
-  def values: View[V]           = keyVector map xs.lookup
-  def keySet: ExSet[K]          = xs.lookup.keys
-  def keyVector: Vec[K]         = keys.toVec
-  def entries: View[Entry]      = keyVector mapZip xs.lookup
-  def contains(key: K): Boolean = keySet(key)
-  def size: Size                = keys.size
-
+  def keys: View[K]        = keySet.m
+  def values: View[V]      = keyVector map xs.lookup
+  def keySet: ExSet[K]     = xs.lookup.keys
+  def keyVector: Vec[K]    = keys.toVec
+  def entries: View[Entry] = keyVector mapZip xs.lookup
   def filterValues(p: ToBool[V]): ExMap[K, V] = xs filterKeys (k => p(xs(k)))
-  def +(entry: Entry): ExMap[K, V]            = ExMap(keySet + entry._1, Fun finite entry orElse xs.lookup)
 }
 final class ExSetOps[A](xs: ExSet[A]) {
   def add(x: A): ExSet[A]                = xs + x
@@ -39,60 +28,33 @@ final class ExSetOps[A](xs: ExSet[A]) {
 trait HasPreciseSizeMethods extends Any {
   def size: Precise
 
-  def longSize: Long       = size.longValue
-  def intSize: Int         = size.intValue
-  def isZero: Boolean      = longSize == 0L
-  def isPositive: Boolean  = longSize > 0L
-  def indices: IndexRange  = indexRange(0, intSize)
-  def nths: Direct[Nth]    = indices mapNow (_.toNth)
-  def lastIntIndex: Int    = lastIndex.getInt
-  def lastIndex: Index     = Index(longSize - 1)  // effectively maps both undefined and zero to no index.
-  def lastNth: Nth         = lastIndex.toNth
+  def longSize: Long      = size.longValue
+  def intSize: Int        = size.intValue
+  def isPositive: Boolean = longSize > 0L
+  def indices: IndexRange = indexRange(0, intSize)
+  def lastIndex: Index    = Index(longSize - 1)  // effectively maps both undefined and zero to no index.
 
-  def containsIndex(index: Index): Boolean = indices.m contains index
-
-  @inline def foreachIndex(f: Index => Unit): Unit     = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIntIndex, i => f(Index(i)))
-  @inline def foreachIntIndex(f: Int => Unit): Unit    = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIntIndex, f)
-  @inline def mapIndices[A](f: Index => A): Direct[A]  = indices mapNow f
+  def containsIndex(index: Index): Boolean          = indices.m contains index
+  @inline def foreachIndex(f: Index => Unit): Unit  = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, i => f(Index(i)))
+  @inline def foreachIntIndex(f: Int => Unit): Unit = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, f)
 }
 
 final class HasPreciseSizeOps(val x: HasPreciseSize) extends HasPreciseSizeMethods {
   def size: Precise = x.size
 }
 
+final class TimesBuilder(val times: Precise) {
+  def const[A](elem: A): Each[A]   = Each const elem take times
+  def eval[A](body: => A): Each[A] = Each continually body take times
+}
+
 final class PreciseOps(val size: Precise) extends AnyRef with HasPreciseSizeMethods {
-  def get: Long        = size.longValue
   def getInt: Int      = size.intValue
-  def toDouble: Double = get.toDouble
+  def times            = new TimesBuilder(size)
+  def leftFormatString = if (getInt == 0) "%s" else "%%-%ds" format getInt
 
-  def + (n: Int): Precise = (longSize + n).size
-  def - (n: Int): Precise = (longSize - n).size
-  def * (n: Int): Precise = (longSize * n).size
-  def / (n: Int): Precise = (longSize / n).size
-  def % (n: Int): Precise = (longSize % n).size
-
-  def /+ (n: Int): Precise = (this / n) + ( if ((this % n).isZero) 0 else 1 )
-
-  def + (n: Precise): Precise = (longSize + n.longSize).size
-  def - (n: Precise): Precise = (longSize - n.longSize).size
-  def * (n: Precise): Precise = (longSize * n.longSize).size
-  def / (n: Precise): Precise = (longSize / n.longSize).size
-  def % (n: Precise): Precise = (longSize % n.longSize).size
-
-  def min(that: Precise): Precise = (longSize min that.longSize).size
-  def max(that: Precise): Precise = (longSize max that.longSize).size
-  def increment: Precise          = (longSize + 1L).size
-  def decrement: Precise          = (longSize - 1L).size
-
-  def timesConst[A](elem: A): Each[A]   = Each const elem take size
-  def timesEval[A](body: => A): Each[A] = Each continually body take size
-
-  def toIntRange                           = intRange(0, intSize)
-  def padLeft(s: String, ch: Char): String = if (s.length >= longSize) s else (this - s.length timesConst ch mkString "") append s
-
-  def leftFormatString  = if (size.isZero) "%s" else "%%-%ds" format intSize
-  def rightFormatString = if (size.isZero) "%s" else "%%%ds" format intSize
-
+  def + (n: Precise): Precise = size + n.longValue
+  def - (n: Precise): Precise = size - n.longValue
   override def toString = s"$longSize"
 }
 
@@ -114,27 +76,14 @@ final class SizeOps(val lhs: Size) extends AnyVal {
   import impl.Size._
   import StdEq._
 
-  def isNonZero    = !loBound.isZero
-  def isZero       = lhs match {
-    case Precise(0L) => true
-    case _           => false
-  }
-  def isFinite         = lhs.hiBound !== Infinite
-  def atLeast: Size    = bounded(lhs, Infinite)
-  def atMost: Size     = bounded(Empty, lhs)
-  def upTo(hi: Atomic) = bounded(lhs, hi)
-  def hiBound: Atomic = lhs match {
-    case Bounded(_, hi) => hi
-    case x: Atomic      => x
-  }
+  def isNonZero     = loBound !== Size.Zero
+  def isZero        = lhs === Size.Zero
+  def atLeast: Size = bounded(lhs, Infinite)
+  def atMost: Size  = bounded(Empty, lhs)
+
   def loBound: Atomic = lhs match {
     case Bounded(lo, _) => lo
     case x: Atomic      => x
-  }
-
-  def mapAtomic(f: Precise => Precise, g: Atomic => Atomic): Size = lhs match {
-    case x: Atomic       => g(x)
-    case Bounded(lo, hi) => bounded(f(lo), g(hi))
   }
 
   def slice(range: IndexRange): Size = (this - range.toDrop) min range.toTake
@@ -147,33 +96,19 @@ final class SizeOps(val lhs: Size) extends AnyVal {
   def intersect(rhs: Size): Size = bounded(0.size, lhs min rhs)
   def diff(rhs: Size): Size      = bounded(lhs - rhs, lhs)
 
-  def * (m: Long): Size = lhs match {
-    case Precise(n)                        => n * m size
-    case Bounded(Precise(lo), Precise(hi)) => bounded(lo * m size, hi * m size)
-    case Bounded(Precise(lo), Infinite)    => if (m == 0L) unknown else bounded(lo * m size, Infinite)
-    case Infinite                          => if (m == 0L) unknown else Infinite
-  }
-  def * (rhs: Size): Size = lhs match {
-    case Precise(n)                        => this * n
-    case Bounded(Precise(lo), Precise(hi)) => bounded(rhs * lo, rhs * hi)
-    case Bounded(Precise(lo), Infinite)    => if (rhs.isZero) unknown else bounded(rhs * lo, Infinite)
-    case Infinite                          => if (rhs.isZero) unknown else Infinite
-  }
-
   def + (rhs: Size): Size = (lhs, rhs) match {
     case (Infinite, _) | (_, Infinite)            => Infinite
     case (Precise(l), Precise(r))                 => l + r size
     case (GenBounded(l1, h1), GenBounded(l2, h2)) => bounded(l1 + l2, h1 + h2)
   }
   def - (rhs: Size): Size = (lhs, rhs) match {
-    case (Precise(l), Precise(r))         => l - r size
+    case (Precise(l), Precise(r))         => Size(l - r)
     case (Infinite, Finite(_, _))         => Infinite
     case (Finite(_, _), Infinite)         => Empty
     case (Finite(l1, h1), Finite(l2, h2)) => bounded(l1 - h2, h1 - l2)
     case (Bounded(l1, h1), rhs: Precise)  => bounded(l1 - rhs, h1 - rhs)
     case _                                => unknown
   }
-
   def min(rhs: Size): Size = (lhs, rhs) match {
     case (Infinite, _)                            => rhs
     case (_, Infinite)                            => lhs
@@ -191,10 +126,6 @@ final class SizeOps(val lhs: Size) extends AnyVal {
 final class FunOps[A, B](val f: Fun[A, B]) extends AnyVal {
   outer =>
 
-  def opaquely: Opaque[A, B] = f match {
-    case x: Opaque[_, _] => x
-    case _               => Opaque(x => if (f isDefinedAt x) f(x) else abort("" + x))
-  }
   def get(x: A): Option[B]            = if (f isDefinedAt x) Some(f(x)) else None
   def getOr(key: A, alt: => B): B     = get(key) getOrElse alt
   def orElse(g: Fun[A, B]): Fun[A, B] = OrElse(f, g)

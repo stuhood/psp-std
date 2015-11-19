@@ -19,13 +19,13 @@ object ExSet {
     def equiv(x: A, y: A): Boolean = eqs.equiv(x, y)
   }
   class FromScala[A](xs: sciSet[A]) extends ExSetImpl[A] {
-    def size: IntSize                 = Precise(xs.size)
+    def size: Precise                 = Size(xs.size)
     @inline def foreach(f: A => Unit) = xs foreach f
     def apply(elem: A)                = xs(elem)
     def eqs                           = Eq.inherit()
   }
   class FromJava[A](xs: jSet[A]) extends ExSetImpl[A] {
-    def size: IntSize                 = Precise(xs.size)
+    def size: Precise                 = Size(xs.size)
     @inline def foreach(f: A => Unit) = xs.iterator foreach f
     def apply(elem: A)                = xs contains elem
     def eqs                           = Eq.inherit()

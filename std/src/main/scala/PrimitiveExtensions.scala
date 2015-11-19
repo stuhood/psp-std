@@ -79,7 +79,7 @@ final class IntOps(val self: Int) extends AnyVal {
   private type This = Int
 
   def offset: Offset = Offset(self)
-  def size: IntSize  = api.Size(self)
+  def size: Precise  = Size(self)
 
   /** Make a 64-bit long by concatenating two 32-bit Ints.
    *  Retrieve the original Ints with left32 and right32.
@@ -110,7 +110,7 @@ final class LongOps(val self: Long) extends AnyVal {
 
   def nth: Nth      = Nth(self)
   def index: Index  = Index(self)
-  def size: LongSize = api.Size(self)
+  def size: Precise = api.Size(self)
 
   def abs: This                 = scala.math.abs(self)
   def max(that: This): This     = scala.math.max(self, that)

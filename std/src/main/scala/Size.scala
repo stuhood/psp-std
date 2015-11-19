@@ -15,26 +15,7 @@ object Size {
   def min(s1: Precise, s2: Precise): Precise = if (s1 <= s2) s1 else s2
   def max(s1: Precise, s2: Precise): Precise = if (s1 >= s2) s1 else s2
 
-  def hash(s: Size): Int = s match {
-    case Precise(n) => n.##
-    case x          => x.##
-  }
-  def equiv(s1: Size, s2: Size): Boolean = (s1, s2) match {
-    case (Infinite, Infinite)               => true
-    case (Precise(s1), Precise(s2))         => s1 === s2
-    case (Bounded(l1, h1), Bounded(l2, h2)) => (l1 === l2) && (h1 === h2)
-    case _                                  => false
-  }
-
-  def apply(n: Long): LongSize = Precise(n)
-  def apply(n: Int): IntSize   = Precise(n)
-  def apply(x: Any): Size = x match {
-    case xs: HasSize                                 => xs.size
-    case xs: jCollection[_]                          => xs.size.size
-    case xs: sc.IndexedSeq[_]                        => xs.size.size
-    case xs: sc.Traversable[_] if xs.hasDefiniteSize => if (xs.isEmpty) Empty else NonEmpty
-    case _                                           => Unknown
-  }
+  def apply(n: Long): Precise = Size(n)
 
   object GenBounded {
     def unapply(x: Size): Option[(Precise, Atomic)] = x match {
@@ -50,13 +31,6 @@ object Size {
       case x: Precise               => Some(x -> x)
       case _                            => None
     }
-  }
-
-  def areComparable(lhs: Size, rhs: Size): Boolean = (lhs, rhs) match {
-    case (Finite(_), Finite(_))                                     => true
-    case (GenBounded(_, hi: Precise), GenBounded(lo, _)) if hi < lo => true
-    case (GenBounded(lo, _), GenBounded(_, hi: Precise)) if hi < lo => true
-    case _                                                          => false
   }
 
   def bounded(lo: Size, hi: Size): Size = (lo, hi) match {

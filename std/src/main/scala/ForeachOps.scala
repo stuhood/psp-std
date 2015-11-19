@@ -38,7 +38,7 @@ final class ArrayClassTagOps[A: CTag](val xs: Array[A]) {
 }
 
 final class ArraySpecificOps[A](val xs: Array[A]) extends AnyVal with HasPreciseSizeMethods {
-  def size: IntSize                          = Precise(xs.length)
+  def size: Precise                          = Size(xs.length)
   def apply(idx: Index): A                   = xs(idx.getInt)
   def updated(idx: Index, value: A): xs.type = andThis(xs(idx.getInt) = value)
   def mapNow[B: CTag](f: A => B): Array[B]   = {
