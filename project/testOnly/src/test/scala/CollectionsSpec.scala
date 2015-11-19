@@ -95,6 +95,7 @@ class GridSpec extends ScalacheckBundle {
   def primePartition = (Indexed from 2).m mpartition (xs => _ % xs.head == 0)
   def primePartitionGrid(n: Int): View2D[Int]   = primePartition take n map (_ take n)
   def primePartitionGrid_t(n: Int): View2D[Int] = primePartition.transpose take n map (_ take n)
+
   def showGrid(xss: View2D[Int]): String = {
     val yss = xss mmap (_.render)
     val width = yss.flatMap(x => x).mapNow(_.length).m.max

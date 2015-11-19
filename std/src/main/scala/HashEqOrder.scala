@@ -8,7 +8,7 @@ import spire.{ algebra => sa }
 object Eq {
   val Inherited = hash[Any](_ == _)(_.##)
   val Reference = hash[AnyRef](_ eq _)(_.id_##)
-  val ToString  = inherit[String] on ((x: Any) => "" + x)
+  val ToString  = hashBy[Any](_.any_s)(inherit())
 
   def apply[A](e: Relation[A]): Eq[A]               = new EqImpl[A](e)
   def hash[A](e: Relation[A])(h: ToInt[A]): Hash[A] = new HashImpl[A](e, h)

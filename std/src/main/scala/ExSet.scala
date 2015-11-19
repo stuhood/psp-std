@@ -87,8 +87,8 @@ object ExSet {
 }
 
 object InSet {
-  val Zero = Pure[Any](ConstantFalse)
-  val One  = Pure[Any](ConstantTrue)
+  val Zero = Pure[Any](false)
+  val One  = Pure[Any](true)
 
   def impl[A](xs: InSet[A]): Impl[A] = xs match {
     case xs: Impl[A] => xs

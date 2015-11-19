@@ -26,24 +26,27 @@ abstract class StdPackage
   implicit def arraySpecificOps[A](xs: Array[A]): ops.ArraySpecificOps[A]       = new ops.ArraySpecificOps[A](xs)
   implicit def arrayClassTagOps[A: CTag](xs: Array[A]): ops.ArrayClassTagOps[A] = new ops.ArrayClassTagOps[A](xs)
 
-  implicit def pairedCollectionOps0[R, A, B](xs: View[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B] = new Paired[R, A, B](xs.toEach)
-  implicit def pairedCollectionOps[R, A, B](xs: Each[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B]  = new Paired[R, A, B](xs)
+  implicit val defaultRenderer: FullRenderer              = new FullRenderer
+  implicit def docOrder(implicit z: Renderer): Order[Doc] = {
+    implicit def lexical = lexicalOrder
+    orderBy[Doc](x => render(x))
+  }
+
+  implicit class DocOps(val lhs: Doc) {
+    def doc: Doc                             = lhs
+    def render(implicit z: Renderer): String = z show lhs
+    def isEmpty: Boolean                     = lhs eq emptyValue[Doc]
+
+    def ~(rhs: Doc): Doc   = Doc.Cat(lhs, rhs)
+    def <>(rhs: Doc): Doc  = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ rhs
+    def <+>(rhs: Doc): Doc = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ " ".s ~ rhs
+  }
 
   implicit class DirectOps[A](val xs: Direct[A]) {
     def head: A                      = apply(Index(0))
     def apply(i: Index): A           = xs elemAt i
     def mapNow[B](f: A => B): Vec[B] = xs.indices map (i => f(xs(i))) toVec
   }
-
-  // Spire
-  type Monoid[A]                  = spire.algebra.Monoid[A]
-  type AdditiveMonoid[A]          = spire.algebra.AdditiveMonoid[A]
-  type AdditiveSemigroup[A]       = spire.algebra.AdditiveSemigroup[A]
-  type MultiplicativeMonoid[A]    = spire.algebra.MultiplicativeMonoid[A]
-  type MultiplicativeSemigroup[A] = spire.algebra.MultiplicativeSemigroup[A]
-  type BooleanAlgebra[R]          = spire.algebra.Bool[R]
-  type UInt                       = spire.math.UInt
-  type Natural                    = spire.math.Natural
 
   implicit class CleaveOps[R, A, B](xs: R)(implicit z: Pair.Cleave[R, A, B]) {
     def mapLeft(f: A => A): R  = z.join(f(z left xs), z right xs)
@@ -53,29 +56,15 @@ abstract class StdPackage
     def left(x: R): A  = fst(z split x)
     def right(x: R): B = snd(z split x)
   }
-  implicit class ApiShowOps[A](val z: Show[A]) {
-    def on[B](f: B => A): Show[B] = Show[B](x => z show f(x))
-  }
-  implicit class ApiEqOps[A](val z: Eq[A]) {
-    def on[B](f: B => A): Eq[B] = Eq[B]((x, y) => z.eqv(f(x), f(y)))
-  }
-  implicit class ApiHashOps[A](val z: Hash[A]) {
-    def on[B](f: B => A): Hash[B] = Eq.hash[B]((x, y) => z.eqv(f(x), f(y)))(x => z hash f(x))
-  }
   implicit class ApiOrderOps[A](val ord: Order[A]) {
     def |[B: Order](f: A => B): Order[A] = Order((x, y) => ord.cmp(x, y) || ?[Order[B]].cmp(f(x), f(y)))
-    def toEq: Eq[A]                      = Eq[A]((x, y) => ord.cmp(x, y) == Cmp.EQ)
-    def reverse: Order[A]                = Order[A]((x, y) => ord.cmp(x, y).flip)
-    def on[B](f: B => A): Order[B]       = Order[B]((x, y) => ord.cmp(f(x), f(y)))
   }
   implicit class CmpEnumOps(val cmp: Cmp) {
     def || (that: => Cmp): Cmp = if (cmp == Cmp.EQ) that else cmp
   }
   implicit class BuildsOps[Elem, To](z: Builds[Elem, To]) {
-    def comap[Prev](f: Prev => Elem): Builds[Prev, To] = Builds(xs => z build (xs map f))
-    def map[Next](f: To => Next): Builds[Elem, Next]   = Builds(xs => f(z build xs))
-    def direct: Suspended[Elem] => To                  = mf => z build Each(mf)
-    def scalaBuilder: scmBuilder[Elem, To]             = sciVector.newBuilder[Elem] mapResult (z build _.toEach)
+    def map[Next](f: To => Next): Builds[Elem, Next] = Builds(xs => f(z build xs))
+    def scalaBuilder: scmBuilder[Elem, To]           = sciVector.newBuilder[Elem] mapResult (z build _.toEach)
   }
   implicit class Tuple2Ops[A, B](val lhs: (A, B)) {
     def fold[C, D](rhs: (A, B))(f: (A, A) => C, g: (B, B) => C)(h: (C, C) => D): D =
@@ -98,17 +87,6 @@ abstract class StdPackage
     def flatten: View[A]              = xss flatMap (_.toEach)
     def mmap[B](f: A => B): View2D[B] = xss map (_ map f)
   }
-
-  def classFilter[A: CTag] : Any ?=> A = ?=>(_.isClass[A], _.castTo[A])
-
-  def transitiveClosure[A: Eq](root: A)(expand: A => Foreach[A]): View[A] = inView { f =>
-    def loop(in: View[A], seen: View[A]): Unit = in filterNot seen.contains match {
-      case Each() => ()
-      case in     => in foreach f ; loop(in flatMap expand, seen ++ in)
-    }
-    loop(view(root), view())
-  }
-
   implicit def wrapClass(x: jClass): JavaClass                            = new JavaClassImpl(x)
   implicit def wrapClassLoader(x: jClassLoader): JavaClassLoader          = new JavaClassLoaderImpl(x)
   implicit def wrapEnumeration[A](x: jEnumeration[A]): JavaEnumeration[A] = new JavaEnumeration(x)
