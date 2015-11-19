@@ -29,6 +29,11 @@ abstract class StdPackage
   implicit def pairedCollectionOps0[R, A, B](xs: View[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B] = new Paired[R, A, B](xs.toEach)
   implicit def pairedCollectionOps[R, A, B](xs: Each[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B]  = new Paired[R, A, B](xs)
 
+  implicit class DirectOps[A](val xs: Direct[A]) { //extends AnyVal {
+    def apply(i: Index): A           = xs elemAt i
+    def mapNow[B](f: A => B): Vec[B] = xs.indices map (i => f(xs(i))) toVec
+  }
+
   // Spire
   type Monoid[A]                  = spire.algebra.Monoid[A]
   type AdditiveMonoid[A]          = spire.algebra.AdditiveMonoid[A]
@@ -51,10 +56,10 @@ abstract class StdPackage
     def on[B](f: B => A): Show[B] = Show[B](x => z show f(x))
   }
   implicit class ApiEqOps[A](val z: Eq[A]) {
-    def on[B](f: B => A): Eq[B] = Eq[B]((x, y) => z.equiv(f(x), f(y)))
+    def on[B](f: B => A): Eq[B] = Eq[B]((x, y) => z.eqv(f(x), f(y)))
   }
   implicit class ApiHashOps[A](val z: Hash[A]) {
-    def on[B](f: B => A): Hash[B] = Eq.hash[B]((x, y) => z.equiv(f(x), f(y)))(x => z hash f(x))
+    def on[B](f: B => A): Hash[B] = Eq.hash[B]((x, y) => z.eqv(f(x), f(y)))(x => z hash f(x))
   }
   implicit class ApiOrderOps[A](val ord: Order[A]) {
     def |[B: Order](f: A => B): Order[A] = Order((x, y) => ord.cmp(x, y) || ?[Order[B]].cmp(f(x), f(y)))

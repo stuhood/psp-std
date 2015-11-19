@@ -16,7 +16,7 @@ object ExSet {
 
   sealed trait ExSetImpl[A] extends ExSet[A] with ToBool[A] {
     def eqs: Eq[A]
-    def equiv(x: A, y: A): Boolean = eqs.equiv(x, y)
+    def equiv(x: A, y: A): Boolean = eqs.eqv(x, y)
   }
   class FromScala[A](xs: sciSet[A]) extends ExSetImpl[A] {
     def size: Precise                 = Size(xs.size)
@@ -64,7 +64,7 @@ object ExSet {
     private[this] val wrapSet: jSet[Wrap] = basis map wrap toJavaSet
     private class Wrap(val value: A) {
       override def equals(that: Any): Boolean = that match {
-        case x: Wrap => eqs.equiv(value, x.value)
+        case x: Wrap => eqs.eqv(value, x.value)
         case _       => false
       }
       override def hashCode = value.##

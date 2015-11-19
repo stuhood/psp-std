@@ -80,8 +80,8 @@ object infix {
   }
   final class EqOps[A](val lhs: A) extends AnyVal {
     def isEqualBy[B: Eq](f: A => B)(rhs: A): Boolean = f(lhs) === f(rhs)
-    def ===(rhs: A)(implicit eq: Eq[A]): Boolean     = eq.equiv(lhs, rhs)
-    def !==(rhs: A)(implicit eq: Eq[A]): Boolean     = !eq.equiv(lhs, rhs)
+    def ===(rhs: A)(implicit z: Eq[A]): Boolean      = z.eqv(lhs, rhs)
+    def =!=(rhs: A)(implicit z: Eq[A]): Boolean      = !(lhs === rhs)
   }
   final class HashOps[A](val lhs: A) extends AnyVal {
     def hash(implicit z: Hash[A]): Int = z hash lhs

@@ -34,6 +34,7 @@ object Direct {
 
   trait DirectImpl[+A] extends Any with Direct[A] {
     def isEmpty = size.isZero
+    def apply(n: Int): A = elemAt(Index(n))
   }
 
   def fromScala[A](xs: sCollection[A]): Direct[A] = xs match {

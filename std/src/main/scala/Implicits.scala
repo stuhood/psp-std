@@ -19,7 +19,6 @@ trait StdImplicits extends scala.AnyRef
   implicit def typeclassTupleCleave[A, B] : Pair.Cleave[A -> B, A, B]        = Pair.Cleave[A -> B, A, B](_ -> _, fst, snd)
   implicit def typeclassLinearSplit[A] : Pair.Split[Linear[A], A, Linear[A]] = Pair.Split(_.head, _.tail)
 
-  implicit def opsPspDirect[A](xs: Direct[A]): ops.DirectOps[A] = new ops.DirectOps(xs)
   implicit def convertViewEach[A](xs: View[A]): Each[A]         = Each(xs foreach _)
   implicit def opsSplitView[A](xs: SplitView[A]): Split[A]      = Split(xs.left, xs.right)
 
@@ -27,7 +26,7 @@ trait StdImplicits extends scala.AnyRef
   // concrete type which has all the other ones.
 
   implicit def promoteApiIndex(x: Index): IndexImpl                    = Index impl x
-  implicit def promoteApiOrder[A](ord: Order[A]): Order.Impl[A]        = Order(ord.cmp)
+  implicit def promoteApiOrder[A](z: Order[A]): Order.Impl[A]          = Order impl z
   implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]          = ExSet impl x
   implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V] = ExMap impl x
   implicit def promoteApiView[A](xs: View[A]): AtomicView[A, View[A]]  = View impl xs
@@ -47,16 +46,12 @@ trait SetAndMapOps {
 
 trait StdOps0 {
   implicit def opsPspUnbuilt[A, R](xs: R)(implicit z: UnbuildsAs[A, R]): Unbuilder[A, R] = new Unbuilder(xs)
-  implicit def opsForeach[A](xs: Each[A]): ops.ForeachOps[A]                             = new ops.ForeachOps(xs)
 }
 trait StdOps1 extends StdOps0 {
   implicit def convertViewBuilds[A, CC[A]](xs: View[A])(implicit z: Builds[A, CC[A]]): CC[A] = z build xs
   implicit def opsHasEq[A: Eq](x: View[A]): ops.HasEq[A]       = new ops.HasEq(x)
 }
 trait StdOps2 extends StdOps1 {
-  implicit def opsDirectArray[A](xs: Array[A]): ops.DirectOps[A] = new ops.DirectOps(Direct fromArray xs)
-  implicit def opsDirectString(s: String): ops.DirectOps[Char]   = new ops.DirectOps(Direct fromString s)
-
   // We buried Predef's {un,}augmentString in favor of these.
   implicit def opsWrapString(x: String): Pstring                       = new Pstring(x)
   implicit def opsAtomicView[A](x: View[A]): ops.InvariantViewOps[A]   = new ops.InvariantViewOps(x)

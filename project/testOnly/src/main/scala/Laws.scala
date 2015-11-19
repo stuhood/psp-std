@@ -34,6 +34,6 @@ trait RelationLaws[A] {
   def reflexive(r: Relation[A])                        = forAll((a: A) => r(a, a))
   def transitive(r: Relation[A])                       = forAll((a: A, b: A, c: A) => r(a, b) && r(b, c) ==> r(a, c))
   def symmetric(r: Relation[A])                        = forAll((a: A, b: A) => r(a, b) ==> r(b, a))
-  def antisymmetric(r: Relation[A])(implicit z: Eq[A]) = forAll((a: A, b: A) => r(a, b) && r(b, a) ==> z.equiv(a, b))
+  def antisymmetric(r: Relation[A])(implicit z: Eq[A]) = forAll((a: A, b: A) => r(a, b) && r(b, a) ==> z.eqv(a, b))
 }
 ***/
