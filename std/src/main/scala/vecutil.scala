@@ -3,6 +3,7 @@ package std
 
 import java.lang.System.arraycopy
 import Vec._
+import StdShow._
 
 sealed trait ArrayN[@spec A] extends AnyRef {
   type Elem
@@ -121,7 +122,7 @@ final class Base32(val index: Int) extends AnyVal {
   def digits = (places map digitAt).toVec.reverseIterator.toVec
 
   private def digit32(n: Int): String = (if (n < 10) '0' + n else 'A' + n - 10).toChar.toString
-  override def toString = "[B32:%s]".format(digits map digit32 mkString "")
+  override def toString = "[B32:%s]".format(digits map digit32 join_s)
 }
 
 final class Displays {

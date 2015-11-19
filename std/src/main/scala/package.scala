@@ -15,6 +15,9 @@ package object std extends psp.std.StdPackage {
   type IndexRange = Consecutive[Index]
   type IntRange   = Consecutive[Int]
 
+  // Ugh. XXX
+  implicit def promoteSize(x: Int): Precise = Size(x)
+
   def lexicalOrder: Order[String] = Order.fromInt(_ compareTo _)
 
   def inheritShow[A] : Show[A]           = Show.Inherited
@@ -22,6 +25,9 @@ package object std extends psp.std.StdPackage {
   def referenceEq[A <: AnyRef] : Hash[A] = Eq.Reference
   def stringEq[A] : Hash[A]              = Eq.ToString
   def shownEq[A: Show] : Hash[A]         = inheritEq[String] on (_.render)
+
+  def sideEffect[A](result: A, exprs: Any*): A = result
+  def leftFormatString(n: Int): Any => String = ( if (n == 0) "%s" else "%%-%ds" format n ) format _
 
   implicit def opsFun[A, B](f: Fun[A, B]): ops.FunOps[A, B] = new ops.FunOps(f)
   implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = new (A ?=> B) {

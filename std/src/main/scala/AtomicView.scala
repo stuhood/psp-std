@@ -151,7 +151,7 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
   private def foreachTakeWhile[A](xs: Each[A], f: A => Unit, p: ToBool[A]): Int = {
     var taken = 0
     xs foreach { x =>
-      if (p(x)) f(x) sideEffect (taken += 1)
+      if (p(x)) sideEffect(f(x), taken += 1)
       else return taken
     }
     taken
@@ -181,13 +181,14 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
   )
 
   private def foreachSlice[A](xs: View[A], range: IndexRange, f: A => Unit): Unit = xs match {
-    case xs: AtomicView[_, _]                                       => xs.foreachSlice(range)(f)
-    case Mapped(prev, g)                                            => foreachSlice(prev, range, g andThen f)
-    case xs: Direct[A @unchecked]                                   => directlySlice(xs, range, f)
-    case Joined(HasSize(PreciseInt(n)), ys) if n < range.startInt   => ys slice (range << n) foreach f
-    case Joined(ys @ HasSize(PreciseInt(n)), _) if range.endInt < n => ys slice range foreach f
-    case Joined(ys1, ys2)                                           => linearlySlice(ys1, range, f) |> (remainingRange => linearlySlice(ys2, remainingRange, f))
-    case _                                                          => linearlySlice(xs, range, f)
+
+    case xs: AtomicView[_, _]                                     => xs.foreachSlice(range)(f)
+    case Mapped(prev, g)                                          => foreachSlice(prev, range, g andThen f)
+    case xs: Direct[A @unchecked]                                 => directlySlice(xs, range, f)
+    case Joined(HasSize(Size.Int(n)), ys) if n < range.startInt   => ys slice (range << n) foreach f
+    case Joined(ys @ HasSize(Size.Int(n)), _) if range.endInt < n => ys slice range foreach f
+    case Joined(ys1, ys2)                                         => linearlySlice(ys1, range, f) |> (remainingRange => linearlySlice(ys2, remainingRange, f))
+    case _                                                        => linearlySlice(xs, range, f)
   }
 }
 

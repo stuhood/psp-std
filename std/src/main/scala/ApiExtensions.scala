@@ -39,10 +39,6 @@ trait HasPreciseSizeMethods extends Any {
   @inline def foreachIntIndex(f: Int => Unit): Unit = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, f)
 }
 
-final class HasPreciseSizeOps(val x: HasPreciseSize) extends HasPreciseSizeMethods {
-  def size: Precise = x.size
-}
-
 final class TimesBuilder(val times: Precise) {
   def const[A](elem: A): Each[A]   = Each const elem take times
   def eval[A](body: => A): Each[A] = Each continually body take times
@@ -51,7 +47,6 @@ final class TimesBuilder(val times: Precise) {
 final class PreciseOps(val size: Precise) extends AnyRef with HasPreciseSizeMethods {
   def getInt: Int      = size.intValue
   def times            = new TimesBuilder(size)
-  def leftFormatString = if (getInt == 0) "%s" else "%%-%ds" format getInt
 
   def + (n: Precise): Precise = size + n.longValue
   def - (n: Precise): Precise = size - n.longValue
@@ -65,11 +60,6 @@ final class InputStreamOps(val in: InputStream) extends AnyVal {
   }
   def slurp(): Array[Byte]             = lowlevel.Streams slurp buffered
   def slurp(len: Precise): Array[Byte] = lowlevel.Streams.slurp(buffered, len)
-}
-
-final class StdOptOps[A](val x: Opt[A]) extends AnyVal {
-  def fold[B](none: => B)(f: A => B): B = if (x.isEmpty) none else f(x.get)
-  def |[A1 >: A](alt: => A1): A1        = if (x.isEmpty) alt else x.get
 }
 
 final class SizeOps(val lhs: Size) extends AnyVal {
@@ -93,7 +83,7 @@ final class SizeOps(val lhs: Size) extends AnyVal {
    *  of the two sizes.
    */
   def union(rhs: Size): Size     = bounded(lhs max rhs, lhs + rhs)
-  def intersect(rhs: Size): Size = bounded(0.size, lhs min rhs)
+  def intersect(rhs: Size): Size = bounded(Size.Zero, lhs min rhs)
   def diff(rhs: Size): Size      = bounded(lhs - rhs, lhs)
 
   def + (rhs: Size): Size = (lhs, rhs) match {

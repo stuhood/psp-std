@@ -15,7 +15,10 @@ object +: {
 }
 
 object Empty {
+  def empty[A] : Empty[A] = new Throws[A]("empty")
   def apply[A](empty: A): Impl[A] = new Impl[A](empty)
+
+  final class Throws[A](msg: String) extends Empty[A] { def empty: A = abort(msg) }
   final class Impl[A](val empty: A) extends AnyVal with Empty[A]
 }
 

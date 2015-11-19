@@ -9,18 +9,18 @@ final class LongSizeException(msg: String) extends CollectionSizeException(msg)
 
 object Each {
   final case class WrapJavaMap[K, V](xs: jMap[K, V]) extends AnyVal with Each[K -> V] {
-    def size = Size(xs.size)
+    def size = xs.size
     @inline def foreach(f: ToUnit[K -> V]): Unit = xs.keySet foreach (k => f(k -> (xs get k)))
   }
   final case class WrapJava[A](xs: jIterable[A]) extends AnyVal with Each[A] {
     def size = xs match {
-      case xs: jCollection[_] => Size(xs.size)
+      case xs: jCollection[_] => xs.size
       case _                  => api.Size.Unknown
     }
     @inline def foreach(f: A => Unit): Unit = xs.iterator foreach f
   }
   final case class WrapScala[A](xs: sCollection[A]) extends AnyVal with Each[A] {
-    def size: Size = if (xs.hasDefiniteSize) Size(xs.size) else api.Size.Unknown
+    def size: Size = if (xs.hasDefiniteSize) xs.size else api.Size.Unknown
     @inline def foreach(f: A => Unit): Unit = xs foreach f
   }
 
@@ -33,13 +33,9 @@ object Each {
    *  scala's rampant overspecification.
    */
   final class ToScalaSeq[A](xs: Each[A]) extends sciSeq[A] {
-    override def length: Int = xs.size match {
-      case Infinite                 => throw new InfiniteSizeException(s"$xs")
-      case Precise(n) if n > MaxInt => throw new LongSizeException(s"$xs")
-      case Precise(n)               => n.toInt
-    }
-    def iterator: scIterator[A] = xs.iterator
-    def apply(index: Int): A = xs drop index.size head
+    override def length: Int                 = xs.size match { case Precise(n) => n.toInt }
+    def iterator: scIterator[A]              = xs.iterator
+    def apply(index: Int): A                 = xs drop index.size head
     override def foreach[U](f: A => U): Unit = xs foreach (x => f(x))
   }
   final class Impl[A](val size: Size, mf: Suspended[A]) extends Each[A] {
@@ -58,7 +54,7 @@ object Each {
     def size = Infinite
   }
   object KnownSize {
-    def unapply[A](xs: Each[A]) = xs.size optionally { case x: Atomic => x }
+    def unapply[A](xs: Each[A]) = xs.size matchOpt { case x: Atomic => x }
   }
 
   final case class Sized[A](underlying: Each[A], override val size: Precise) extends Each[A] with HasPreciseSize {

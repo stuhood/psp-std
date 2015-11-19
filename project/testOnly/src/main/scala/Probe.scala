@@ -18,7 +18,7 @@ object Probe {
     def head                          = counter record range.head
     def tail                          = { head ; new Linear(range.tail, counter) }
     def isEmpty                       = range.isEmpty
-    def size                          = if (isEmpty) 0.size else 1.size.atLeast
+    def size                          = if (isEmpty) Size.Zero else Size(1).atLeast
     def foreach(f: Int => Unit): Unit = if (!isEmpty) { f(head) ; tail foreach f }
     def view                          = new LinearView(this)
     override def toString             = s"${this.shortClass} ($counter)"

@@ -29,7 +29,8 @@ abstract class StdPackage
   implicit def pairedCollectionOps0[R, A, B](xs: View[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B] = new Paired[R, A, B](xs.toEach)
   implicit def pairedCollectionOps[R, A, B](xs: Each[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B]  = new Paired[R, A, B](xs)
 
-  implicit class DirectOps[A](val xs: Direct[A]) { //extends AnyVal {
+  implicit class DirectOps[A](val xs: Direct[A]) {
+    def head: A                      = apply(Index(0))
     def apply(i: Index): A           = xs elemAt i
     def mapNow[B](f: A => B): Vec[B] = xs.indices map (i => f(xs(i))) toVec
   }

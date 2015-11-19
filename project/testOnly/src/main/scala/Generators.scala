@@ -53,8 +53,8 @@ package object gen {
   def indexFrom(r: IndexRange): Gen[Index]                  = Gen.choose(r.head, r.last)
   def indexRangeFrom(sMax: Int, eMax: Int): Gen[IndexRange] = (0 upTo sMax, 0 upTo eMax) ^^ indexRange
 
-  def precise: Gen[Precise] = chooseNum(1, MaxInt / 2) map (_.size)
-  def atomic: Gen[Atomic]   = frequency(10 -> precise, 1 -> 0.size, 1 -> Infinite)
+  def precise: Gen[Precise] = chooseNum(1, MaxInt / 2) map (x => Size(x))
+  def atomic: Gen[Atomic]   = frequency(10 -> precise, 1 -> Size.Zero, 1 -> Infinite)
   def bounded: Gen[Bounded] = precise.flatMap(lo => atomic map (hi => api.Size(lo, hi))) collect classFilter[Bounded]
   def size: Gen[Size]       = oneOf(atomic, bounded)
 }

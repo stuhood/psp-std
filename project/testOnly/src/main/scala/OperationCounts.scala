@@ -10,7 +10,7 @@ class CollectionResult(viewOp: ViewClass.Op, testedFn: RecorderCounter => ViewCl
   val counter = new RecorderCounter
   val xs      = testedFn(counter)
   val name    = xs.name
-  val applied = viewOp(xs) take 3.size
+  val applied = viewOp(xs) take 3
   val result  = applied.to_s
   val calls   = counter.distinctCalls
   val hits    = counter.totalCalls
@@ -25,8 +25,8 @@ class OperationCounts extends ScalacheckBundle {
 
   def bundle                 = "Operation Counts"
   def max                    = 100
-  def minSuccessful: Precise = 1000.size
-  def maxDisplay: Precise    = 20.size
+  def minSuccessful: Precise = 1000
+  def maxDisplay: Precise    = 20
   def numComposite           = 2 upTo 4
   def collections            = vec[RecorderCounter => ViewClass](
     c => PolicyViewClass("p/linear", Probe.Linear(1 to max, c).view),
@@ -48,10 +48,10 @@ class OperationCounts extends ScalacheckBundle {
   private def multiply(n: Int) = (_: Int) * n
 
   def viewMethod: Gen[ViewClass.Op] = oneOf(
-    lowHalf     ^^ lop(n => s"drop $n"   -> (_ drop n.size)),
-    highHalf    ^^ lop(n => s"take $n"   -> (_ take n.size)),
-    chooseMax   ^^ lop(n => s"dropR $n"  -> (_ dropRight n.size)),
-    chooseMax   ^^ lop(n => s"takeR $n"  -> (_ takeRight n.size)),
+    lowHalf     ^^ lop(n => s"drop $n"   -> (_ drop n)),
+    highHalf    ^^ lop(n => s"take $n"   -> (_ take n)),
+    chooseMax   ^^ lop(n => s"dropR $n"  -> (_ dropRight n)),
+    chooseMax   ^^ lop(n => s"takeR $n"  -> (_ takeRight n)),
     lowHalf     ^^ lop(n => s"dropW <$n" -> (_ dropWhile less(n))),
     lowHalf     ^^ lop(n => s"takeW <$n" -> (_ takeWhile less(n))),
     chooseSmall ^^ lop(n => s"*$n"       -> (_ map multiply(n))),
@@ -76,7 +76,7 @@ class OperationCounts extends ScalacheckBundle {
     lazy val results: Vec[String]            = outcomes mapNow (_.result)
 
     lazy val failed = (
-         results.m.distinct.size != 1.size
+         results.m.distinct.size =!= 1
       || usLinear.calls > themLinear.calls
       || usDirect.calls > themDirect.calls
     )
@@ -88,13 +88,13 @@ class OperationCounts extends ScalacheckBundle {
     private def maybeShow(passed: Boolean): Unit = {
       if (!passed)
         println(failString)
-      else if (isTestDebug || (displaysRemaining.isPositive && distinctCounts.size >= 3.size))
-        try println(passString) finally displaysRemaining -= 1.size
+      else if (isTestDebug || (displaysRemaining.isPositive && distinctCounts.size >= 3))
+        try println(passString) finally displaysRemaining -= 1
     }
 
     def compare(lhs: Int, rhs: Int): String = "%3s %-2s %-3s".format(lhs, if (lhs <= rhs) "<=" else ">", rhs)
 
-    def ops_s             = "%-63s" format (ops map ("%-15s" format _.try_s) mk_s " ")
+    def ops_s             = "%-63s" format (ops map ("%-15s" format _.any_s) mk_s " ")
     def outcomes_s        = outcomes map (_.to_s)
     def description       = if (passed) passString else failString
     def passString        = pp"| $ops_s  $counts  // ${results.head}"
