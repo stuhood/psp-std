@@ -2,24 +2,25 @@ package psp
 package tests
 
 import scala.collection.immutable.StringOps
-import psp.std._, api._
+import std._, api._,StdEq._, StdShow._
 import Prop.forAll
-import StdEq._, StdShow._
 
-class SizeSpec extends ScalacheckBundle {
-  def bundle = "Size laws"
+class SpireSpec extends ScalacheckBundle {
+  def bundle = "Reliance on spire"
+  import spire._, algebra._, implicits._
+  import spire.syntax.literals.si._
 
-  def props = Direct[NamedProp](
-    "+ is commutative"   -> commutative[Size](_ + _),
-    "max is associative" -> associative[Size](_ max _),
-    "max is commutative" -> commutative[Size](_ max _),
-    "min is associative" -> associative[Size](_ min _),
-    "min is commutative" -> commutative[Size](_ min _)
+  val y = big"123 456 789 987 654 321"       // BigInt
+  val z = dec"1 234 456 789.123456789098765" // BigDecimal
+
+  def props = vec(
+    expectValue(y * 3)(Array(y, y, y).inPlace.shuffle.m.sum),
+    expectValue(y * y * y)(Array(y, y, y).inPlace.shuffle.m.product)
   )
 }
 
-class FunSpec extends ScalacheckBundle {
-  def bundle = "Fun laws"
+class ADTSpec extends ScalacheckBundle {
+  def bundle = "ADTs defined in psp-api"
 
   val f1 = Fun((_: Int) * 2)
   val f2 = f1 mapOut (_ * 3)
@@ -36,8 +37,12 @@ class FunSpec extends ScalacheckBundle {
     xs mapNow m1
     seen.trim
   }
-
-  def props = Direct(
+  def props = vec(
+    "size.+ is commutative"   -> commutative[Size](_ + _),
+    "size.max is associative" -> associative[Size](_ max _),
+    "size.max is commutative" -> commutative[Size](_ max _),
+    "size.min is associative" -> associative[Size](_ min _),
+    "size.min is commutative" -> commutative[Size](_ min _),
     seqShows("2, 4, 6", xs map f1),
     seqShows("6, 12, 18", xs map f2),
     seqShows("6, 12", xs collect f3),

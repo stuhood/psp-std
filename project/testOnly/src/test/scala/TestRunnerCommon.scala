@@ -17,14 +17,13 @@ abstract class TestRunnerCommon {
     new GridSpec,
     new ViewBasic,
     new ViewSplitZip,
-    new SizeSpec,
     new InferenceSpec,
     new CollectionsSpec,
     new SliceSpec,
     new OperationCounts,
-    // new TokenSpec,
     new ResourcesSpec,
-    new FunSpec
+    new ADTSpec,
+    new SpireSpec
   )
 
   def wrapRun(b: Bundle): Boolean = Try(b.run) fold (

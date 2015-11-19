@@ -74,6 +74,9 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
 
   def clusterBy[B: Eq](f: A => B): View[Vec[A]] = groupBy[B](f).values
 
+  def sum(implicit z: AdditiveMonoid[A]): A           = z sum xs.trav
+  def product(implicit z: MultiplicativeMonoid[A]): A = z prod xs.trav
+
   /** This is kind of horrific but has the advantage of not being as busted.
    *  We need to not be using scala's map because it will always compare keys based
    *  on the inherited equals.
