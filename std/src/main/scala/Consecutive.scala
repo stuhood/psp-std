@@ -54,7 +54,7 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
 object Consecutive {
   private val id: Int => Int = x => x
   final class Ints private[std] (s: Int, e: Int) extends Consecutive[Int](s, e, id)
-  val empty = new Consecutive[Nothing](0, -1, _ => sys.error("empty"))
+  val empty = new Consecutive[Nothing](0, -1, _ => abort("empty"))
 
   def downTo(start: Int, end: Int): Direct[Int]                   = Direct reversed to(end, start)
   def to(start: Int, end: Int): Consecutive[Int]                  = if (end < start) empty else new Ints(start, end)

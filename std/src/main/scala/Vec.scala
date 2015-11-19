@@ -5,6 +5,7 @@ import api._, StdShow._
 import java.lang.System.arraycopy
 import Api.SpecTypes
 import Vec._
+import java.lang.{ Math => math }
 
 /** Based on the scala library Vector by Tiark Rompf.
  *    https://issues.scala-lang.org/browse/SI-4442

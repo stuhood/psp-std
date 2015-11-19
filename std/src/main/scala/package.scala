@@ -40,10 +40,7 @@ package object std extends psp.std.StdPackage {
   final val Array   = psp.dmz.Array
   final val Failure = psp.dmz.Failure
   final val Success = psp.dmz.Success
-  final val System  = psp.dmz.System
   final val Try     = psp.dmz.Try
-  final val math    = psp.dmz.math
-  final val sys     = psp.dmz.sys
 
   final val NameTransformer = scala.reflect.NameTransformer
   final val Nil             = sci.Nil
@@ -106,20 +103,20 @@ package object std extends psp.std.StdPackage {
     result
   }
 
-  def abortTrace(msg: String): Nothing     = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
-  def abort(msg: String): Nothing          = runtimeException(msg)
-  def noNull[A](value: A, orElse: => A): A = if (value == null) orElse else value
-  def nullAs[A] : A                        = null.asInstanceOf[A]
-  def andFalse(x: Unit, xs: Unit*): Boolean        = false
-  def andTrue(x: Unit, xs: Unit*): Boolean         = true
-  def fullIndexRange: IndexRange                   = indexRange(0, MaxInt)
-  def indexRange(start: Int, end: Int): IndexRange = Consecutive.until(start, end, Index(_))
-  def intRange(start: Int, end: Int): IntRange     = Consecutive.until(start, end)
-  def option[A](p: Boolean, x: => A): Option[A]       = if (p) Some(x) else None
-  def andClose[A <: Closeable, B](x: A)(f: A => B): B = try f(x) finally x.close()
-  def randomNat(max: Int): Int                              = scala.util.Random.nextInt(max)
+  def abort(msg: String): Nothing                           = runtimeException(msg)
+  def abortTrace(msg: String): Nothing                      = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
+  def andClose[A <: Closeable, B](x: A)(f: A => B): B       = try f(x) finally x.close()
+  def andFalse(x: Unit, xs: Unit*): Boolean                 = false
+  def andTrue(x: Unit, xs: Unit*): Boolean                  = true
   def bufferMap[A, B: Empty](): scmMap[A, B]                = scmMap[A, B]() withDefaultValue emptyValue[B]
+  def fullIndexRange: IndexRange                            = indexRange(0, MaxInt)
+  def indexRange(start: Int, end: Int): IndexRange          = Consecutive.until(start, end, Index(_))
+  def intRange(start: Int, end: Int): IntRange              = Consecutive.until(start, end)
   def newPartial[K, V](p: K => Boolean, f: K => V): K ?=> V = { case x if p(x) => f(x) }
+  def noNull[A](value: A, orElse: => A): A                  = if (value == null) orElse else value
+  def nullAs[A] : A                                         = null.asInstanceOf[A]
+  def option[A](p: Boolean, x: => A): Option[A]             = if (p) Some(x) else None
+  def randomNat(max: Int): Int                              = scala.util.Random.nextInt(max)
 
   // Java.
   def jConcurrentMap[K, V](xs: (K -> V)*): jConcurrentMap[K, V] = new jConcurrentHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
@@ -140,4 +137,12 @@ package object std extends psp.std.StdPackage {
   def list[A](xs: A*): Plist[A]                 = xs.toPlist
   def inView[A](mf: Suspended[A]): View[A]      = Each(mf).m
   def zipView[A, B](xs: (A, B)*): ZipView[A, B] = Zipped1(xs.seq)
+}
+
+package std {
+  object sys {
+    def error(msg: java.lang.String): Nothing = scala.sys.error(msg)
+    def props                                 = scala.sys.props
+    def env                                   = scala.sys.env
+  }
 }
