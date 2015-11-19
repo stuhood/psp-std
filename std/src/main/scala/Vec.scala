@@ -101,8 +101,8 @@ final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focu
   def to_s = "[ " + (this map (_.any_s) mk_s ", ") + " ]"
 
   def lastIntIndex        = length - 1
-  def length              = endIndex - startIndex
-  def size: Precise       = Precise(length)
+  def length: Int         = endIndex - startIndex
+  def size: Precise       = Size(length)
   def elemAt(i: Index): A = apply(i.getInt)
   def isEmpty: Boolean    = length == 0
   def nonEmpty: Boolean   = length > 0

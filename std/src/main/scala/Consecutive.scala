@@ -15,7 +15,7 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
     else new Consecutive[A](startInt, startInt + size.getInt - 1, f)
 
   def endInt: Int         = lastInt + 1
-  def size: Precise       = Precise(hops + 1)
+  def size: Precise       = Size(hops + 1)
   def isEmpty: Boolean    = lastInt < startInt
   def elemAt(i: Index): A = f(startInt + i.getInt)
   def map[B](g: A => B)   = new Consecutive[B](startInt, lastInt, f andThen g)
@@ -31,11 +31,11 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
   def slice(s: Int, e: Int): Consecutive[A]   = if (e <= 0 || e <= s) empty else this drop s.size take (e - s).size
   def slice(r: IndexRange): Consecutive[A]    = slice(r.startInt, r.endInt)
   def dropWhile(p: ToBool[A]): Consecutive[A] = prefixLength(p) |> (len => create(startInt + len, size - len))
-  def takeWhile(p: ToBool[A]): Consecutive[A] = create(startInt, Precise(prefixLength(p)))
+  def takeWhile(p: ToBool[A]): Consecutive[A] = create(startInt, Size(prefixLength(p)))
   def >> (n: Int): Consecutive[A]             = create(startInt + n, size)
   def << (n: Int): Consecutive[A]             = create(startInt - n, size)
 
-  def toDrop: Precise = Precise(startInt)
+  def toDrop: Precise = Size(startInt)
   def toTake: Precise = size
 
   private def prefixLength(p: ToBool[A]): Int = {

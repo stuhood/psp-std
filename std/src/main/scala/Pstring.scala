@@ -35,7 +35,7 @@ final class Pstring(val self: String) extends AnyVal with ForceShowDirect {
   def replaceChar(pair: Char -> Char): String       = self.replace(pair._1, pair._2)
   def reverse: String                               = new String(chars.inPlace.reverse)
   def sanitize: String                              = mapChars { case x if x.isControl => '?' }
-  def size: IntSize                                 = Precise(self.length)
+  def size: Precise                                 = Size(self.length)
   def splitChar(ch: Char): Vec[String]              = splitRegex(Regex quote ch.any_s)
   def splitRegex(r: Regex): Vec[String]             = r.pattern split self toVec
   def stripMargin(marginChar: Char): String         = mapLines(_ remove ("""^\s*[""" + marginChar + "]").r)

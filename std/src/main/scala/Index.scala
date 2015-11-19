@@ -18,10 +18,10 @@ import api._
 final class IndexImpl private[std] (val index: Long) extends AnyVal with Index {
   def get: Long                     = index
   def getInt: Int                   = index.safeInt
-  def /(size: Int): Index           = this / Precise(size: Long)
-  def %(size: Int): Index           = this % Precise(size: Long)
-  def /(size: LongSize): Index      = if (isUndefined) this else Index(index / size.value)
-  def %(size: LongSize): Index      = if (isUndefined) this else Index(index % size.value)
+  def /(size: Int): Index           = this / Size(size)
+  def %(size: Int): Index           = this % Size(size)
+  def /(size: Precise): Index       = if (isUndefined) this else Index(index / size.value)
+  def %(size: Precise): Index       = if (isUndefined) this else Index(index % size.value)
   def +(n: Long): Index             = if (isUndefined) this else Index(index + n)
   def -(n: Long): Index             = if (isUndefined) this else Index(index - n)
   def prev: Index                   = this - 1
