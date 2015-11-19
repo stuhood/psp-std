@@ -22,23 +22,6 @@ class FullRenderer extends Renderer {
   }
 }
 
-final class Label(val label: String) extends AnyVal {
-  def matches(r: Regex)   = r isMatch label
-  def contains(s: String) = label contains s
-  def containsOp          = contains("&&") || contains("||") || (label startsWith "!")
-  def isSafe              = matches("""^[(](.*?)[)]$""".r) || !containsOp
-  def isBool              = isZero || isOne
-  def isZero              = label eq Label.Zero.label
-  def isOne               = label eq Label.One.label
-
-  override def toString = label
-}
-object Label {
-  val Zero = new Label(new String(""))
-  val One  = new Label(new String(""))
-  def apply(s: String) = new Label(s)
-}
-
 final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
   def escapedParts    = stringContext.parts map (_.processEscapes)
   def escaped: String = escapedParts mk_s ""
