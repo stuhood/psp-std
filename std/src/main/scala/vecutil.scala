@@ -79,7 +79,7 @@ class ArrayLevels[@spec A: CTag] {
 
   private[std] final def copyRange[E: CTag](array: ArrayN.Typed[A, E], oldLeft: Int, newLeft: Int): Array[E] = {
     val elems = new Array[E](32)
-    arraycopy(array, oldLeft, elems, newLeft, 32 - math.max(newLeft,oldLeft))
+    arraycopy(array, oldLeft, elems, newLeft, 32 - java.lang.Math.max(newLeft,oldLeft))
     elems
   }
 

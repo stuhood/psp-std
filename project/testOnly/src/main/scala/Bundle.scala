@@ -1,7 +1,7 @@
 package psp
 package tests
 
-import psp.std._, api._, StdShow._
+import psp._, std._, api._, StdShow._
 import org.scalacheck.Test
 import scala.Console.{ println => _, _ }
 
@@ -16,7 +16,7 @@ trait Bundle extends ForceShowDirect {
     count += 1
     Try(body).toOption match {
       case Some(true) => passed += 1
-      case _          => System.err.println(s"Failed: $msg")
+      case _          => println(s"Failed: $msg")
     }
   }
   def assert(body: => Boolean): Unit = {
