@@ -28,15 +28,12 @@ final class ExSetOps[A](xs: ExSet[A]) {
 trait HasPreciseSizeMethods extends Any {
   def size: Precise
 
-  def longSize: Long      = size.longValue
-  def intSize: Int        = size.intValue
-  def isPositive: Boolean = longSize > 0L
-  def indices: IndexRange = indexRange(0, intSize)
-  def lastIndex: Index    = Index(longSize - 1)  // effectively maps both undefined and zero to no index.
+  def indices: IndexRange                  = indexRange(0, size.intValue)
+  def lastIndex: Index                     = Index(size.longValue - 1)  // effectively maps both undefined and zero to no index.
+  def containsIndex(index: Index): Boolean = indices.m contains index
 
-  def containsIndex(index: Index): Boolean          = indices.m contains index
-  @inline def foreachIndex(f: Index => Unit): Unit  = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, i => f(Index(i)))
-  @inline def foreachIntIndex(f: Int => Unit): Unit = if (isPositive) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, f)
+  @inline def foreachIndex(f: Index => Unit): Unit  = if (size.longValue > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, i => f(Index(i)))
+  @inline def foreachIntIndex(f: Int => Unit): Unit = if (size.longValue > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, f)
 }
 
 final class TimesBuilder(val times: Precise) {
@@ -45,12 +42,14 @@ final class TimesBuilder(val times: Precise) {
 }
 
 final class PreciseOps(val size: Precise) extends AnyRef with HasPreciseSizeMethods {
-  def getInt: Int      = size.intValue
-  def times            = new TimesBuilder(size)
+  import size._
+
+  def toInt: Int = intValue
+  def times      = new TimesBuilder(size)
 
   def + (n: Precise): Precise = size + n.longValue
   def - (n: Precise): Precise = size - n.longValue
-  override def toString = s"$longSize"
+  override def toString = s"$longValue"
 }
 
 final class InputStreamOps(val in: InputStream) extends AnyVal {

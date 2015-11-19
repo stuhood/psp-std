@@ -12,7 +12,7 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
   private def hops = if (isEmpty) -1 else lastInt - startInt
   private def create(startInt: Int, size: Precise): Consecutive[A] =
     if (size.isZero) empty
-    else new Consecutive[A](startInt, startInt + size.getInt - 1, f)
+    else new Consecutive[A](startInt, size.toInt + startInt - 1, f)
 
   def endInt: Int         = lastInt + 1
   def size                = Size(hops + 1)
@@ -24,10 +24,10 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
   def asIndices: IndexRange                   = Consecutive.to(startInt, lastInt) map (i => Index(i))
   def tail: Consecutive[A]                    = drop(1)
   def init: Consecutive[A]                    = dropRight(1)
-  def drop(n: Precise): Consecutive[A]        = create(startInt + n.getInt, size - n)
+  def drop(n: Precise): Consecutive[A]        = create(startInt + n.toInt, size - n)
   def dropRight(n: Precise): Consecutive[A]   = create(startInt, size - n)
   def take(n: Precise): Consecutive[A]        = create(startInt, size min n)
-  def takeRight(n: Precise): Consecutive[A]   = (size min n) |> (s => create(endInt - s.getInt, s))
+  def takeRight(n: Precise): Consecutive[A]   = (size min n) |> (s => create(endInt - s.toInt, s))
   def slice(s: Int, e: Int): Consecutive[A]   = if (e <= 0 || e <= s) empty else this drop s take e - s
   def slice(r: IndexRange): Consecutive[A]    = slice(r.startInt, r.endInt)
   def dropWhile(p: ToBool[A]): Consecutive[A] = prefixLength(p) |> (len => create(startInt + len, size - len))
@@ -39,7 +39,7 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
   def toTake: Precise = size
 
   private def prefixLength(p: ToBool[A]): Int = {
-    val max = size.getInt
+    val max = size.toInt
     @tailrec def loop(count: Int): Int = (
       if (count >= max) max
       else if (p(f(startInt + count))) loop(count + 1)

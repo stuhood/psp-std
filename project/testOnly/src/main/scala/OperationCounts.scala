@@ -88,7 +88,7 @@ class OperationCounts extends ScalacheckBundle {
     private def maybeShow(passed: Boolean): Unit = {
       if (!passed)
         println(failString)
-      else if (isTestDebug || (displaysRemaining.isPositive && distinctCounts.size >= 3))
+      else if (isTestDebug || (displaysRemaining > 0 && distinctCounts.size >= 3))
         try println(passString) finally displaysRemaining -= 1
     }
 

@@ -14,7 +14,7 @@ trait ApiViewOps[+A] extends Any {
   }
 
   def count(p: ToBool[A]): Int                                              = foldl[Int](0)((res, x) => if (p(x)) res + 1 else res)
-  def dropIndex(index: Index): View[A]                                      = xs splitAt index mapRight (_ drop 1.size) rejoin
+  def dropIndex(index: Index): View[A]                                      = xs splitAt index mapRight (_ drop 1) rejoin
   def exists(p: ToBool[A]): Boolean                                         = foldl[Boolean](false)((res, x) => if (p(x)) return true else res)
   def filter(p: ToBool[A]): View[A]                                         = xs withFilter p
   def filterNot(p: ToBool[A]): View[A]                                      = xs withFilter !p
@@ -30,26 +30,26 @@ trait ApiViewOps[+A] extends Any {
   def foreachWithIndex(f: (A, Index) => Unit): Unit                         = foldl(0.index)((idx, x) => try idx.next finally f(x, idx))
   def gatherClass[B: CTag] : View[B]                                        = xs collect classFilter[B]
   def grep(regex: Regex)(implicit z: Show[A]): View[A]                      = xs filter (x => regex isMatch x)
-  def head: A                                                               = (xs take 1.size).toVec.head
+  def head: A                                                               = (xs take 1).toVec.head
   def indexWhere(p: ToBool[A]): Index                                       = zipIndex findLeft p map snd or NoIndex
   def indicesWhere(p: ToBool[A]): View[Index]                               = zipIndex filterLeft p rights
-  def init: View[A]                                                         = xs dropRight 1.size
+  def init: View[A]                                                         = xs dropRight 1
   def isEmpty: Boolean                                                      = xs.size.isZero || directIsEmpty
   def labelOp[B](label: String)(f: View[A] => View[B]): View[B]             = new LabeledView(f(xs), xs.viewOps.castTo[Vec[Doc]] :+ label)
-  def last: A                                                               = (xs takeRight 1.size).toVec.head
+  def last: A                                                               = (xs takeRight 1).toVec.head
   def mapApply[B, C](x: B)(implicit ev: A <:< (B => C)): View[C]            = xs map (f => ev(f)(x))
   def mapNow[B](f: A => B): Vec[B]                                          = xs map f toVec
   def mapWithIndex[B](f: (A, Index) => B): View[B]                          = inView[B](mf => foldWithIndex(())((res, x, i) => mf(f(x, i))))
   def mapZip[B](f: A => B): View[A -> B]                                    = xs map (x => x -> f(x))
-  def join_s(implicit z: Show[A]): String                                   = mk_s("")
-  def mk_s(sep: Char)(implicit z: Show[A]): String                          = mk_s(sep.any_s)(z)
+  def join_s(implicit z: Show[A]): String                                   = this mk_s ""
+  def mk_s(sep: Char)(implicit z: Show[A]): String                          = this mk_s sep.to_s
   def mk_s(sep: String)(implicit z: Show[A]): String                        = xs map z.show zreducel (_ append sep append _)
   def nonEmpty: Boolean                                                     = xs.size.isNonZero || !directIsEmpty
   def slice(range: IndexRange): View[A]                                     = labelOp(pp"slice $range")(_ drop range.toDrop take range.toTake)
   def sliceWhile(p: ToBool[A], q: ToBool[A]): View[A]                       = xs dropWhile p takeWhile q
   def tabular(columns: ToString[A]*): String                                = if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toVec, columns.m).render else ""
-  def tail: View[A]                                                         = xs drop 1.size
-  def takeToFirst(p: ToBool[A]): View[A]                                    = xs span !p mapRight (_ take 1.size) rejoin
+  def tail: View[A]                                                         = xs drop 1
+  def takeToFirst(p: ToBool[A]): View[A]                                    = xs span !p mapRight (_ take 1) rejoin
   def tee(f: A => String): View[A]                                          = xs map (_ doto (x => println(f(x))))
   def toRefs: View[Ref[A]]                                                  = xs map (_.toRef)
   def withSize(size: Size): View[A]                                         = new Each.Impl[A](size, xs foreach _)
@@ -65,9 +65,8 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
   def +:(elem: A): View[A] = view(elem) ++ xs
   def :+(elem: A): View[A] = xs ++ view(elem)
 
-  def clusterBy[B: Eq](f: A => B): View[Vec[A]]  = groupBy[B](f).values
-  def gather[B](p: Partial[A, View[B]]): View[B] = xs flatMap p.zapply
-
+  def clusterBy[B: Eq](f: A => B): View[View[A]]      = groupBy[B](f).values
+  def gather[B](p: Partial[A, View[B]]): View[B]      = xs flatMap p.zapply
   def sum(implicit z: AdditiveMonoid[A]): A           = z sum xs.trav
   def product(implicit z: MultiplicativeMonoid[A]): A = z prod xs.trav
 
@@ -75,7 +74,7 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
    *  We need to not be using scala's map because it will always compare keys based
    *  on the inherited equals.
    */
-  def groupBy[B: Eq](f: A => B): ExMap[B, Vec[A]] = {
+  def groupBy[B: Eq](f: A => B): ExMap[B, View[A]] = {
     var seen: Vec[B] = vec()
     val buf = bufferMap[Index, Vec[A]]()
     xs foreach { x =>
@@ -86,7 +85,7 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
       }
       buf(idx) :+= x
     }
-    val res = buf.toMap map { case (k, v) => seen(k) -> v }
+    val res = buf.toMap map { case (k, v) => seen(k) -> v.m }
     res.m.toMap[ExMap]
   }
 
@@ -138,7 +137,7 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
 
   def boundedClosure(maxDepth: Precise, f: A => View[A]): View[A] = (
     if (maxDepth.isZero) xs
-    else xs ++ (xs flatMap f).boundedClosure(maxDepth--, f)
+    else xs ++ (xs flatMap f).boundedClosure(maxDepth - 1, f)
   )
 }
 
@@ -146,7 +145,7 @@ private abstract class HeadAndTail[A, B] {
   def isDone(xs: View[A]): Boolean
   def head(xs: View[A]): B
   def tail(xs: View[A]): View[A]
-  def apply(xs: View[A]): View[B] = if (isDone(xs)) emptyValue else head(xs) +: apply(tail(xs)) // XXX @tailrec
+  def apply(xs: View[A]): View[B] = cond(isDone(xs), emptyValue, head(xs) +: apply(tail(xs))) // XXX @tailrec
 }
 
 private class Grouped[A](n: Precise) extends HeadAndTail[A, View[A]] {
@@ -174,7 +173,7 @@ class HasEq[A](xs: View[A])(implicit z: Eq[A]) {
   def indexOf(x: A): Index                        = xs indexWhere (_ === x)
   def indicesOf(x: A): View[Index]                = xs indicesWhere (_ === x)
   def mapOnto[B](f: A => B): ExMap[A, B]          = toSet mapOnto f
-  def toBag: Bag[A]                               = xs groupBy identity map (_.size)
+  def toBag: Bag[A]                               = xs groupBy identity map (_.sizeExact)
   def toSet: ExSet[A]                             = xs.toExSet
   def without(x: A): View[A]                      = xs filterNot (_ === x)
   def withoutEmpty(implicit z: Empty[A]): View[A] = this without z.empty

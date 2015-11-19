@@ -85,6 +85,15 @@ abstract class StdPackage
     def seq: Vec[A] = vec(x._1, x._2)
   }
 
+  implicit class HasSizeOps(val xs: HasSize) { //extends AnyVal {
+    def sizeLong: Long = sizeExact.longValue
+    def sizeInt: Int   = sizeExact.intValue
+    def sizeExact: Precise = xs.size match {
+      case x: Precise => x
+      case n          => abort(s"$n")
+    }
+  }
+
   implicit class View2DOps[A](val xss: View2D[A]) {
     def flatten: View[A]              = xss flatMap (_.toEach)
     def mmap[B](f: A => B): View2D[B] = xss map (_ map f)

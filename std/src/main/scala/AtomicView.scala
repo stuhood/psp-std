@@ -1,7 +1,7 @@
 package psp
 package std
 
-import impl.Size._, api._, Unsafe.inheritedShow
+import impl.Size._, api._, StdEq._, Unsafe.inheritedShow
 import lowlevel.CircularBuffer
 
 sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] {
@@ -28,9 +28,9 @@ object FlattenSlice {
 }
 
 final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr] {
-  type This   = LinearView[A, Repr]
-  def viewOps = vec("<list>".s)
-  def size    = underlying.size
+  type This      = LinearView[A, Repr]
+  def viewOps    = vec("<list>".s)
+  def size: Size = underlying.size
 
   @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, fullIndexRange, f)
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = linearlySlice(underlying, range, f)
@@ -92,7 +92,7 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
 
   def linearlySlice[A](xs: Each[A], range: IndexRange, f: A => Unit): IndexRange = {
     var dropping  = range.startInt
-    var remaining = range.intSize
+    var remaining = range.sizeInt
     def nextRange = indexRange(dropping, dropping + remaining)
     xs foreach { x =>
       if (dropping > 0)
@@ -107,7 +107,7 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
   }
   def directlySlice[A](xs: Direct[A], range: IndexRange, f: A => Unit): IndexRange = {
     xs.indices slice range foreach (i => f(xs(i)))
-    range << xs.intSize
+    range << xs.sizeInt
   }
 }
 
@@ -170,7 +170,7 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
   }
 
   private def foreachTakeRight[A](xs: Each[A], f: A => Unit, n: Precise): Unit = (
-    if (n.isPositive)
+    if (n > 0)
       (CircularBuffer[A](n) ++= xs) foreach f
   )
   private def foreachDropRight[A](xs: Each[A], f: A => Unit, n: Precise): Unit = (
