@@ -6,28 +6,17 @@ import api._, StdEq._, StdShow._
 import java.io.BufferedInputStream
 
 final class DocSeqOps(xs: Direct[Doc]) {
-  private def strs: Direct[String]       = xs mapNow (_.render)
-  private def nonEmpties: Direct[String] = strs filterNot (_.isEmpty) mapNow (_.trim)
-
-  def inParens: String    = "(" append joinComma append ")"
-  def joinLines: String   = strs mkString EOL
-  def joinComma: String   = nonEmpties mkString ", "
-  def joinParents: String = nonEmpties mkString " with "
-  def joinWords: String   = nonEmpties mkString " "
+  def joinLines: String = xs mapNow (_.render) mk_s EOL
 }
 final class ExMapOps[K, V](xs: ExMap[K, V]) {
   type Entry = K -> V
 
-  def keys: View[K]             = keySet.m
-  def values: View[V]           = keyVector map xs.lookup
-  def keySet: ExSet[K]          = xs.lookup.keys
-  def keyVector: Vec[K]         = keys.toVec
-  def entries: View[Entry]      = keyVector mapZip xs.lookup
-  def contains(key: K): Boolean = keySet(key)
-  def size: Size                = keys.size
-
+  def keys: View[K]        = keySet.m
+  def values: View[V]      = keyVector map xs.lookup
+  def keySet: ExSet[K]     = xs.lookup.keys
+  def keyVector: Vec[K]    = keys.toVec
+  def entries: View[Entry] = keyVector mapZip xs.lookup
   def filterValues(p: ToBool[V]): ExMap[K, V] = xs filterKeys (k => p(xs(k)))
-  def +(entry: Entry): ExMap[K, V]            = ExMap(keySet + entry._1, Fun finite entry orElse xs.lookup)
 }
 final class ExSetOps[A](xs: ExSet[A]) {
   def add(x: A): ExSet[A]                = xs + x
@@ -107,33 +96,19 @@ final class SizeOps(val lhs: Size) extends AnyVal {
   def intersect(rhs: Size): Size = bounded(0.size, lhs min rhs)
   def diff(rhs: Size): Size      = bounded(lhs - rhs, lhs)
 
-  def * (m: Long): Size = lhs match {
-    case Precise(n)                        => n * m size
-    case Bounded(Precise(lo), Precise(hi)) => bounded(lo * m size, hi * m size)
-    case Bounded(Precise(lo), Infinite)    => if (m == 0L) unknown else bounded(lo * m size, Infinite)
-    case Infinite                          => if (m == 0L) unknown else Infinite
-  }
-  def * (rhs: Size): Size = lhs match {
-    case Precise(n)                        => this * n
-    case Bounded(Precise(lo), Precise(hi)) => bounded(rhs * lo, rhs * hi)
-    case Bounded(Precise(lo), Infinite)    => if (rhs.isZero) unknown else bounded(rhs * lo, Infinite)
-    case Infinite                          => if (rhs.isZero) unknown else Infinite
-  }
-
   def + (rhs: Size): Size = (lhs, rhs) match {
     case (Infinite, _) | (_, Infinite)            => Infinite
     case (Precise(l), Precise(r))                 => l + r size
     case (GenBounded(l1, h1), GenBounded(l2, h2)) => bounded(l1 + l2, h1 + h2)
   }
   def - (rhs: Size): Size = (lhs, rhs) match {
-    case (Precise(l), Precise(r))         => l - r size
+    case (Precise(l), Precise(r))         => Size(l - r)
     case (Infinite, Finite(_, _))         => Infinite
     case (Finite(_, _), Infinite)         => Empty
     case (Finite(l1, h1), Finite(l2, h2)) => bounded(l1 - h2, h1 - l2)
     case (Bounded(l1, h1), rhs: Precise)  => bounded(l1 - rhs, h1 - rhs)
     case _                                => unknown
   }
-
   def min(rhs: Size): Size = (lhs, rhs) match {
     case (Infinite, _)                            => rhs
     case (_, Infinite)                            => lhs
@@ -151,10 +126,6 @@ final class SizeOps(val lhs: Size) extends AnyVal {
 final class FunOps[A, B](val f: Fun[A, B]) extends AnyVal {
   outer =>
 
-  def opaquely: Opaque[A, B] = f match {
-    case x: Opaque[_, _] => x
-    case _               => Opaque(x => if (f isDefinedAt x) f(x) else abort("" + x))
-  }
   def get(x: A): Option[B]            = if (f isDefinedAt x) Some(f(x)) else None
   def getOr(key: A, alt: => B): B     = get(key) getOrElse alt
   def orElse(g: Fun[A, B]): Fun[A, B] = OrElse(f, g)
