@@ -7,8 +7,8 @@ import Api._
 
 /** The classic type classes for encoding value equivalence and hash codes.
  */
-trait Eq[-A]   extends Any            { def equiv(x: A, y: A): Boolean }
-trait Hash[-A] extends Any with Eq[A] { def hash(x: A): Int            }
+trait Eq[-A]   extends Any            { def eqv(x: A, y: A): Boolean ; def equiv(x: A, y: A) = eqv(x, y) }
+trait Hash[-A] extends Any with Eq[A] { def hash(x: A): Int          }
 
 /** The classic type class for turning typed values into string representations.
  */
@@ -37,8 +37,7 @@ trait Unbuilds[Repr] extends Any {
  *  controversial thing to do, in the year 2014. Not joking.
  */
 trait Order[-A] extends Any with Eq[A] {
-  def compare(x: A, y: A): Cmp
-  def equiv(x: A, y: A): Boolean = compare(x, y) == Cmp.EQ
+  def cmp(x: A, y: A): Cmp
 }
 
 /** Type classes and extractors for composing and decomposing an R into A -> B.

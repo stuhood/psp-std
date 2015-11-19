@@ -27,7 +27,7 @@ trait StdImplicits extends scala.AnyRef
   // concrete type which has all the other ones.
 
   implicit def promoteApiIndex(x: Index): IndexImpl                    = Index impl x
-  implicit def promoteApiOrder[A](ord: Order[A]): Order.Impl[A]        = Order(ord.compare)
+  implicit def promoteApiOrder[A](ord: Order[A]): Order.Impl[A]        = Order(ord.cmp)
   implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]          = ExSet impl x
   implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V] = ExMap impl x
   implicit def promoteApiView[A](xs: View[A]): AtomicView[A, View[A]]  = View impl xs
