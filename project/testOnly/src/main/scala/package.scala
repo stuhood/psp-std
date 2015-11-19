@@ -11,6 +11,14 @@ package object tests {
   val PassGreen = GREEN + "\u2713" + RESET // check mark
   val FailRed   = RED + "\u2717" + RESET   // cross mark
 
+  /** Scala, so aggravating.
+   *  [error] could not find implicit value for parameter equiv: Eq[A => Bool]
+   *  The parameter can be given explicitly, it just won't be found unless the
+   *  function type is invariant. The same issue arises with intensional sets.
+   */
+  type InvariantPredicate[A] = A => Bool
+  type InvariantInSet[A]     = InSet[A]
+
   lazy val isTestDebug = sys.props contains "psp.test.debug"
 
   implicit def assertions: Assertions = ImmediateTraceAssertions
@@ -120,6 +128,9 @@ package object tests {
       case x     => x
     }
   }
+
+  def printResult[A: Show](msg: String)(result: A): A              = result doto (r => println(show"$msg: $r"))
+  def printResultIf[A: Show : Eq](x: A, msg: String)(result: A): A = result doto (r => if (r === x) println(show"$msg: $r"))
 
   /** How to check for function equivalence? In the absence of mathematical breakthroughs,
    *  recursively throw scalacheck at it again, verifying arbitrary inputs have the same result.

@@ -21,7 +21,6 @@ abstract class TestRunnerCommon {
     new CollectionsSpec,
     new SliceSpec,
     new OperationCounts,
-    new ResourcesSpec,
     new ADTSpec,
     new SpireSpec
   )

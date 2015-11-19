@@ -80,7 +80,7 @@ trait StdOps3 extends StdOps2 {
 
   implicit def opsBoolean(x: Boolean): ops.BooleanOps                              = new ops.BooleanOps(x)
   implicit def opsChar(x: Char): ops.CharOps                                       = new ops.CharOps(x)
-  implicit def opsFileTime(x: jFileTime): ops.FileTimeOps                          = new ops.FileTimeOps(x)
+  implicit def opsFileTime(x: FileTime): ops.FileTimeOps                           = new ops.FileTimeOps(x)
   implicit def opsHasPreciseSize(x: HasPreciseSize): ops.HasPreciseSizeOps         = new ops.HasPreciseSizeOps(x)
   implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A]         = new ops.JavaIteratorOps[A](x)
   implicit def opsInputStream(x: InputStream): ops.InputStreamOps                  = new ops.InputStreamOps(x)

@@ -7,7 +7,7 @@ import Prop.forAll
 
 class SpireSpec extends ScalacheckBundle {
   def bundle = "Reliance on spire"
-  import spire._, algebra._, implicits._
+  import spire._, implicits._
   import spire.syntax.literals.si._
 
   val y = big"123 456 789 987 654 321"       // BigInt
