@@ -76,7 +76,7 @@ final class SizeOps(val lhs: Size) extends AnyVal {
   import impl.Size._
   import StdEq._
 
-  def isNonZero     = loBound !== Size.Zero
+  def isNonZero     = loBound =!= Size.Zero
   def isZero        = lhs === Size.Zero
   def atLeast: Size = bounded(lhs, Infinite)
   def atMost: Size  = bounded(Empty, lhs)

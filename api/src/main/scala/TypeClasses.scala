@@ -7,7 +7,7 @@ import Api._
 
 /** The classic type classes for encoding value equivalence and hash codes.
  */
-trait Eq[-A]   extends Any            { def eqv(x: A, y: A): Boolean ; def equiv(x: A, y: A) = eqv(x, y) }
+trait Eq[-A]   extends Any            { def eqv(x: A, y: A): Boolean }
 trait Hash[-A] extends Any with Eq[A] { def hash(x: A): Int          }
 
 /** The classic type class for turning typed values into string representations.

@@ -51,10 +51,10 @@ abstract class StdPackage
     def on[B](f: B => A): Show[B] = Show[B](x => z show f(x))
   }
   implicit class ApiEqOps[A](val z: Eq[A]) {
-    def on[B](f: B => A): Eq[B] = Eq[B]((x, y) => z.equiv(f(x), f(y)))
+    def on[B](f: B => A): Eq[B] = Eq[B]((x, y) => z.eqv(f(x), f(y)))
   }
   implicit class ApiHashOps[A](val z: Hash[A]) {
-    def on[B](f: B => A): Hash[B] = Eq.hash[B]((x, y) => z.equiv(f(x), f(y)))(x => z hash f(x))
+    def on[B](f: B => A): Hash[B] = Eq.hash[B]((x, y) => z.eqv(f(x), f(y)))(x => z hash f(x))
   }
   implicit class ApiOrderOps[A](val ord: Order[A]) {
     def |[B: Order](f: A => B): Order[A] = Order((x, y) => ord.cmp(x, y) || ?[Order[B]].cmp(f(x), f(y)))
