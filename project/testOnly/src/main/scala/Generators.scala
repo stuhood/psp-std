@@ -6,11 +6,11 @@ import psp.std._, api._, StdShow._
 
 package gen {
   class RegexGenerator(val letter: Gen[Char]) {
-    def alternative: Gen[Regex]       = (atom, atom) ^^ Regex.alt
+    def alternative: Gen[Regex]       = (atom, atom) ^^ (_ | _)
     def anchor(c: Char): Gen[String]  = frequency(3 -> "", 1 -> c.toString)
     def apply(): Gen[Regex]           = (concatenate, anchor('^'), anchor('$')) map ((re, s, e) => re.surround(s, e))
     def atom: Gen[Regex]              = oneOf(literal, range, quantified)
-    def concatenate: Gen[Regex]       = simple * (1 upTo 3) ^^ (_.m reducel Regex.alt)
+    def concatenate: Gen[Regex]       = simple * (1 upTo 3) ^^ (_.m reducel (_ | _))
     def group: Gen[Regex]             = atom ^^ (_.capturingGroup)
     def letterPair: Gen[Char -> Char] = (letter, letter) filter (_ <= _)
     def literal: Gen[Regex]           = letter * (0 upTo 5) ^^ (_ mk_s "" r)
