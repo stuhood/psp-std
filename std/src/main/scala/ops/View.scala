@@ -158,6 +158,11 @@ private class Grouped[A](n: Precise) extends HeadAndTail[A, View[A]] {
   def tail(xs: View[A]): View[A]   = xs drop n
 }
 
+final class View2DOps[A](val xss: View2D[A]) {
+  def flatten: View[A]              = xss flatMap identity
+  def mmap[B](f: A => B): View2D[B] = xss map (_ map f)
+}
+
 /** Methods requiring us to have additional knowledge, by parameter or type class.
  *  We keep the interface simple and foolproof by establishing thet instance
  *  first and only offering the methods after that.

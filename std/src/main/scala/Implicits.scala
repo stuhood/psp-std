@@ -38,6 +38,8 @@ trait StdImplicits extends scala.AnyRef
 trait GlobalShow {
   implicit def convertHasShowDocOps[A: Show](x: A): ops.DocOps      = new ops.DocOps(Doc(x))
   implicit def convertHasShowDoc[A](x: A)(implicit z: Show[A]): Doc = Doc(x)
+  implicit def defaultRenderer: FullRenderer                        = new FullRenderer
+  implicit def docOrder(implicit z: Renderer): Order[Doc]           = Order[Doc]((x, y) => lexicalOrder.cmp(render(x), render(y)))
 }
 
 trait SetAndMapOps {
@@ -58,6 +60,7 @@ trait StdOps2 extends StdOps1 {
   implicit def opsAtomicView[A](x: View[A]): ops.InvariantViewOps[A] = new ops.InvariantViewOps(x)
   implicit def opsHasOrderInfix[A: Order](x: A): ops.OrderOps[A]     = new ops.OrderOps[A](x)
   implicit def opsHasHash[A: Hash](x: View[A]): ops.HasHash[A]       = new ops.HasHash(x)
+  implicit def opsView2D[A](x: View2D[A]): ops.View2DOps[A]          = new ops.View2DOps(x)
 }
 
 trait StdOps3 extends StdOps2 {
@@ -197,8 +200,7 @@ trait OrderInstances extends OrderInstancesLow {
   // implicit def enumOrder[A <: jEnum[A]]: Order[A] = Order.fromInt[A](_.ordinal - _.ordinal)
   //
   // This one doesn't work if it's A <:< jEnum[A], but jEnum[_] is just enough to get what we need.
-  implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A] = orderBy[A](_.ordinal) // Order.fromInt[A](_.ordinal - _.ordinal)
-
+  implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A]          = orderBy[A](_.ordinal)
   implicit def indexOrder: Order[Index]                                     = orderBy[Index](_.get)
   implicit def preciseOrder[A <: Precise]: Order[A]                         = orderBy[Precise](_.get)
   implicit def stringOrder: Order[String]                                   = Order.fromLong[String](_ compareTo _)
