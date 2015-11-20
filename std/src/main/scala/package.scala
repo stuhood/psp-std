@@ -61,21 +61,13 @@ package object std extends psp.std.StdPackage {
   def stringEq[A] : Hash[A]              = Eq.ToString
   def shownEq[A: Show] : Hash[A]         = hashBy[A](x => render(x))(Eq.ToString)
 
-   //Hash[String] on render
-  // Hash[A](x => render(x)
-
-
-  // Show[B](x => z show f(x))
-  // inheritEq[String] on (x => render(x))
-
-  def render[A](x: A)(implicit z: Show[A]): String = z show x
-
   // Helpers for inference when calling 'on' on contravariant type classes.
   def eqBy[A]    = new EqBy[A]
   def orderBy[A] = new OrderBy[A]
   def showBy[A]  = new ShowBy[A]
   def hashBy[A]  = new HashBy[A]
 
+  def render[A](x: A)(implicit z: Show[A]): String = z show x
   def print[A: Show](x: A): Unit   = Console putOut show"$x"
   def println[A: Show](x: A): Unit = Console echoOut show"$x"
   def anyprintln(x: Any): Unit     = Console echoOut x.any_s
@@ -141,6 +133,8 @@ package object std extends psp.std.StdPackage {
   def fst[A, B](x: A -> B): A          = x._1
   def snd[A, B](x: A -> B): B          = x._2
   def tuple[A, B](x: A -> B): ((A, B)) = x._1 -> x._2
+  def swap[A, B](x: A -> B): B -> A    = x._2 -> x._1
+  def swap[A, B](x: A, y: B): B -> A   = y -> x
 
   def cond[A](p: Bool, thenp: => A, elsep: => A): A = if (p) thenp else elsep
   def view[A](xs: A*): View[A]                      = xs.toVec.m
@@ -149,5 +143,5 @@ package object std extends psp.std.StdPackage {
   def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V]       = xs.m.toExMap
   def list[A](xs: A*): Plist[A]                     = xs.toPlist
   def inView[A](mf: Suspended[A]): View[A]          = Each(mf).m
-  def zipView[A, B](xs: (A, B)*): ZipView[A, B]     = Zipped1(xs.seq)
+  def zipView[A, B](xs: (A, B)*): ZipView[A, B]     = Zip zip1 xs.m
 }
