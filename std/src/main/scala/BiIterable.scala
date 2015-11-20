@@ -60,7 +60,7 @@ object BiIterator {
     def next(): A = try xs(index) finally index += 1
   }
   final class DirectIterator[A](xs: Direct[A]) extends BiIterator[A] {
-    private[this] var index: Index = 0.index
+    private[this] var index: Index = Index(0)
     def hasNext   = xs containsIndex index
     def next(): A = try xs(index) finally index += 1
     def reverseIterator(): ReverseDirectIterator[A] = new ReverseDirectIterator(xs)

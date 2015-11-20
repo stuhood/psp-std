@@ -97,7 +97,7 @@ final class SizeOps(val lhs: Size) extends AnyVal {
 
   def + (rhs: Size): Size = (lhs, rhs) match {
     case (Infinite, _) | (_, Infinite)            => Infinite
-    case (Precise(l), Precise(r))                 => l + r size
+    case (Precise(l), Precise(r))                 => Size(l + r)
     case (GenBounded(l1, h1), GenBounded(l2, h2)) => bounded(l1 + l2, h1 + h2)
   }
   def - (rhs: Size): Size = (lhs, rhs) match {

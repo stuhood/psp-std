@@ -5,8 +5,8 @@ import api._
 import StdShow._
 
 class FullRenderer extends Renderer {
-  def minElements: Precise = 3.size
-  def maxElements: Precise = 10.size
+  def minElements: Precise = 3
+  def maxElements: Precise = 10
 
   def showEach(xs: Each[Doc]): String = "[ " + (xs splitAt maxElements.lastIndex match {
     case Split(xs, ys) if ys.isEmpty => xs map show mk_s ", "

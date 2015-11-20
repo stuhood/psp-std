@@ -74,13 +74,13 @@ object ExSet {
     def \(relation: Relation[A]): Quotient[A] = new Quotient[A](basis)(Eq(relation))
     def +(elem: A): ExSet[A]                  = this union ExSet.elems(elem)(eqs)
     def apply(elem: A)                        = wrapSet contains wrap(elem)
-    def size: Precise                         = wrapSet.size.size
+    def size: Precise                         = wrapSet.size
     @inline def foreach(f: A => Unit): Unit   = wrapSet foreach (x => f(x.value))
   }
 
   final class Quotient[A](basis: Each[A])(implicit val eqs: Eq[A]) extends ExSetImpl[A] {
     private[this] val set = basis.foldl(sciSet[A]())((res, x) => if (res exists (_ === x)) res else res + x)
-    def size: Precise               = set.size.size
+    def size: Precise               = set.size
     def apply(x: A): Boolean        = set(x)
     def foreach(x: A => Unit): Unit = set foreach x
   }
