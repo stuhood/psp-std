@@ -212,7 +212,7 @@ trait EmptyInstances0 {
 
 trait EmptyInstances extends EmptyInstances0 {
   implicit def emptyAtomicView[A, Repr] : Empty[AtomicView[A, Repr]] = Empty(View.each[A, Repr](emptyValue))
-  implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]    = Empty(z build Each.empty)
+  implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]    = Empty(z build vec())
   implicit def emptyOption[A] : Empty[Option[A]]                     = Empty(None)
   implicit def emptyTuple[A: Empty, B: Empty]: Empty[(A, B)]         = Empty(emptyValue[A] -> emptyValue[B])
   implicit def emptyView[A] : Empty[View[A]]                         = Empty(view())
@@ -226,24 +226,18 @@ trait EmptyInstances extends EmptyInstances0 {
 }
 
 trait EqInstances extends OrderInstances {
-  import StdShow._
-
   implicit def classWrapperEq: Hash[JavaClass] = inheritEq
   implicit def classEq: Hash[Class[_]]         = inheritEq
   implicit def offsetEq: Hash[Offset]          = inheritEq
-  implicit def pathEq: Eq[jPath]               = shownEq[jPath]
+  implicit def pathEq: Eq[jPath]               = shownEq[jPath](inheritShow)
   implicit def sizeEq: Hash[Size]              = inheritEq
+  implicit def arrayEq[A: Eq] : Eq[Array[A]]   = eqBy[Array[A]](_.toDirect)
+  implicit def vectorEq[A: Eq] : Eq[Direct[A]] = Eq(_ zip _ corresponds (_ === _))
 
-  /** The throwableEq defined above conveniently conflicts with the actual
-   *  implicit parameter to the method. W... T... F. On top of this the error
-   *  message is simply "value === is not a member of Throwable".
-   */
   implicit def tryEq[A](implicit z1: Eq[A], z2: Eq[Throwable]): Eq[Try[A]] = Eq {
     case (Success(x), Success(y)) => x === y
-    case (Failure(x), Failure(y)) => x === y // would be x === y, but.
+    case (Failure(x), Failure(y)) => x === y
     case _                        => false
   }
 
-  implicit def arrayEq[A: Eq] : Eq[Array[A]]   = eqBy[Array[A]](_.toDirect)
-  implicit def vectorEq[A: Eq] : Eq[Direct[A]] = Eq(_ zip _ corresponds (_ === _))
 }

@@ -3,9 +3,6 @@ package std
 
 import api._
 
-/** TODO - how to abstract the entire notion of a Complement class and the
- *  always-the-same logic which accompanies it, without virtual classes?
- */
 object Algebras {
   final case class Not[A](f: ToBool[A]) extends ToBool[A] with ForceShowDirect {
     def apply(x: A): Boolean = !f(x)
