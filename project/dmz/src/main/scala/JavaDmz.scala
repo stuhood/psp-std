@@ -8,20 +8,21 @@ import java.{ util => ju }
 import java.{ io => jio }
 import java.nio.{ file => jnf }
 import java.nio.charset.Charset
+import java.lang.String
 
 trait JavaDmz extends Any {
   // Exceptional factories.
-  def assertionError(msg: jl.String): Nothing                = throw new AssertionError(msg)
-  def illegalArgumentException(msg: Any): Nothing            = throw new IllegalArgumentException(s"$msg")
-  def noSuchElementException(msg: jl.String): Nothing        = throw new NoSuchElementException(msg)
-  def runtimeException(msg: jl.String): Nothing              = throw new RuntimeException(msg)
-  def unsupportedOperationException(msg: jl.String): Nothing = throw new UnsupportedOperationException(msg)
-  def indexOutOfBoundsException(msg: Any): Nothing           = throw new IndexOutOfBoundsException(s"$msg")
+  def assertionError(msg: String): Nothing                = throw new AssertionError(msg)
+  def illegalArgumentException(msg: Any): Nothing         = throw new IllegalArgumentException(s"$msg")
+  def indexOutOfBoundsException(msg: Any): Nothing        = throw new IndexOutOfBoundsException(s"$msg")
+  def noSuchElementException(msg: String): Nothing        = throw new NoSuchElementException(msg)
+  def runtimeException(msg: String): Nothing              = throw new RuntimeException(msg)
+  def unsupportedOperationException(msg: String): Nothing = throw new UnsupportedOperationException(msg)
 
   // A selection of popular static methods from javaland.
   def currentThread: Thread           = jl.Thread.currentThread
   def defaultCharset: Charset         = Charset.defaultCharset
-  def fileSeparator: jl.String        = jio.File.separator
+  def fileSeparator: String           = jio.File.separator
   def milliTime: Long                 = jl.System.currentTimeMillis
   def nanoTime: Long                  = jl.System.nanoTime
   def systemClassLoader: ClassLoader  = jl.ClassLoader.getSystemClassLoader
@@ -29,6 +30,11 @@ trait JavaDmz extends Any {
   def utf8Charset: Charset            = Charset forName "UTF-8"
   def threadSleep(ms: Long): Unit     = jl.Thread.sleep(ms)
   def threadYield(): Unit             = jl.Thread.`yield`
+
+  // A few operations involving time and date.
+  def formattedDate(format: String)(date: jDate): String = new java.text.SimpleDateFormat(format) format date
+  def dateTime(): String                                 = formattedDate("yyyyMMdd-HH-mm-ss")(new jDate)
+  def now(): FileTime                                    = jnf.attribute.FileTime fromMillis milliTime
 
   // Exceptions and Throwables.
   type AssertionError                = jl.AssertionError
@@ -51,7 +57,6 @@ trait JavaDmz extends Any {
   type FileTime                 = jnf.attribute.FileTime
   type InputStream              = jio.InputStream
   type OutputStream             = jio.OutputStream
-  type Path                     = jnf.Path
   type PrintStream              = jio.PrintStream
   type StringBuilder            = jl.StringBuilder
   type Thread                   = jl.Thread
@@ -80,6 +85,7 @@ trait JavaDmz extends Any {
   type jMapEntry[K, V]          = ju.Map.Entry[K, V]
   type jMap[K, V]               = ju.Map[K, V]
   type jMethod                  = jl.reflect.Method
+  type jPath                    = jnf.Path
   type jSet[A]                  = ju.Set[A]
   type jSortedMap[K, V]         = ju.SortedMap[K, V]
   type jSortedSet[A]            = ju.SortedSet[A]

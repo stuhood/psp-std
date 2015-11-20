@@ -41,17 +41,6 @@ abstract class StdPackage
   implicit class DirectOps[A](val xs: Direct[A]) {
     def apply(i: Index): A = xs elemAt i
   }
-
-  implicit class ApiOrderOps[A](val ord: Order[A]) {
-    def |[B: Order](f: A => B): Order[A] = Order((x, y) => ord.cmp(x, y) || ?[Order[B]].cmp(f(x), f(y)))
-  }
-  implicit class CmpEnumOps(val cmp: Cmp) {
-    def || (that: => Cmp): Cmp = if (cmp == Cmp.EQ) that else cmp
-  }
-  implicit class BuildsOps[Elem, To](z: Builds[Elem, To]) {
-    def map[Next](f: To => Next): Builds[Elem, Next] = Builds(xs => f(z build xs))
-    def scalaBuilder: scmBuilder[Elem, To]           = sciVector.newBuilder[Elem] mapResult (z build _.toEach)
-  }
   implicit class Tuple2Ops[A, B](val lhs: (A, B)) {
     def fold[C, D](rhs: (A, B))(f: (A, A) => C, g: (B, B) => C)(h: (C, C) => D): D =
       h(f(lhs._1, rhs._1), g(lhs._2, rhs._2))

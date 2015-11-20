@@ -83,21 +83,17 @@ trait JavaClassLoader extends Any {
   def to_s: String = s"$loader"
 }
 
-
 /** Static forwarder objects.
  */
-object Paths {
-  def get(path: String): jnf.Path = jnf.Paths get path
-}
 
 object FileTime {
   val NoFileTime                        = this fromMillis MinLong
   def empty: FileTime                   = NoFileTime
   def fromMillis(value: Long): FileTime = jnfa.FileTime fromMillis value
 }
-
 object Files {
-  def readAllBytes(path: Path): Array[Byte]                 = jnf.Files.readAllBytes(path)
-  def readAllLines(path: Path, cs: jCharset): jList[String] = jnf.Files.readAllLines(path, cs)
-  def readAllLines(path: Path): jList[String]               = readAllLines(path, defaultCharset)
+  def readAllBytes(path: jPath): Array[Byte]                 = jnf.Files.readAllBytes(path)
+  def readAllLines(path: jPath, cs: jCharset): jList[String] = jnf.Files.readAllLines(path, cs)
+  def readAllLines(path: jPath): jList[String]               = readAllLines(path, defaultCharset)
 }
+

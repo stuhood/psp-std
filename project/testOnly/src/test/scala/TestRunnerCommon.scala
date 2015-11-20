@@ -26,7 +26,7 @@ abstract class TestRunnerCommon {
   )
 
   def wrapRun(b: Bundle): Boolean = Try(b.run) fold (
-    t => andFalse(println(show"Caught $t running $b"), t.printStackTrace),
+    t => sideEffect(false, println(show"Caught $t running $b"), t.printStackTrace),
     identity
   )
 

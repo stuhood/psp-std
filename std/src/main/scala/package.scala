@@ -6,7 +6,6 @@ import scala.{ collection => sc }
 import sc.{ mutable => scm, immutable => sci }
 import psp.api._
 import Api.SpecTypes
-import psp.dmz.Console
 
 package object std extends psp.std.StdPackage {
   type AdditiveMonoid[A]          = spire.algebra.AdditiveMonoid[A]
@@ -22,17 +21,11 @@ package object std extends psp.std.StdPackage {
   type IndexRange = Consecutive[Index]
 
   final val ->              = psp.api.Pair
-  final val ::              = psp.dmz.::
-  final val Array           = psp.dmz.Array
   final val Failure         = scala.util.Failure
   final val MaxIndex        = Index(MaxLong)
   final val NameTransformer = scala.reflect.NameTransformer
-  final val Nil             = sci.Nil
-  final val NoFile: jFile   = new jFile("")
   final val NoIndex         = Index.undefined
   final val NoNth           = Nth.undefined
-  final val NoPath: Path    = path("")
-  final val NoUri: jUri     = jUri("")
   final val None            = scala.None
   final val Option          = scala.Option
   final val Some            = scala.Some
@@ -44,6 +37,11 @@ package object std extends psp.std.StdPackage {
   final val sciSet          = sci.Set
   final val sciVector       = sci.Vector
   final val scmMap          = scm.Map
+  final val Array           = scala.Array
+
+  final val NoFile: jFile = jFile("")
+  final val NoPath: jPath = jPath("")
+  final val NoUri: jUri   = jUri("")
 
   // Ugh. XXX
   implicit def promoteSize(x: Int): Precise = Size(x)
@@ -67,21 +65,28 @@ package object std extends psp.std.StdPackage {
   def showBy[A]  = new ShowBy[A]
   def hashBy[A]  = new HashBy[A]
 
+  private def stdout                  = scala.Console.out
+  private def putOut(msg: Any): Unit  = sideEffect(stdout print msg, stdout.flush())
+  private def echoOut(msg: Any): Unit = stdout println msg
+
   def render[A](x: A)(implicit z: Show[A]): String = z show x
-  def print[A: Show](x: A): Unit   = Console putOut show"$x"
-  def println[A: Show](x: A): Unit = Console echoOut show"$x"
-  def anyprintln(x: Any): Unit     = Console echoOut x.any_s
+  def print[A: Show](x: A): Unit   = putOut(show"$x")
+  def println[A: Show](x: A): Unit = echoOut(show"$x")
+  def anyprintln(x: Any): Unit     = echoOut(x.any_s)
 
   def applyIfNonEmpty[A](x: A)(f: A => A)(implicit z: Empty[A]): A =
     if (z isEmptyValue x) x else f(x)
 
-  def ??? : Nothing                                                            = throw new scala.NotImplementedError
-  def assert(assertion: => Boolean, msg: => Any)(implicit z: Assertions): Unit = Assertions.using(z)(assertion, s"assertion failed: $msg")
+  def ??? : Nothing = throw new scala.NotImplementedError
+
+  def assert(assertion: => Boolean, msg: => Any)(implicit z: Assertions): Unit =
+    Assertions.using(z)(assertion, s"assertion failed: $msg")
 
   def classOf[A: CTag](): Class[_ <: A]      = classTag[A].runtimeClass.castTo[Class[_ <: A]]
   def classTag[A: CTag] : CTag[A]            = implicitly[CTag[A]]
   def classFilter[A: CTag] : Partial[Any, A] = Partial(_.isClass[A], _.castTo[A])
-  def path(s: String): Path                  = Paths get s
+  def jPath(path: String): jPath             = Paths get path
+  def jFile(path: String): jFile             = new jFile(path)
 
   def transitiveClosure[A: Eq](root: A)(expand: A => Foreach[A]): View[A] = inView { f =>
     def loop(in: View[A], seen: View[A]): Unit = in filterNot seen.contains match {
@@ -96,11 +101,6 @@ package object std extends psp.std.StdPackage {
   def decodeName(s: String): String = s.mapSplit('.')(NameTransformer.decode)
   def encodeName(s: String): String = s.mapSplit('.')(NameTransformer.encode)
 
-  // Operations involving time and date.
-  def formattedDate(format: String)(date: jDate): String = new java.text.SimpleDateFormat(format) format date
-  def dateTime(): String                                 = formattedDate("yyyyMMdd-HH-mm-ss")(new jDate)
-  def now(): FileTime                                    = jnfa.FileTime fromMillis milliTime
-
   @inline def timed[A](elapsed: Long => Unit)(body: => A): A = {
     val start = nanoTime
     val result = body
@@ -108,14 +108,24 @@ package object std extends psp.std.StdPackage {
     result
   }
 
+  def sortInPlace[A](xs: Array[A]): Array[A] = sideEffect(xs, xs match {
+    case xs: Array[Byte]   => java.util.Arrays.sort(xs)
+    case xs: Array[Char]   => java.util.Arrays.sort(xs)
+    case xs: Array[Short]  => java.util.Arrays.sort(xs)
+    case xs: Array[Int]    => java.util.Arrays.sort(xs)
+    case xs: Array[Long]   => java.util.Arrays.sort(xs)
+    case xs: Array[Double] => java.util.Arrays.sort(xs)
+    case xs: Array[Float]  => java.util.Arrays.sort(xs)
+    case xs: Array[AnyRef] => java.util.Arrays.sort[AnyRef](xs, Eq.refComparator)
+    case _                 =>
+  })
+
   def tabular[A](xs: View[A])(columns: ToString[A]*): String =
     if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toVec, columns.m).render(inheritShow) else ""
 
   def abort(msg: String): Nothing                      = runtimeException(msg)
   def abortTrace(msg: String): Nothing                 = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
   def andClose[A <: jCloseable, B](x: A)(f: A => B): B = try f(x) finally x.close()
-  def andFalse(x: Unit, xs: Unit*): Boolean            = false
-  def andTrue(x: Unit, xs: Unit*): Boolean             = true
   def bufferMap[A, B: Empty](): scmMap[A, B]           = scmMap[A, B]() withDefaultValue emptyValue[B]
   def fullIndexRange: IndexRange                       = indexRange(0, MaxInt)
   def indexRange(start: Int, end: Int): IndexRange     = Consecutive.until(start, end, Index(_))

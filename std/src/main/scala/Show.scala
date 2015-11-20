@@ -45,10 +45,8 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
       val post: String = s drop index.sizeExcluding force;
       pre append post.stripMargin
     }
-    val stripped: sciList[String] = stringContext.parts.toList match {
-      case head :: tail => head.stripMargin :: (tail map stripTrailingPart)
-      case Nil          => Nil
-    }
+    val stripped = applyIfNonEmpty(stringContext.parts.toList)(xs => xs.head.stripMargin :: (xs.tail map stripTrailingPart))
+
     (new StringContext(stripped: _*).raw(args: _*)).trim
   }
 }
@@ -57,11 +55,7 @@ object Show {
   /** This of course is not implicit as that would defeat the purpose of the endeavor.
    *  There is however an implicit universal instance in the Unsafe object.
    */
-  val Inherited: Show[Any] = apply[Any] {
-    case null          => ""
-    case x: ShowDirect => x.to_s
-    case x             => x.toString
-  }
+  val Inherited: Show[Any] = apply[Any](s => noNull(s, "").toString)
 
   def apply[A](f: ToString[A]): Show[A] = new Impl[A](f)
 
@@ -77,7 +71,7 @@ trait ShowInstances extends ShowEach {
   implicit def showDouble: Show[Double]       = inheritShow
   implicit def showInt: Show[Int]             = inheritShow
   implicit def showLong: Show[Long]           = inheritShow
-  implicit def showPath: Show[Path]           = inheritShow
+  implicit def showPath: Show[jPath]          = inheritShow
   implicit def showString: Show[String]       = inheritShow
   implicit def showThrowable: Show[Throwable] = inheritShow
 
@@ -95,7 +89,6 @@ trait ShowInstances extends ShowEach {
     case Infinite              => "<inf>"
   }
 }
-
 trait ShowEach0 {
   implicit def showView[A: Show](implicit z: FullRenderer): Show[View[A]] = showBy[View[A]](z showEach _.toEach.map(_.doc))
 }
@@ -105,6 +98,6 @@ trait ShowEach1 extends ShowEach0 {
 trait ShowEach extends ShowEach1 {
   implicit def showExMap[K: Show, V: Show] : Show[ExMap[K, V]]        = Show(xs => tabular(xs.entries.pairs)(_.render))
   implicit def showZipped[A1: Show, A2: Show] : Show[ZipView[A1, A2]] = showBy[ZipView[A1, A2]](_.pairs)
-  implicit def showArray[A: Show] : Show[Array[A]]                    = showBy[Array[A]](Direct.fromArray)
+  implicit def showArray[A: Show] : Show[Array[A]]                    = showBy[Array[A]](_.toVec)
   implicit def showJavaEnum[A <: jEnum[A]] : Show[jEnum[A]]           = inheritShow
 }
