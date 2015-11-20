@@ -21,6 +21,7 @@ trait StdImplicits extends scala.AnyRef
 
   implicit def convertViewEach[A](xs: View[A]): Each[A]    = Each(xs foreach _)
   implicit def opsSplitView[A](xs: SplitView[A]): Split[A] = Split(xs.left, xs.right)
+  implicit def opsBuildsTypeClass[Elem, To](z: Builds[Elem, To]): ops.BuildsTypeClassOps[Elem, To] = new ops.BuildsTypeClassOps(z)
 
   // Promotion of the api type (which has as few methods as possible) to the
   // concrete type which has all the other ones.
@@ -53,10 +54,10 @@ trait StdOps1 extends StdOps0 {
 }
 trait StdOps2 extends StdOps1 {
   // We buried Predef's {un,}augmentString in favor of these.
-  implicit def opsWrapString(x: String): Pstring                       = new Pstring(x)
-  implicit def opsAtomicView[A](x: View[A]): ops.InvariantViewOps[A]   = new ops.InvariantViewOps(x)
-  implicit def opsHasOrderInfix[A: Order](x: A): ops.infix.OrderOps[A] = new ops.infix.OrderOps[A](x)
-  implicit def opsHasHash[A: Hash](x: View[A]): ops.HasHash[A]         = new ops.HasHash(x)
+  implicit def opsWrapString(x: String): Pstring                     = new Pstring(x)
+  implicit def opsAtomicView[A](x: View[A]): ops.InvariantViewOps[A] = new ops.InvariantViewOps(x)
+  implicit def opsHasOrderInfix[A: Order](x: A): ops.OrderOps[A]     = new ops.OrderOps[A](x)
+  implicit def opsHasHash[A: Hash](x: View[A]): ops.HasHash[A]       = new ops.HasHash(x)
 }
 
 trait StdOps3 extends StdOps2 {
@@ -64,22 +65,23 @@ trait StdOps3 extends StdOps2 {
   // but then discarding it. The only way these can be value classes is if the type class
   // arrives with the method call.
 
-  implicit def opsChar(x: Char): ops.CharOps                                        = new ops.CharOps(x)
-  implicit def opsHasAlgebraInfix[A: BooleanAlgebra](x: A): ops.infix.AlgebraOps[A] = new ops.infix.AlgebraOps[A](x)
-  implicit def opsHasEmpty[A: Empty](x: View[A]): ops.HasEmpty[A]                   = new ops.HasEmpty[A](x)
-  implicit def opsHasEqInfix[A: Eq](x: A): ops.infix.EqOps[A]                       = new ops.infix.EqOps[A](x)
-  implicit def opsHasHashInfix[A: Hash](x: A): ops.infix.HashOps[A]                 = new ops.infix.HashOps[A](x)
-  implicit def opsHasOrder[A: Order](x: View[A]): ops.HasOrder[A]                   = new ops.HasOrder(x)
-  implicit def opsHasShowEach[A: Show](x: Each[A]): ops.DocSeqOps                   = new ops.DocSeqOps(x map (_.doc) toVec)
-  implicit def opsHasShowView[A: Show](x: View[A]): ops.DocSeqOps                   = opsHasShowEach(x)
-  implicit def opsInputStream(x: InputStream): ops.InputStreamOps                   = new ops.InputStreamOps(x)
-  implicit def opsInt(x: Int): ops.IntOps                                           = new ops.IntOps(x)
-  implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A]          = new ops.JavaIteratorOps[A](x)
-  implicit def opsLong(x: Long): ops.LongOps                                        = new ops.LongOps(x)
-  implicit def opsOption[A](x: Option[A]): ops.OptionOps[A]                         = new ops.OptionOps[A](x)
-  implicit def opsPrecise(x: Precise): ops.PreciseOps                               = new ops.PreciseOps(x)
-  implicit def opsSize(x: Size): ops.SizeOps                                        = new ops.SizeOps(x)
-  implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                                  = new ops.TryOps[A](x)
+  implicit def opsChar(x: Char): ops.CharOps                                  = new ops.CharOps(x)
+  implicit def opsHasAlgebraInfix[A: BooleanAlgebra](x: A): ops.AlgebraOps[A] = new ops.AlgebraOps[A](x)
+  implicit def opsHasEmpty[A: Empty](x: View[A]): ops.HasEmpty[A]             = new ops.HasEmpty[A](x)
+  implicit def opsHasEqInfix[A: Eq](x: A): ops.EqOps[A]                       = new ops.EqOps[A](x)
+  implicit def opsHasHashInfix[A: Hash](x: A): ops.HashOps[A]                 = new ops.HashOps[A](x)
+  implicit def opsHasOrder[A: Order](x: View[A]): ops.HasOrder[A]             = new ops.HasOrder(x)
+  implicit def opsHasShowEach[A: Show](x: Each[A]): ops.DocSeqOps             = new ops.DocSeqOps(x map (_.doc) toVec)
+  implicit def opsHasShowView[A: Show](x: View[A]): ops.DocSeqOps             = opsHasShowEach(x)
+  implicit def opsInputStream(x: InputStream): ops.InputStreamOps             = new ops.InputStreamOps(x)
+  implicit def opsInt(x: Int): ops.IntOps                                     = new ops.IntOps(x)
+  implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A]    = new ops.JavaIteratorOps[A](x)
+  implicit def opsCmpEnum(x: Cmp): ops.CmpEnumOps                             = new ops.CmpEnumOps(x)
+  implicit def opsLong(x: Long): ops.LongOps                                  = new ops.LongOps(x)
+  implicit def opsOption[A](x: Option[A]): ops.OptionOps[A]                   = new ops.OptionOps[A](x)
+  implicit def opsPrecise(x: Precise): ops.PreciseOps                         = new ops.PreciseOps(x)
+  implicit def opsSize(x: Size): ops.SizeOps                                  = new ops.SizeOps(x)
+  implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                            = new ops.TryOps[A](x)
 
   implicit def opsPairSplit[R, A, B](xs: Foreach[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B] =
     new Paired[R, A, B](Each(xs foreach _))
@@ -218,7 +220,7 @@ trait EmptyInstances extends EmptyInstances0 {
   implicit def emptyFile: Empty[jFile]            = Empty(NoFile)
   implicit def emptyIndex: Empty[Index]           = Empty(NoIndex)
   implicit def emptyIndexRange: Empty[IndexRange] = Empty(indexRange(0, 0))
-  implicit def emptyPath: Empty[Path]             = Empty(NoPath)
+  implicit def emptyPath: Empty[jPath]            = Empty(NoPath)
   implicit def emptyDoc: Empty[Doc]               = Empty(Doc.empty)
   implicit def emptyString: Empty[String]         = Empty("")
 }
@@ -229,7 +231,7 @@ trait EqInstances extends OrderInstances {
   implicit def classWrapperEq: Hash[JavaClass] = inheritEq
   implicit def classEq: Hash[Class[_]]         = inheritEq
   implicit def offsetEq: Hash[Offset]          = inheritEq
-  implicit def pathEq: Eq[Path]                = shownEq[Path]
+  implicit def pathEq: Eq[jPath]               = shownEq[jPath]
   implicit def sizeEq: Hash[Size]              = inheritEq
 
   /** The throwableEq defined above conveniently conflicts with the actual

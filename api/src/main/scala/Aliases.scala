@@ -17,8 +17,6 @@ trait Aliases extends scala.Any {
   type CTag[A]       = scala.reflect.ClassTag[A]
   type Dynamic       = scala.Dynamic
   type Option[+A]    = scala.Option[A]
-  type Product       = scala.Product
-  type ScalaNumber   = scala.math.ScalaNumber
   type Some[+A]      = scala.Some[A]
   type String        = java.lang.String
   type StringContext = scala.StringContext
@@ -83,9 +81,8 @@ trait Aliases extends scala.Any {
   def emptyValue[A](implicit z: Empty[A]): A   = z.empty
   def identity[A](x: A): A                     = x
   def implicitly[A](implicit x: A): A          = x
-  def longCmp(diff: Long): Cmp                 = if (diff < 0) Cmp.LT else if (diff > 0) Cmp.GT else Cmp.EQ
   def newArray[A: CTag](length: Int): Array[A] = new Array[A](length)
   def none[A](): Option[A]                     = scala.None
-  def show[A: Show] : Show[A]                  = ?
+  def show[A](implicit z: Show[A]): Show[A]    = z
   def some[A](x: A): Some[A]                   = scala.Some(x)
 }

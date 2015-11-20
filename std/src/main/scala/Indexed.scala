@@ -67,7 +67,7 @@ object Indexed {
     def isDefinedAt(i: Index): Boolean = {
       !i.isUndefined && (
            (seen containsIndex i)
-        || (Try(andTrue(advanceTo(i))) | false)
+        || (Try(sideEffect(true, advanceTo(i))) | false)
       )
     }
 

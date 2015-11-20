@@ -81,7 +81,7 @@ class OperationCounts extends ScalacheckBundle {
       || usDirect.calls > themDirect.calls
     )
     lazy val passed = Try(!failed).fold(
-      t => andFalse(t.printStackTrace),
+      t => sideEffect(false, t.printStackTrace),
       x => try x finally maybeShow(x)
     )
 

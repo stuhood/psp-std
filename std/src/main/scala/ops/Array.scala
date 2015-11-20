@@ -48,7 +48,7 @@ final class InPlace[A](val xs: Array[A]) extends AnyVal {
 
   def insertionSort(implicit z: Order[A]): Array[A] = andThis(Sorting.insertionSort[A](xs)(z, null))
   def quickSort(implicit z: Order[A]): Array[A]     = andThis(Sorting.quickSort[A](xs)(z, null))
-  def sort(implicit z: Order[A]): Array[A]          = andThis(if (isReference) sortRef(Order.comparator) else Array sortInPlace xs)
+  def sort(implicit z: Order[A]): Array[A]          = andThis(if (isReference) sortRef(Order.comparator) else sortInPlace(xs))
   def sortBy[B: Order](f: A => B): Array[A]         = sort(orderBy[A](f))
 
   def map(f: ToSelf[A]): Array[A] = andThis(0 to lastIndex foreach (i => xs(i) = f(xs(i))))

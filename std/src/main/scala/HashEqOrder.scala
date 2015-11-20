@@ -24,7 +24,12 @@ object Eq {
   class EqComparator[A: Eq]() extends Comparator[A] {
     def compare(x: A, y: A): Int = if (x === y) 0 else x.id_## - y.id_##
   }
+  object RefComparator extends Comparator[AnyRef] {
+    def compare(x: AnyRef, y: AnyRef): Int = if (x eq y) 0 else x.id_## - y.id_##
+  }
+
   def eqComparator[A: Eq](): Comparator[A] = new EqComparator[A]
+  def refComparator: Comparator[AnyRef]    = RefComparator
 }
 
 object Order {
@@ -37,6 +42,12 @@ object Order {
   def comparator[A](implicit z: Order[A]): Comparator[A] = new ToOrdering(z)
   def ordering[A](implicit z: Order[A]): Ordering[A]     = new ToOrdering(z)
 
+  private def longCmp(diff: Long): Cmp = (
+    if (diff < 0) Cmp.LT
+    else if (diff > 0) Cmp.GT
+    else Cmp.EQ
+  )
+
   def inherited[A <: Comparable[A]](): Impl[A] = fromInt[A](_ compareTo _)
   def apply[A](f: (A, A) => Cmp): Impl[A]      = new FromRelation[A](f)
   def fromInt[A](f: (A, A) => Int): Impl[A]    = apply[A]((x, y) => longCmp(f(x, y)))
@@ -47,6 +58,8 @@ object Order {
   sealed abstract class Impl[A](f: OrderRelation[A]) extends sa.Order[A] with api.Order[A] {
     def cmp(x: A, y: A): Cmp = f(x, y)
     def compare(x: A, y: A): Int = cmp(x, y).intValue
+
+    def | [B: Order](f: A => B): Order[A] = apply((x, y) => cmp(x, y) | (f(x) compare f(y)))
   }
   final class FromApiOrder[A](z: api.Order[A])        extends Impl[A](z.cmp)
   final class FromComparator[A](c: Comparator[A])     extends Impl[A]((x, y) => longCmp(c.compare(x, y)))

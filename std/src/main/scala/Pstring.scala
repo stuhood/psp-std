@@ -69,7 +69,7 @@ final class Pstring(val self: String) extends AnyVal with ForceShowDirect {
   def trimLines: String                             = mapLines(_.trim).trim
 
   private def bs = '\\'
-  private def unwrapArg(arg: Any): AnyRef                                     = arg.matchOr(arg.toRef) { case x: ScalaNumber => x.underlying }
+  private def unwrapArg(arg: Any): AnyRef                                     = arg.matchOr(arg.toRef) { case x: scala.math.ScalaNumber => x.underlying }
   private def foldPrefix[A](prefix: String)(none: => A)(some: String => A): A = foldRemove(prefix.r.literal.starts)(none)(some)
   private def foldRemove[A](r: Regex)(none: => A)(some: String => A): A       = remove(r) match { case `self` => none ; case s => some(s) }
   private def foldSuffix[A](suffix: String)(none: => A)(some: String => A): A = foldRemove(suffix.r.literal.ends)(none)(some)

@@ -8,11 +8,12 @@ import api._
 final class AnyOps[A](val x: A) extends AnyVal {
   def any_s: String                         = s"$x"
   def castTo[U] : U                         = x.asInstanceOf[U]
+  def collectSelf(pf: A ?=> A): A           = matchOr(x)(pf)
   def id_## : Int                           = java.lang.System.identityHashCode(x)
   def id_==(y: Any): Boolean                = x.asInstanceOf[AnyRef] eq y.asInstanceOf[AnyRef]  // Calling eq on Anys.
   def isClass[A: CTag]                      = classOf[A] isAssignableFrom x.getClass
-  def matchOr[B](alt: => B)(pf: A ?=> B): B = if (pf isDefinedAt x) pf(x) else alt
   def matchOpt[B](pf: A ?=> B): Option[B]   = matchOr(none[B])(pf andThen some)
+  def matchOr[B](alt: => B)(pf: A ?=> B): B = if (pf isDefinedAt x) pf(x) else alt
   def reflect[B](m: jMethod)(args: Any*): B = m.invoke(x, args.m.toRefs.seq: _*).castTo[B]
   def shortClass: String                    = NameTransformer decode (x.getClass.getName splitChar '.').last
   def toRef: Ref[A]                         = castTo[Ref[A]]
