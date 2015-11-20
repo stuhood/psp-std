@@ -35,7 +35,7 @@ object Each {
   final class ToScalaSeq[A](xs: Each[A]) extends sciSeq[A] {
     override def length: Int                 = xs.size.getInt
     def iterator: scIterator[A]              = xs.iterator
-    def apply(index: Int): A                 = xs drop index.size head
+    def apply(index: Int): A                 = xs drop index head
     override def foreach[U](f: A => U): Unit = xs foreach (x => f(x))
   }
   final class Impl[A](val size: Size, mf: Suspended[A]) extends Each[A] {

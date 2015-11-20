@@ -107,25 +107,24 @@ final class CircularBuffer[@spec(SpecTypes) A](capacity: Precise) extends Direct
   private[this] def cap: Int            = capacity.getInt
   private[this] val buffer              = newArray[Any](cap)
   private[this] var seen                = 0L
-  private[this] def writePointer: Int   = (seen % cap).safeInt
+  private[this] def writePointer: Int   = (seen % cap).toInt
   private[this] def readPointer         = if (isFull) writePointer else 0
   private[this] def setHead(x: A): Unit = sideEffect(buffer(writePointer) = x, seen += 1)
 
   @inline def foreach(f: A => Unit): Unit = this foreachIndex (i => f(elemAt(i)))
 
-  def head: A                     = elemAt(0.index)
   def isFull                      = seen >= cap
   def elemAt(index: Index): A     = buffer((readPointer + index.getInt) % cap).castTo[A]
   def size: Precise               = min(capacity, Size(seen))
   def ++=(xs: Each[A]): this.type = andThis(xs foreach setHead)
   def += (x: A): this.type        = andThis(this setHead x)
-  def push(x: A): A               = if (isFull) sideEffect(head, setHead(x)) else abort("push on non-full buffer")
+  def push(x: A): A               = if (isFull) sideEffect(this.head, setHead(x)) else abort("push on non-full buffer")
 }
 final class ByteBufferInputStream(b: ByteBuffer) extends InputStream {
   private def empty = !b.hasRemaining
 
   override def read()                                       = if (empty) -1 else b.get & 0xFF
-  override def read(bytes: Array[Byte], off: Int, len: Int) = if (empty) -1 else len min2 b.remaining doto (b.get(bytes, off, _))
+  override def read(bytes: Array[Byte], off: Int, len: Int) = if (empty) -1 else min(len, b.remaining) doto (b.get(bytes, off, _))
 }
 
 final class ByteBufferOutputStream(b: ByteBuffer) extends OutputStream {

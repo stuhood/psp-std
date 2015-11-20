@@ -5,8 +5,8 @@ import api._, std._, StdEq._
 import scala.{ collection => sc }
 
 object Size {
-  val Empty    = 0.size
-  val NonEmpty = api.Size(1.size, Infinite)
+  val Empty    = api.Size(0)
+  val NonEmpty = api.Size(1, Infinite)
   val Unknown  = api.Size(Empty, Infinite)
 
   def empty: Size   = Empty

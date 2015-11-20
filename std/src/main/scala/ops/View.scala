@@ -27,7 +27,7 @@ trait ApiViewOps[+A] extends Any {
   def foldr[@spec(SpecTypes) B](zero: B)(f: (A, B) => B): B                 = foldFrom(zero) right f
   def forall(p: ToBool[A]): Boolean                                         = foldl(true)((res, x) => if (!p(x)) return false else res)
   def forallTrue(implicit ev: A <:< Boolean): Boolean                       = forall(ev)
-  def foreachWithIndex(f: (A, Index) => Unit): Unit                         = foldl(0.index)((idx, x) => try idx.next finally f(x, idx))
+  def foreachWithIndex(f: (A, Index) => Unit): Unit                         = foldl(Index(0))((idx, x) => try idx.next finally f(x, idx))
   def gatherClass[B: CTag] : View[B]                                        = xs collect classFilter[B]
   def grep(regex: Regex)(implicit z: Show[A]): View[A]                      = xs filter (regex isMatch _)
   def head: A                                                               = (xs take 1).toVec.head
@@ -132,30 +132,10 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
     }
   }
 
-  def grouped(n: Precise): View2D[A] = new Grouped[A](n) apply xs
-
-  private def iteratively[B](xs: View[A], head: View[A] => B, tail: ToSelf[View[A]]): View[B] = xs match {
-    case _ if xs.isEmpty => emptyValue
-    case _               => head(xs) +: iteratively(tail(xs), head, tail)
-  }
-
   def boundedClosure(maxDepth: Precise, f: A => View[A]): View[A] = (
     if (maxDepth.isZero) xs
     else xs ++ (xs flatMap f).boundedClosure(maxDepth - 1, f)
   )
-}
-
-private abstract class HeadAndTail[A, B] {
-  def isDone(xs: View[A]): Boolean
-  def head(xs: View[A]): B
-  def tail(xs: View[A]): View[A]
-  def apply(xs: View[A]): View[B] = cond(isDone(xs), emptyValue, head(xs) +: apply(tail(xs))) // XXX @tailrec
-}
-
-private class Grouped[A](n: Precise) extends HeadAndTail[A, View[A]] {
-  def isDone(xs: View[A]): Boolean = xs.isEmpty
-  def head(xs: View[A]): View[A]   = xs take n
-  def tail(xs: View[A]): View[A]   = xs drop n
 }
 
 final class View2DOps[A](val xss: View2D[A]) {
@@ -191,10 +171,9 @@ class HasHash[A](xs: View[A])(implicit z: Hash[A]) extends HasEq[A](xs)(z) {
   override def toSet: ExSet[A] = xs.toHashSet
 }
 final class HasOrder[A](xs: View[A])(implicit z: Order[A]) extends HasEq[A](xs) {
-  def max: A                = xs reducel (_ max2 _)
-  def min: A                = xs reducel (_ min2 _)
-  def sortDistinct: View[A] = sorted.distinct
-  def sorted: View[A]       = xs.toRefArray.inPlace.sort
+  def max: A          = xs reducel (psp.std.max(_, _))
+  def min: A          = xs reducel (psp.std.min(_, _))
+  def sorted: View[A] = xs.toRefArray.inPlace.sort
 }
 final class HasEmpty[A](xs: View[A])(implicit z: Empty[A]) {
   def zapply(i: Index): A      = xs drop i.sizeExcluding zhead

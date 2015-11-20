@@ -174,7 +174,7 @@ class ViewBasic extends ScalacheckBundle {
     expectValue[Size](2)(strs.byString.distinct.force.size),
     expectValue[Int](vec4 drop 10 length)(size4 - 10),
     expectValue[Int](vec4 dropRight 10 length)(size4 - 10),
-    expectValue[Int](vec4.updated(100.index, 12345).apply(100))(12345),
+    expectValue[Int](vec4.updated(Index(100), 12345).apply(100))(12345),
     expectValue[Int](vec4 take size4 + 10 length)(size4),
     expectValue[Int](vec4 take size4 - 10 length)(size4 - 10),
     expectValue[Int](vec4 takeRight size4 - 10 length)(size4 - 10)
