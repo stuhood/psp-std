@@ -11,7 +11,7 @@ object ReplMain {
 /** This sets up the ammonite repl with the correct compiler settings
  *  and desired namespace elements and aesthetics.
  */
-object REPL extends Repl(System.in, System.out, Ref(Storage(Repl.defaultAmmoniteHome, None)), "", Nil) {
+object REPL extends Repl(System.in, System.out, Ref(Storage(Repl.defaultAmmoniteHome, None)), "", sciSeq()) {
   import interp.replApi._
 
   private def options     = "-language:_ -Yno-adapted-args -Yno-imports -Yno-predef -encoding UTF-8"
