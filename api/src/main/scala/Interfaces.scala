@@ -1,19 +1,6 @@
 package psp
 package api
 
-/** API level type classes and interfaces for views and collections.
- *
- *  An intensional collection is one which can tell us things about
- *  instances of a particular type, but cannot produce any of that type.
- *  An extensional collection is the dual: it can produce instances of
- *  a particular type, but can tell us nothing about them.
- *
- *  Alert readers will notice we are describing contravariance and
- *  covariance, and indeed those properties accompany those traits.
- *
- *  An intensional set (InSet) is little more than a function A => Bool
- *  plus some structure. An ExSet is little more than a generator of As.
- */
 import Api._
 
 trait HasSize        extends Any                           { def size: Size     }
@@ -31,10 +18,9 @@ trait Indexed[@spec(SpecTypes) +A] extends Any with Each[A]                     
 trait Direct[@spec(SpecTypes) +A]  extends Any with Indexed[A] with HasPreciseSize
 trait Linear[@spec(SpecTypes) +A]  extends Any with Each[A]    with IsEmpty        { def head: A ; def tail: Linear[A] }
 
-trait InSet[-A]     extends Any                            { def apply(x: A): Boolean       }
-trait InMap[-K, +V] extends Any                            { def lookup: Fun[K, V]          }
-trait ExSet[A]      extends Any with Each[A] with InSet[A] { def equiv(x: A, y: A): Boolean }
-trait ExMap[K, +V]  extends Any with InMap[K, V]           { def lookup: FiniteDom[K, V]    }
+trait InMap[-K, +V] extends Any                  { def lookup: Fun[K, V]                               }
+trait ExSet[A]      extends Any with Each[A]     { def apply(x: A): Bool ; def equiv(x: A, y: A): Bool }
+trait ExMap[K, +V]  extends Any with InMap[K, V] { def lookup: FiniteDom[K, V]                         }
 
 trait Index extends Any with Opt[Long]
 
@@ -56,12 +42,6 @@ trait AnyView[@spec(SpecTypes) +A] extends Any with IsView with Foreach[A] {
 trait ContiguousViewOps[@spec(SpecTypes) +A] extends Any with AnyView[A] {
   type Contiguous[+X] <: View[X]
 
-  // TODO:
-  //
-  // def init: Contiguous[A]
-  // def tail: Contiguous[A]
-  // def span(p: ToBool[A]): ContiguousSplit[A]
-  // def splitAt(index: Index): ContiguousSplit[A]
   def drop(n: Precise): Contiguous[A]
   def dropRight(n: Precise): Contiguous[A]
   def dropWhile(p: ToBool[A]): Contiguous[A]
@@ -69,7 +49,6 @@ trait ContiguousViewOps[@spec(SpecTypes) +A] extends Any with AnyView[A] {
   def takeRight(n: Precise): Contiguous[A]
   def takeWhile(p: ToBool[A]): Contiguous[A]
 }
-
 trait NonContiguousViewOps[@spec(SpecTypes) +A] extends Any with AnyView[A] {
   def collect[B](pf: A ?=> B): MapTo[B]
   def map[B](f: A => B): MapTo[B]
@@ -82,24 +61,11 @@ trait View[@spec(SpecTypes) +A] extends Any with ContiguousViewOps[A] with NonCo
   def viewOps: Direct[Doc]
 }
 
-trait ContiguousView[@spec(SpecTypes) +A] extends Any with View[A] {
-  type Contiguous[+X] <: ContiguousView[X]
-}
-
 trait InvariantView[A] extends Any with View[A] {
   def join(that: InvariantView[A]): InvariantView[A]
   def partition(p: ToBool[A]): SplitView[A]
   def span(p: ToBool[A]): SplitView[A]
   def splitAt(index: Index): SplitView[A]
-}
-
-trait InMapView[-K, +V] extends Any with AnyView[V] with InMap[K, V] {
-  type CoMapTo[-X] <: InMapView[X, V]
-  type MapTo[+X] <: InMapView[K, X]
-
-  def comap[K1](f: K1 => K): CoMapTo[K1]
-  def filter(p: ToBool[V]): MapTo[V]
-  def map[V1](f: V => V1): MapTo[V1]
 }
 
 /** When a View is split into two disjoint views.

@@ -85,35 +85,3 @@ object ExSet {
     def foreach(x: A => Unit): Unit = set foreach x
   }
 }
-
-object InSet {
-  val Zero = Pure[Any](false)
-  val One  = Pure[Any](true)
-
-  def impl[A](xs: InSet[A]): Impl[A] = xs match {
-    case xs: Impl[A] => xs
-    case _           => apply[A](xs)
-  }
-  def apply[A](p: ToBool[A]): InSet[A] = p match {
-    case ConstantFalse => Zero
-    case ConstantTrue  => One
-    case _             => Pure[A](p)
-  }
-  def doc[A](xs: InSet[A]): Doc = xs match {
-    case Zero                => "∅".s
-    case One                 => "U".s
-    case Complement(xs)      => pp"$xs′"
-    case Intersect(lhs, rhs) => pp"$lhs ∩ $rhs"
-    case Union(lhs, rhs)     => pp"$lhs ∪ $rhs"
-    case Diff(lhs, rhs)      => pp"$lhs ∖ $rhs"
-    case Pure(f: ShowDirect) => pp"$f" // f.to_s
-    case _                   => "{ ... }".s
-  }
-
-  abstract class Impl[A](p: ToBool[A])                        extends InSet[A] with ToBool[A] { def apply(x: A) = p(x) ; override def toString = doc(this).render }
-  final case class Complement[A](lhs: InSet[A])               extends Impl[A](x => !lhs(x))
-  final case class Intersect[A](lhs: InSet[A], rhs: InSet[A]) extends Impl[A](x => lhs(x) && rhs(x))
-  final case class Union[A](lhs: InSet[A], rhs: InSet[A])     extends Impl[A](x => lhs(x) || rhs(x))
-  final case class Diff[A](lhs: InSet[A], rhs: InSet[A])      extends Impl[A](x => lhs(x) && !rhs(x))
-  final case class Pure[A](p: ToBool[A])                      extends Impl[A](p)
-}

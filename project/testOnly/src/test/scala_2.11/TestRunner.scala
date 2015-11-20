@@ -9,7 +9,6 @@ object TestRunner_211 extends TestRunnerCommon {
   lazy val bundles = commonBundles ++ vec[Bundle](
     new Typecheck,
     new AlgebraSpec[Boolean]("Boolean") { override def join = "||" ; override def meet = "&&" },
-    new AlgebraSpec[InvariantPredicate[Pint]]("InvariantPredicate[Pint]"),
-    new AlgebraSpec[InvariantInSet[Pint]]("InvariantInSet[Pint]")
+    new AlgebraSpec[InvariantPredicate[Pint]]("InvariantPredicate[Pint]")
   )
 }
