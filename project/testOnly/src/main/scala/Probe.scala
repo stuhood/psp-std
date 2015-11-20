@@ -41,7 +41,7 @@ object Probe {
   final case class ScalaDirect(range: IntRange, counter: RecorderCounter) extends sci.IndexedSeq[Int] with sc.IndexedSeqLike[Int, ScalaDirect] with sc.IndexedSeqOptimized[Int, ScalaDirect] {
     override def newBuilder: scmBuilder[Int, ScalaDirect] = sciVector.newBuilder[Int] mapResult (xs => ScalaDirect(xs.head to xs.last, counter))
     def apply(index: Int): Int                            = counter record range(Index(index))
-    def length: Int                                       = range.sizeInt
+    def length: Int                                       = range.size.getInt
     override def toString                                 = s"$view ($counter)"
   }
 }

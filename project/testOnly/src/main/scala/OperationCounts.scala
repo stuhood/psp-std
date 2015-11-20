@@ -58,7 +58,7 @@ class OperationCounts extends ScalacheckBundle {
     chooseSmall ^^ lop(n => s"/$n"       -> (_ withFilter divides(n))),
     chooseSmall ^^ lop(n => s"!/$n"      -> (_ filterNot divides(n))),
     chooseSmall ^^ lop(n => s"%/$n"      -> (_ collect ?=>(divides(n), _ / n))),
-    chooseSmall ^^ lop(n => s"x=>(x, x)" -> (_ flatMap (x => (x, x).seq))),
+    chooseSmall ^^ lop(n => s"x=>(x, x)" -> (_ flatMap (x => vec(x, x)))),
     chooseRange ^^ lop(r => s"slice $r"  -> (_ slice r))
   )
   def composite: Gen[CompositeOp] = viewMethod * numComposite ^^ CompositeOp

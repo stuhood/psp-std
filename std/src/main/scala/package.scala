@@ -7,7 +7,17 @@ import sc.{ mutable => scm, immutable => sci }
 import psp.api._
 import Api.SpecTypes
 
-package object std extends psp.std.StdPackage {
+package object std extends scala.AnyRef
+      with EmptyInstances
+      with PrimitiveInstances
+      with AlgebraInstances
+      with GlobalShow
+      with StdImplicits
+      with Aliases
+      with psp.dmz.ScalaDmz
+      with psp.dmz.JavaDmz
+{
+
   type AdditiveMonoid[A]          = spire.algebra.AdditiveMonoid[A]
   type AdditiveSemigroup[A]       = spire.algebra.AdditiveSemigroup[A]
   type BooleanAlgebra[R]          = spire.algebra.Bool[R]
@@ -45,10 +55,18 @@ package object std extends psp.std.StdPackage {
 
   // Ugh. XXX
   implicit def promoteSize(x: Int): Precise = Size(x)
+
   implicit def opsFun[A, B](f: Fun[A, B]): ops.FunOps[A, B] = new ops.FunOps(f)
+  implicit def wrapClass(x: jClass): JavaClass              = new JavaClassImpl(x)
+  implicit def conforms[A] : (A <:< A)                      = new conformance[A]
+
+  implicit def constantPredicate[A](value: Boolean): ToBool[A] = if (value) ConstantTrue else ConstantFalse
   implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = new (A ?=> B) {
     def isDefinedAt(x: A) = f isDefinedAt x
     def apply(x: A)       = f(x)
+  }
+  implicit class DirectOps[A](val xs: Direct[A]) {
+    def apply(i: Index): A = xs elemAt i
   }
 
   def lexicalOrder: Order[String] = Order.fromInt(_ compareTo _)

@@ -158,6 +158,11 @@ private class Grouped[A](n: Precise) extends HeadAndTail[A, View[A]] {
   def tail(xs: View[A]): View[A]   = xs drop n
 }
 
+final class View2DOps[A](val xss: View2D[A]) {
+  def flatten: View[A]              = xss flatMap identity
+  def mmap[B](f: A => B): View2D[B] = xss map (_ map f)
+}
+
 /** Methods requiring us to have additional knowledge, by parameter or type class.
  *  We keep the interface simple and foolproof by establishing thet instance
  *  first and only offering the methods after that.
@@ -177,7 +182,7 @@ class HasEq[A](xs: View[A])(implicit z: Eq[A]) {
   def indexOf(x: A): Index                        = xs indexWhere (_ === x)
   def indicesOf(x: A): View[Index]                = xs indicesWhere (_ === x)
   def mapOnto[B](f: A => B): ExMap[A, B]          = toSet mapOnto f
-  def toBag: Bag[A]                               = xs groupBy identity map (_.sizeExact)
+  def toBag: Bag[A]                               = xs groupBy identity map (_.size.getInt)
   def toSet: ExSet[A]                             = xs.toExSet
   def without(x: A): View[A]                      = xs filterNot (_ === x)
   def withoutEmpty(implicit z: Empty[A]): View[A] = this without z.empty
