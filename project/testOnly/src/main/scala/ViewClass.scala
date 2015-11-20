@@ -56,8 +56,8 @@ final case class ScalaViewClass(name: String, xs: scIterable[Int]) extends ViewC
   def to_s: String                    = "[ " + (xs mkString ", ") + " ]"
 }
 
-final case class PolicyViewClass(name: String, xs: View[Int]) extends ViewClass {
-  type This = PolicyViewClass
+final case class PspViewClass(name: String, xs: View[Int]) extends ViewClass {
+  type This = PspViewClass
   private implicit def liftResult(xs: View[Int]): This = copy(xs = xs)
 
   def collect(pf: Int ?=> Int)        = xs collect pf

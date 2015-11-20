@@ -29,9 +29,9 @@ class OperationCounts extends ScalacheckBundle {
   def maxDisplay: Precise    = 20
   def numComposite           = 2 upTo 4
   def collections            = vec[RecorderCounter => ViewClass](
-    c => PolicyViewClass("p/linear", Probe.Linear(1 to max, c).view),
+    c => PspViewClass("p/linear", Probe.Linear(1 to max, c).view),
     c => ScalaViewClass("s/linear",  Probe.ScalaLinear(1 to max, c).view),
-    c => PolicyViewClass("p/direct", Probe.Direct(1 to max, c).view),
+    c => PspViewClass("p/direct", Probe.Direct(1 to max, c).view),
     c => ScalaViewClass("s/direct",  Probe.ScalaDirect(1 to max, c).view)
   )
   def chooseMax   = 0 upTo max
@@ -106,6 +106,6 @@ class OperationCounts extends ScalacheckBundle {
   def props() = Vec[NamedProp](
     NamedProp(s"Generating $minSuccessful view combinations, displaying at most $maxDisplay", Prop(true)),
     NamedProp("%-60s %-12s %s".format("", "Linear", "Direct"), Prop(true)),
-    NamedProp("policy never performs more operations than scala", compositeProp)
+    NamedProp("psp-std never performs more operations than scala", compositeProp)
   )
 }
