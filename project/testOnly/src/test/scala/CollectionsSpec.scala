@@ -16,7 +16,7 @@ class SpireSpec extends ScalacheckBundle {
   def props = vec(
     expectValue(y * 3)(Array(y, y, y).inPlace.shuffle.m.sum),
     expectValue(y * y * y)(Array(y, y, y).inPlace.shuffle.m.product)
-  )
+    )
 }
 
 class ADTSpec extends ScalacheckBundle {
@@ -32,7 +32,7 @@ class ADTSpec extends ScalacheckBundle {
   val m1 = f1.traced(
     x => seen += s"f($x): ",
     x => seen += s"$x "
-  )
+    )
   lazy val m1trace = {
     xs mapNow m1
     seen.trim
@@ -53,7 +53,7 @@ class ADTSpec extends ScalacheckBundle {
     showsAs("-", f4 get 3),
     showsAs("99", f4(3)),
     showsAs("f(1): 2 f(2): 4 f(3): 6", m1trace)
-  )
+    )
 }
 
 class StringExtensions extends ScalacheckBundle {
@@ -66,7 +66,7 @@ class StringExtensions extends ScalacheckBundle {
 
   def newProp2[B] = new {
     def apply[R](f: (StringOps, B) => R)(g: (String, B) => R)(implicit z1: Arb[B], z2: Eq[R]): Prop =
-      forAll((s: String, x: B) => sameBehavior(f(scalaOps(s), x), g(s, x)))
+    forAll((s: String, x: B) => sameBehavior(f(scalaOps(s), x), g(s, x)))
   }
 
   // dropRight and takeRight have the domain limited because of a scala bug with
@@ -86,7 +86,7 @@ class StringExtensions extends ScalacheckBundle {
     "head"        -> newProp(_.head, _.head),
     "drop"        -> newProp[Char](_.head, _.head),
     "reverse"     -> newProp[String](_.reverse, _.reverse.force)
-  )
+    )
 }
 
 class GridSpec extends ScalacheckBundle {
@@ -102,20 +102,20 @@ class GridSpec extends ScalacheckBundle {
     (yss mmap leftFormatString(width) map (_ mk_s ' ') mk_s '\n').trim.trimLines
   }
   def primePartition6 = sm"""
-    |2   4   6   8   10  12
-    |3   9   15  21  27  33
-    |5   25  35  55  65  85
-    |7   49  77  91  119 133
-    |11  121 143 187 209 253
-    |13  169 221 247 299 377
+  |2   4   6   8   10  12
+  |3   9   15  21  27  33
+  |5   25  35  55  65  85
+  |7   49  77  91  119 133
+  |11  121 143 187 209 253
+  |13  169 221 247 299 377
   """
   def primePartition6_t = sm"""
-    |2   3   5   7   11  13
-    |4   9   25  49  121 169
-    |6   15  35  77  143 221
-    |8   21  55  91  187 247
-    |10  27  65  119 209 299
-    |12  33  85  133 253 377
+  |2   3   5   7   11  13
+  |4   9   25  49  121 169
+  |6   15  35  77  143 221
+  |8   21  55  91  187 247
+  |10  27  65  119 209 299
+  |12  33  85  133 253 377
   """
 
   def props = Direct(
@@ -134,12 +134,6 @@ class ViewBasic extends ScalacheckBundle {
   def pseq    = Each.elems(1, 2, 3)
   def punfold = Indexed from 1
 
-  val vec1  = Each const 1 take 32 toVec
-  val vec2  = vec1 map (_ => vec1) reducel (_ ++ _)
-  val vec3  = vec1 map (_ => vec2) reducel (_ ++ _)
-  val vec4  = vec3 :+ 1
-  val size4 = (32 * 32 * 32) + 1
-
   case class Bippy(s: String, i: Int) {
     override def toString = s
   }
@@ -155,7 +149,52 @@ class ViewBasic extends ScalacheckBundle {
   def closureBag = closure flatMap (x => x) toBag // That's my closure bag, baby
   def xxNumbers  = (Indexed from 0).m grep """^(.*)\1""".r
 
-  def props: Direct[NamedProp] = Direct(
+  def props = miscProps ++ vecProps ++ rangeProps
+
+  lazy val rangeProps = {
+    type Triple[A, B, C] = A -> (B -> C)
+    type RTriple = Triple[IntRange, Index, Precise]
+
+    // A size and and index each no greater than the halfway point lets
+    // us formulate lots of relationships without creating out-of-bounds
+    // conditions.
+    val len  = 100
+    val half = len / 2
+
+    def pair(r: IntRange): Gen[Index -> Precise] = for {
+      i <- 0 upTo half
+      s <- 0 upTo half
+    } yield Index(i) -> Size(s)
+
+    implicit val arbRange = Arb[IntRange](Gen const (0 until len))
+    implicit val arbTriple: Arb[RTriple] = arbRange flatMap (r => pair(r) flatMap (x => r -> x))
+
+    vec[NamedProp](
+      "take/drop vs. slice" -> sameOutcomes[Triple[IntRange, Int, Int], IntRange](
+        { case (xs, (start, len)) => xs drop start take len },
+        { case (xs, (start, len)) => xs.slice(start, start + len) }
+      ),
+      "drop/apply" -> sameOutcomes[RTriple, Int](
+        { case xs -> (idx -> size) => (xs drop size)(idx) },
+        { case xs -> (idx -> size) => xs(idx + size.get) }
+      ),
+      "dropRight/apply" -> sameOutcomes[RTriple, Int](
+        { case xs -> (idx -> size) => (xs dropRight size)(idx) },
+        { case xs -> (idx -> size) => xs(idx) }
+      ),
+      "splitAt/drop" -> sameOutcomes[RTriple, View[Int]](
+        { case xs -> (idx -> size) => xs splitAt idx onRight (_ drop size) },
+        { case xs -> (idx -> size) => xs drop size splitAt idx onRight identity }
+      )
+      // Just to observe the scalacheck arguments being generated
+      // , "dump" -> sameOutcomes[RTriple, Unit](
+      //   { case xs -> (idx -> size) => { println(s"$xs -> ($idx -> $size)") ; () } },
+      //   { case xs -> (idx -> size) => () }
+      // )
+    )
+  }
+
+  def miscProps = vec[NamedProp](
     showsAs("[ 1, 2, 3 ]", plist),
     showsAs("[ 1, 2, 3 ]", pvector),
     showsAs("[ 1, 2, 3 ]", parray),
@@ -171,14 +210,25 @@ class ViewBasic extends ScalacheckBundle {
     seqShows("99, 1010, 1111", xxNumbers slice (8 takeNext 3).asIndices),
     expectValue[Size](4)(strs.byRef.distinct.force.size),
     expectValue[Size](3)(strs.byEquals.distinct.force.size),
-    expectValue[Size](2)(strs.byString.distinct.force.size),
-    expectValue[Int](vec4 drop 10 length)(size4 - 10),
-    expectValue[Int](vec4 dropRight 10 length)(size4 - 10),
-    expectValue[Int](vec4.updated(Index(100), 12345).apply(100))(12345),
-    expectValue[Int](vec4 take size4 + 10 length)(size4),
-    expectValue[Int](vec4 take size4 - 10 length)(size4 - 10),
-    expectValue[Int](vec4 takeRight size4 - 10 length)(size4 - 10)
+    expectValue[Size](2)(strs.byString.distinct.force.size)
   )
+
+  lazy val vecProps = {
+    val vec1  = Each const 1 take 32 toVec
+    val vec2  = vec1 map (_ => vec1) reducel (_ ++ _)
+    val vec3  = vec1 map (_ => vec2) reducel (_ ++ _)
+    val vec4  = vec3 :+ 1
+    val size4 = (32 * 32 * 32) + 1
+
+    vec[NamedProp](
+      expectValue[Int](vec4 drop 10 length)(size4 - 10),
+      expectValue[Int](vec4 dropRight 10 length)(size4 - 10),
+      expectValue[Int](vec4.updated(Index(100), 12345).apply(100))(12345),
+      expectValue[Int](vec4 take size4 + 10 length)(size4),
+      expectValue[Int](vec4 take size4 - 10 length)(size4 - 10),
+      expectValue[Int](vec4 takeRight size4 - 10 length)(size4 - 10)
+    )
+  }
 }
 
 class ViewSplitZip extends ScalacheckBundle {
@@ -209,7 +259,7 @@ class ViewSplitZip extends ScalacheckBundle {
     showsAs("[ 5 -> 6 ]", zipped dropWhileSnd (_ < 4) map swap),
     showsAs("-", zipped findLeft (_ == 8)),
     seqShows("10 -> 2, 30 -> 4", zipView(1 -> 2, 3 -> 4) mapLeft (_ * 10) force)
-  )
+    )
 }
 
 class CollectionsSpec extends ScalacheckBundle {
@@ -217,6 +267,7 @@ class CollectionsSpec extends ScalacheckBundle {
 
   val arr  = Array[Int](1, 2, 3)
   val smap = sciMap("a" -> 1, "b" -> 2, "c" -> 3)
+  val mmap = scmMap("a" -> 1, "b" -> 2, "c" -> 3)
   val sseq = sciSeq("a" -> 1, "b" -> 2, "c" -> 3)
   val svec = sciVector("a" -> 1, "b" -> 2, "c" -> 3)
   val sset = sciSet("a" -> 1, "b" -> 2, "c" -> 3)
@@ -226,7 +277,9 @@ class CollectionsSpec extends ScalacheckBundle {
 
   def paired[A](x: A): (A, Int) = x -> ("" + x).length
 
-  def props: Vec[NamedProp] = policyProps ++ vec(
+  def props = pspProps ++ javaProps ++ scalaProps ++ jvmProps
+
+  def jvmProps = vec[NamedProp](
     expectTypes[String](
       "abc" map identity build,
       "abc" map (_.toInt.toChar) build,
@@ -249,52 +302,64 @@ class CollectionsSpec extends ScalacheckBundle {
       arr.m flatMap (x => view(x)) build,
       arr.flatMap(x => view(x)).force[Array[Int]],
       arr.m.flatMap(x => vec(x)).force[Array[Int]]
-    ),
+    )
+  )
+
+  def scalaProps = vec[NamedProp](
     expectTypes[sciSet[_]](
       sset map identity,
       sset.m build,
       sset.m map identity build,
       sset.m.map(fst) map paired build
-    ),
+      ),
     expectTypes[sciMap[_, _]](
       (smap map identity).force[sciMap[_, _]],
       smap.m build,
       smap.m map identity build,
       smap.m map fst map identity map paired build
-    ),
+      ),
+    expectTypes[scmMap[_, _]](
+      (mmap map identity).force[scmMap[_,_]],
+      mmap.m build,
+      mmap.m map identity build,
+      mmap.m map fst map identity map paired build
+      ),
     expectTypes[scSeq[_]](
       sseq map identity,
       sseq.m build,
       sseq.m map identity build,
       sseq.m.map(fst).map(paired).force[scSeq[_]]
-    ),
+      ),
     expectTypes[sciVector[_]](
       svec map identity,
       svec.m.build,
       svec.m map identity build,
       svec.m.map(fst).map(paired).force[sciVector[_]]
-    ),
+      )
+    )
+
+  def javaProps = vec[NamedProp](
     expectTypes[jList[_]](
       jseq map identity build,
       jseq.m.build,
       jseq.m map identity build,
       jseq.m.map(fst).map(paired).force[jList[_]]
-    ),
+      ),
     expectTypes[jSet[_]](
       jset map identity build,
       jset.m build,
       jset.m map identity build,
       jset.m.map(fst) map paired build
-    ),
+      ),
     expectTypes[jMap[_, _]](
       (jmap map identity).force[jMap[_, _]],
       jmap.m build,
       jmap.m map identity build,
       jmap.m map fst map identity map paired build
+      )
     )
-  )
 
-  def policyProps: Vec[NamedProp] = {
+  def pspProps: Vec[NamedProp] = {
     import StdEq._
     val pset = set("a" -> 1, "b" -> 2, "c" -> 3)
     val pvec = vec("a" -> 1, "b" -> 2, "c" -> 3)
@@ -305,7 +370,7 @@ class CollectionsSpec extends ScalacheckBundle {
         pset map identity build,
         pset map fst map paired build,
         pset union pset
-      ),
+        ),
       expectTypes[Vec[_]](
         pvec mapNow identity,
         pvec ++ pvec,
@@ -314,7 +379,7 @@ class CollectionsSpec extends ScalacheckBundle {
         pvec.m.build,
         pvec.m map identity build,
         pvec.m.map(fst).map(paired).force[Vec[_]]
+        )
       )
-    )
   }
 }

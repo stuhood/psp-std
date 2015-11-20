@@ -28,6 +28,7 @@ package object std extends scala.AnyRef
   type UInt                       = spire.math.UInt
 
   type IntRange   = Consecutive[Int]
+  type LongRange  = Consecutive[Long]
   type IndexRange = Consecutive[Index]
 
   final val ->              = psp.api.Pair
@@ -154,6 +155,7 @@ package object std extends scala.AnyRef
   def fullIndexRange: IndexRange                       = indexRange(0, MaxInt)
   def indexRange(start: Int, end: Int): IndexRange     = Consecutive.until(start, end, Index(_))
   def intRange(start: Int, end: Int): IntRange         = Consecutive.until(start, end)
+  def longRange(start: Long, end: Long): LongRange     = intRange(start.safeInt, end.safeInt) map (_.toLong)
   def noNull[A](value: A, orElse: => A): A             = if (value == null) orElse else value
   def nullAs[A] : A                                    = null.asInstanceOf[A]
   def option[A](p: Boolean, x: => A): Option[A]        = if (p) Some(x) else None

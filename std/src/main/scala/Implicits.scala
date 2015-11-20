@@ -233,6 +233,7 @@ trait EqInstances extends OrderInstances {
   implicit def sizeEq: Hash[Size]              = inheritEq
   implicit def arrayEq[A: Eq] : Eq[Array[A]]   = eqBy[Array[A]](_.toDirect)
   implicit def vectorEq[A: Eq] : Eq[Direct[A]] = Eq(_ zip _ corresponds (_ === _))
+  implicit def viewEq[A: Eq] : Eq[View[A]]     = Eq(_ zip _ corresponds (_ === _))
 
   implicit def tryEq[A](implicit z1: Eq[A], z2: Eq[Throwable]): Eq[Try[A]] = Eq {
     case (Success(x), Success(y)) => x === y

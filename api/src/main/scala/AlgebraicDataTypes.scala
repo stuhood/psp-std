@@ -30,6 +30,7 @@ final case class Precise private[api] (get: Long)               extends AnyVal w
   def +(n: Long): Precise = Size(get + n)
   def -(n: Long): Precise = Size(get - n)
   def getInt: Int         = get.toInt
+  override def toString = s"$get"
 }
 
 object Size {

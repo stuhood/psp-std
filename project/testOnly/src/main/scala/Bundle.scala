@@ -2,7 +2,6 @@ package psp
 package tests
 
 import psp._, std._, api._, StdShow._
-import org.scalacheck.Test
 import scala.Console.{ println => _, _ }
 
 trait Bundle extends ForceShowDirect {

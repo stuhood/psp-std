@@ -1,10 +1,6 @@
 package psp
 
-import org.scalacheck._, Prop._, Gen._
-import org.scalacheck.util.Pretty
-import psp.std._, api._
-import StdShow._
-import StdEq._
+import std._, api._, StdShow._, StdEq._
 import scala.Console.{ println => _, _ }
 
 package object tests {
@@ -22,8 +18,13 @@ package object tests {
 
   implicit def assertions: Assertions = ImmediateTraceAssertions
 
-  type Arb[A]             = Arbitrary[A]
-  val Arb                 = Arbitrary
+  type Gen[A]             = org.scalacheck.Gen[A]
+  type Arb[A]             = org.scalacheck.Arbitrary[A]
+  val Arb                 = org.scalacheck.Arbitrary
+  val Gen                 = org.scalacheck.Gen
+  val Test                = org.scalacheck.Test
+  type Choose[A]          = org.scalacheck.Gen.Choose[A]
+  val Choose              = org.scalacheck.Gen.Choose
   type Forall1[-A]        = ToBool[A]
   type Forall2[-A]        = Relation[A]
   type Forall3[-A]        = (A, A, A) => Boolean
@@ -35,6 +36,8 @@ package object tests {
   type Buildable[A, C[X]] = org.scalacheck.util.Buildable[A, C[A]]
   type GenParams          = Gen.Parameters
   type TestParams         = Test.Parameters
+
+  import Prop._
 
   def arb[A](implicit z: Arb[A]): Arb[A] = z
 
@@ -49,22 +52,31 @@ package object tests {
     Try(p1) === Try(p2)
   }
 
+  def sameOutcomes[A: Arb, B: Eq](f: A => B, g: A => B): Prop =
+    forAll((x: A) => sameBehavior(f(x), g(x)))
+
+  def sameOutcomes2[A1: Arb, A2: Arb, B: Eq](f: (A1, A2) => B, g: (A1, A2) => B): Prop =
+    forAll((p1: A1, p2: A2) => sameBehavior(f(p1, p2), g(p1, p2)))
+
   implicit class ArbitraryOps[A](x: Arb[A]) {
     def map[B](f: A => B): Arb[B]    = Arb(x.arbitrary map f)
     def filter(p: ToBool[A]): Arb[A] = Arb(x.arbitrary filter p)
   }
 
+  implicit def arbProduct[A1: Arb, A2: Arb](implicit z: Arb[(A1, A2)]): Arb[A1->A2] = Arb(z.arbitrary ^^ (x => x))
+
   implicit def arbSize: Arb[Size]       = Arb(gen.size)
   implicit def arbWord: Arb[String]     = Arb(gen.text.word)
-  implicit def arbitraryPint: Arb[Pint] = Arb(Gen.choose(MinInt, MaxInt) map (x => Pint(x)))
+  implicit def arbitraryPint: Arb[Pint] = Arb(gen.int ^^ Pint)
   implicit class LiftConverter[A](gen: Gen[A]) {
     def to[B](implicit f: A => B): Gen[B] = gen map f
   }
 
   implicit class Gen2Ops[A, B](g: (Gen[A], Gen[B])) {
-    def filter(p: (A, B) => Boolean)   = Gen.zip(g._1, g._2) suchThat p.tupled
-    def map[C](f: (A, B) => C): Gen[C] = Gen.zip(g._1, g._2) map f.tupled
-    def ^^[C](f: (A, B) => C): Gen[C]  = map(f)
+    def filter(p: (A, B) => Boolean)       = Gen.zip(g._1, g._2) suchThat p.tupled
+    def map[C](f: (A, B) => C): Gen[C]     = Gen.zip(g._1, g._2) map f.tupled
+    def ^^[C](f: (A, B) => C): Gen[C]      = map(f)
+    def >>[C](f: (A, B) => Gen[C]): Gen[C] = g._1 >> (x => g._2 >> (y => f(x, y)))
   }
   implicit class Gen3Ops[A, B, C](g: (Gen[A], Gen[B], Gen[C])) {
     def filter(f: (A, B, C) => Boolean)   = Gen.zip(g._1, g._2, g._3) suchThat f.tupled
@@ -77,20 +89,35 @@ package object tests {
   implicit class TestLongOps(val x: Long) extends AnyVal {
     def upTo(max: Long): Gen[Long] = Gen.choose(x, max)
   }
-  implicit class GenOps[A](g: Gen[A]) {
-    def ^^^[B](x: B): Gen[B]                 = Gen const x
-    def ^^[B](f: A => B): Gen[B]             = g map f
-    def >>[B](f: A => Gen[B]): Gen[B]        = g flatMap f
-    def ^?[B](pf: A ?=> B): Gen[B]           = g collect pf
-    def *(n: Int): Gen[Direct[A]]            = gen.directOfN(n, g)
-    def *(r: Gen[Int]): Gen[Direct[A]]       = r flatMap (g * _)
-    def zip[B, C](h: Gen[B])(f: (A, B) => C) = (g, h) map f
 
-    def collect[B](pf: A ?=> B): Gen[B]                                    = g suchThat pf.isDefinedAt map pf.apply
-    def collectN[B](n: Int)(pf: Each[A] ?=> B)(implicit z: Arb[A]): Gen[B] = gen.eachOfN(n, g) collect pf
-    def stream: Each[A]                                                    = Each continually g.sample flatMap (_.toVec)
-    def take(n: Int): Vec[A]                                               = stream take n toVec
+  trait GenTransform[CC[X], A] {
+    def self: CC[A]
+    def transform[B](f: Gen[A] => Gen[B]): CC[B]
+
+    def ^^^[B](x: B): CC[B]                                               = transform(_ => Gen const x)
+    def ^^[B](f: A => B): CC[B]                                           = transform(_ map f)
+    def ?(p: A => Bool): CC[A]                                            = transform(_ filter p)
+    def >>[B](f: A => Gen[B]): CC[B]                                      = transform(_ flatMap f)
+    def +^^[B](f: A => B): CC[A->B]                                       = transform(_ map (x => x -> f(x)))
+    def ^?[B](pf: A ?=> B): CC[B]                                         = transform(_ collect pf)
+    def *(n: Int): CC[Vec[A]]                                             = transform(gen.directOfN(n, _))
+    def *(r: Gen[Int]): CC[Vec[A]]                                        = transform(g => r flatMap (g * _))
+    def zip[B](h: Gen[B]): CC[A -> B]                                     = transform(_ flatMap (x => h map (x -> _)))
+    def zipWith[B, C](h: Gen[B])(f: (A, B) => C): CC[C]                   = transform(g => (g, h) map f)
+    def collect[B](pf: A ?=> B): CC[B]                                    = transform(_ suchThat pf.isDefinedAt map pf.apply)
+    def collectN[B](n: Int)(pf: Each[A] ?=> B)(implicit z: Arb[A]): CC[B] = transform(g => gen.eachOfN(n, g) collect pf)
   }
+
+  implicit class ArbOps[A](val self: Arb[A]) extends GenTransform[Arb, A] {
+    def transform[B](f: Gen[A] => Gen[B]): Arb[B] = Arb(f(self.arbitrary))
+    def flatMap[B](f: A => Gen[B]): Arb[B]        = Arb(self.arbitrary flatMap f)
+  }
+  implicit class GenOps[A](val self: Gen[A]) extends GenTransform[Gen, A] {
+    def transform[B](f: Gen[A] => Gen[B]): Gen[B] = f(self)
+    def stream: Each[A]                           = Each continually self.sample flatMap (_.toVec)
+    def take(n: Int): Vec[A]                      = stream take n toVec
+  }
+
   implicit def chooseIndex: Choose[Index]  = Choose.xmap[Long, Index](Index, _.get)
   implicit def chooseSize: Choose[Precise] = Choose.xmap[Long, Precise](Precise, _.get)
   implicit def chooseNth: Choose[Nth]      = Choose.xmap[Long, Nth](Nth, _.get)
@@ -133,13 +160,13 @@ package object tests {
   /** How to check for function equivalence? In the absence of mathematical breakthroughs,
    *  recursively throw scalacheck at it again, verifying arbitrary inputs have the same result.
    */
-  def observationalEq[M[X], A : Arbitrary, B : Eq](f: (M[A], A) => B): Eq[M[A]] = Eq[M[A]] { (xs, ys) =>
+  def observationalEq[M[X], A : Arb, B : Eq](f: (M[A], A) => B): Eq[M[A]] = Eq[M[A]] { (xs, ys) =>
     val prop = forAll((elem: A) => f(xs, elem) === f(ys, elem))
     (Test check prop)(identity).passed
   }
   implicit def pintEq: Hash[Pint]                                     = inheritEq
   implicit def pintShow: Show[Pint]                                   = inheritShow
-  implicit def predicateEq[A : Arbitrary] : Eq[InvariantPredicate[A]] = observationalEq[InvariantPredicate, A, Boolean](_ apply _)
+  implicit def predicateEq[A : Arb] : Eq[InvariantPredicate[A]] = observationalEq[InvariantPredicate, A, Boolean](_ apply _)
 
   implicit object IdentityAlgebra extends BooleanAlgebra[Boolean] {
     def and(x: Boolean, y: Boolean): Boolean = x && y
