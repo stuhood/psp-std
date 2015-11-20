@@ -50,8 +50,8 @@ abstract class StdPackage
   }
 
   implicit class HasSizeOps(val xs: HasSize) { //extends AnyVal {
-    def sizeLong: Long = sizeExact.longValue
-    def sizeInt: Int   = sizeExact.intValue
+    def sizeLong: Long = sizeExact.get
+    def sizeInt: Int   = sizeExact.getInt
     def sizeExact: Precise = xs.size match {
       case x: Precise => x
       case n          => abort(s"$n")

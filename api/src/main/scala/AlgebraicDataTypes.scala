@@ -26,26 +26,19 @@ sealed trait Size extends Any
 sealed trait Atomic extends Any with Size
 final case object Infinite                                      extends Atomic
 final case class Bounded private[api] (lo: Precise, hi: Atomic) extends Size
-final case class Precise private[api] (value: Long)             extends AnyVal with Atomic {
-  def min(that: Precise): Precise = if (value <= that.value) this else that
-  def max(that: Precise): Precise = if (value >= that.value) this else that
-
-  def +(n: Long): Precise = Size(value + n)
-  def -(n: Long): Precise = Size(value - n)
-  def toInt: Int          = value.toInt
-  def intValue: Int       = value.toInt
-  def longValue: Long     = value
-  override def toString   = s"$value"
+final case class Precise private[api] (get: Long)               extends AnyVal with Atomic {
+  def +(n: Long): Precise = Size(get + n)
+  def -(n: Long): Precise = Size(get - n)
+  def getInt: Int         = get.toInt
 }
 
-
 object Size {
+  private val MaxInt = scala.Int.MaxValue.toLong
   val Zero    = Precise(0)
   val Unknown = Bounded(Zero, Infinite)
 
   object Int {
-    private val Max = scala.Int.MaxValue.toLong
-    def unapply(x: Precise): Option[Int] = if (x.value <= Max) some(x.value.toInt) else none()
+    def unapply(x: Precise): Option[Int] = if (x.get <= MaxInt) some(x.getInt) else none()
   }
 
   /** Preserving associativity/commutativity of Size prevents us from

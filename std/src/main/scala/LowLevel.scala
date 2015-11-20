@@ -2,7 +2,7 @@ package psp
 package std
 package lowlevel
 
-import api._
+import api._, StdEq._
 import scala.Tuple2
 import Api.SpecTypes
 import java.nio.ByteBuffer
@@ -104,7 +104,7 @@ final class ArrowAssocRef[A](val self: A) extends AnyVal {
 final class CircularBuffer[@spec(SpecTypes) A](capacity: Precise) extends Direct.DirectImpl[A] with AndThis {
   assert(!capacity.isZero, "CircularBuffer capacity cannot be 0")
 
-  private[this] def cap: Int            = capacity.intValue
+  private[this] def cap: Int            = capacity.getInt
   private[this] val buffer              = newArray[Any](cap)
   private[this] var seen                = 0L
   private[this] def writePointer: Int   = (seen % cap).safeInt
@@ -116,7 +116,7 @@ final class CircularBuffer[@spec(SpecTypes) A](capacity: Precise) extends Direct
   def head: A                     = elemAt(0.index)
   def isFull                      = seen >= cap
   def elemAt(index: Index): A     = buffer((readPointer + index.getInt) % cap).castTo[A]
-  def size: Precise               = capacity min Size(seen)
+  def size: Precise               = min(capacity, Size(seen))
   def ++=(xs: Each[A]): this.type = andThis(xs foreach setHead)
   def += (x: A): this.type        = andThis(this setHead x)
   def push(x: A): A               = if (isFull) sideEffect(head, setHead(x)) else abort("push on non-full buffer")

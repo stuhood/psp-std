@@ -22,9 +22,9 @@ object ?=> {
   def unapply[A, B](f: Fun[A, B]) = Some((f isDefinedAt _, f apply _))
 }
 object sys {
-  def error(msg: java.lang.String): Nothing = scala.sys.error(msg)
-  def props                                 = scala.sys.props
-  def env                                   = scala.sys.env
+  def error(msg: String): Nothing = scala.sys.error(msg)
+  def props                       = scala.sys.props
+  def env                         = scala.sys.env
 }
 final case class FunctionGrid[A, B](values: View[A], functions: View[A => B]) {
   def rows: View2D[B]   = values map (v => functions map (f => f(v)))
