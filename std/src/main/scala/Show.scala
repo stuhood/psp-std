@@ -24,7 +24,7 @@ class FullRenderer extends Renderer {
 
 final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
   def escapedParts    = stringContext.parts map (_.processEscapes)
-  def escaped: String = escapedParts mk_s ""
+  def escaped: String = escapedParts.join_s
 
   /** The type of args forces all the interpolation variables to
    *  be of a type which is implicitly convertible to Doc.
