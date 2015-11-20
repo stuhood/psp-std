@@ -8,6 +8,15 @@ import java.io.BufferedInputStream
 final class DocSeqOps(xs: Direct[Doc]) {
   def joinLines: String = xs mapNow (_.render) mk_s EOL
 }
+final class DocOps(val lhs: Doc) extends AnyVal {
+  def doc: Doc                             = lhs
+  def render(implicit z: Renderer): String = z show lhs
+  def isEmpty: Boolean                     = lhs eq emptyValue[Doc]
+
+  def ~(rhs: Doc): Doc   = Doc.Cat(lhs, rhs)
+  def <>(rhs: Doc): Doc  = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ rhs
+  def <+>(rhs: Doc): Doc = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ " ".s ~ rhs
+}
 final class ExMapOps[K, V](xs: ExMap[K, V]) {
   type Entry = K -> V
 
@@ -62,6 +71,10 @@ final class SizeOps(val lhs: Size) extends AnyVal {
   import impl.Size._
   import StdEq._
 
+  def getInt: Int = lhs match {
+    case Precise(n) => n.toInt
+    case s          => illegalArgumentException(s)
+  }
   def isNonZero     = loBound =!= Size.Zero
   def isZero        = lhs === Size.Zero
   def atLeast: Size = bounded(lhs, Infinite)

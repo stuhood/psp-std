@@ -177,7 +177,7 @@ class HasEq[A](xs: View[A])(implicit z: Eq[A]) {
   def indexOf(x: A): Index                        = xs indexWhere (_ === x)
   def indicesOf(x: A): View[Index]                = xs indicesWhere (_ === x)
   def mapOnto[B](f: A => B): ExMap[A, B]          = toSet mapOnto f
-  def toBag: Bag[A]                               = xs groupBy identity map (_.sizeExact)
+  def toBag: Bag[A]                               = xs groupBy identity map (_.size.getInt)
   def toSet: ExSet[A]                             = xs.toExSet
   def without(x: A): View[A]                      = xs filterNot (_ === x)
   def withoutEmpty(implicit z: Empty[A]): View[A] = this without z.empty

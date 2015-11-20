@@ -36,7 +36,7 @@ trait StdImplicits extends scala.AnyRef
 }
 
 trait GlobalShow {
-  implicit def convertHasShowDocOps[A: Show](x: A): DocOps          = new DocOps(Doc(x))
+  implicit def convertHasShowDocOps[A: Show](x: A): ops.DocOps      = new ops.DocOps(Doc(x))
   implicit def convertHasShowDoc[A](x: A)(implicit z: Show[A]): Doc = Doc(x)
 }
 

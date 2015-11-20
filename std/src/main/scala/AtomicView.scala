@@ -71,7 +71,7 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
 
   def linearlySlice[A](xs: Each[A], range: IndexRange, f: A => Unit): IndexRange = {
     var dropping  = range.startInt
-    var remaining = range.sizeInt
+    var remaining = range.size.getInt
     def nextRange = indexRange(dropping, dropping + remaining)
     xs foreach { x =>
       if (dropping > 0)
@@ -86,7 +86,7 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
   }
   def directlySlice[A](xs: Direct[A], range: IndexRange, f: A => Unit): IndexRange = {
     xs.indices slice range foreach (i => f(xs(i)))
-    range << xs.sizeInt
+    range << xs.size.getInt
   }
 }
 
