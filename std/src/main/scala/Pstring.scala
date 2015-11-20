@@ -4,18 +4,22 @@ package std
 import api._, StdShow._
 import java.{ lang => jl }
 import java.util.regex.{ Pattern, Matcher }
+import jl.Integer.parseInt, jl.Long.parseLong, jl.Double.parseDouble, jl.Float.parseFloat
 
-final class LinesView(val to_s: String) extends Each[String] with ForceShowDirect {
-  private val xs = to_s splitChar '\n'
-  private def rebuild(xs: View[String]): LinesView = new LinesView(xs mk_s '\n')
+final class SplitCharView(val xs: Vec[String], sep: Char) extends Direct[String] with ForceShowDirect {
+  private def rebuild(xs: Vec[String]) = new SplitCharView(xs, sep)
 
-  def collect(pf: String ?=> String): LinesView = rebuild(xs collect pf)
-  def filter(p: ToBool[String]): LinesView      = rebuild(xs filter p)
-  def foreach(f: String => Unit): Unit          = xs foreach f
-  def grep(r: Regex): LinesView                 = rebuild(xs filter r.isMatch)
-  def map(f: String => String): LinesView       = rebuild(xs map f)
-  def size                                      = xs.size
-  def toVec: Vec[String]                        = xs.toVec
+  def build(): String                               = xs mk_s sep
+  def collect(pf: String ?=> String): SplitCharView = rebuild(xs collect pf)
+  def elemAt(idx: Index)                            = xs(idx)
+  def filter(p: ToBool[String]): SplitCharView      = rebuild(xs filter p)
+  def foreach(f: String => Unit): Unit              = xs foreach f
+  def grep(r: Regex): SplitCharView                 = rebuild(xs filter r.isMatch)
+  def isEmpty: Bool                                 = xs.isEmpty
+  def map(f: String => String): SplitCharView       = rebuild(xs map f)
+  def size: Precise                                 = xs.size
+  def toVec: Vec[String]                            = xs
+  def to_s: String                                  = build
 }
 
 final class Pstring(val self: String) extends AnyVal with ForceShowDirect {
@@ -32,47 +36,43 @@ final class Pstring(val self: String) extends AnyVal with ForceShowDirect {
   def * (n: Int): String     = this * n.size
   def * (n: Precise): String = n.times const self join_s
 
-  def lines: LinesView = new LinesView(self)
+  def lines: SplitCharView               = splitView('\n')
+  def splitView(ch: Char): SplitCharView = new SplitCharView(splitChar(ch), ch)
 
-  def append(that: String): String                     = self + that   /** Note to self: don't touch this `+`. */
-  def bytes: Array[Byte]                               = self.getBytes
-  def capitalize: String                               = applyIfNonEmpty[String](self)(s => s.head.toUpper.to_s append s.tail.force)
-  def chars: Array[Char]                               = self.toCharArray
-  def containsChar(ch: Char): Boolean                  = chars.m contains ch
-  def format(args : Any*): String                      = java.lang.String.format(self, args map unwrapArg: _*)
-  def length: Int                                      = self.length
-  def mapLines(f: ToSelf[String]): String              = lines map f to_s
-  def mapChars(pf: Char ?=> Char): String              = self map (c => if (pf isDefinedAt c) pf(c) else c) build
-  def mapSplit(ch: Char)(f: ToSelf[String]): String    = splitChar(ch) map f mk_s ch
-  def filterSplit(ch: Char)(p: ToBool[String]): String = splitChar(ch) filter p mk_s ch
-  def nonEmpty: Boolean                                = onull.length > 0
-  def processEscapes: String                           = StringContext processEscapes self
-  def remove(regex: Regex): String                     = regex matcher self replaceFirst emptyValue
-  def replaceChar(pair: Char -> Char): String          = self.replace(pair._1, pair._2)
-  def reverse: String                                  = new String(chars.inPlace.reverse)
-  def sanitize: String                                 = mapChars { case x if x.isControl => '?' }
-  def splitChar(ch: Char): Vec[String]                 = splitRegex(Regex quote ch.any_s)
-  def splitRegex(r: Regex): Vec[String]                = r.pattern split self toVec
-  def stripMargin(ch: Char): String                    = lines map (_ remove s"""^${bs}s*[$ch]""".r) to_s
-  def stripMargin: String                              = stripMargin('|')
-  def stripPrefix(prefix: String): String              = foldPrefix(prefix)(self, s => s)
-  def stripSuffix(suffix: String): String              = foldSuffix(suffix)(self, s => s)
-  def toBigInt: BigInt                                 = scala.math.BigInt(self)
-  def toDecimal: BigDecimal                            = scala.math.BigDecimal(self)
-  def toDouble: Double                                 = jl.Double parseDouble dropSuffix(self, "dD")
-  def toFloat: Float                                   = jl.Float parseFloat dropSuffix(self, "fF")
-  def toInt: Int                                       = foldPrefix("0x")(jl.Integer parseInt self, s => jl.Integer.parseInt(s, 16))
-  def toLong: Long                                     = foldPrefix("0x")(jl.Long parseLong dropSuffix(self, "lL"), s => jl.Long.parseLong(dropSuffix(s, "lL"), 16))
-  def trimLines: String                                = lines.map(_.trim).to_s.trim
+  def append(that: String): String                  = self + that   /** Note to self: don't touch this `+`. */
+  def bytes: Array[Byte]                            = self.getBytes
+  def capitalize: String                            = applyIfNonEmpty[String](self)(s => s.head.toUpper.to_s append s.tail.force)
+  def chars: Array[Char]                            = self.toCharArray
+  def containsChar(ch: Char): Boolean               = chars.m contains ch
+  def format(args : Any*): String                   = java.lang.String.format(self, args map unwrapArg: _*)
+  def length: Int                                   = self.length
+  def mapLines(f: ToSelf[String]): String           = mapSplit('\n')(f)
+  def mapChars(pf: Char ?=> Char): String           = chars.m mapPartial pf force
+  def mapSplit(ch: Char)(f: ToSelf[String]): String = splitChar(ch) map f mk_s ch
+  def processEscapes: String                        = StringContext processEscapes self
+  def remove(regex: Regex): String                  = regex matcher self replaceFirst ""
+  def replaceChar(pair: Char -> Char): String       = self.replace(pair._1, pair._2)
+  def reverse: String                               = new String(chars.inPlace.reverse)
+  def sanitize: String                              = mapChars { case x if x.isControl => '?' }
+  def splitChar(ch: Char): Vec[String]              = splitRegex(Regex quote ch.any_s)
+  def splitRegex(r: Regex): Vec[String]             = r.pattern split self toVec
+  def stripMargin(ch: Char): String                 = mapLines(_ remove s"""^${bs}s*[$ch]""".r)
+  def stripMargin: String                           = stripMargin('|')
+  def stripPrefix(prefix: String): String           = foldPrefix(prefix)(self)(identity)
+  def stripSuffix(suffix: String): String           = foldSuffix(suffix)(self)(identity)
+  def toBigInt: BigInt                              = scala.math.BigInt(self)
+  def toDecimal: BigDecimal                         = scala.math.BigDecimal(self)
+  def toDouble: Double                              = parseDouble(dropSuffix(self, "dD"))
+  def toFloat: Float                                = parseFloat(dropSuffix(self, "fF"))
+  def toInt: Int                                    = foldPrefix("0x")(parseInt(self))(parseInt(_, 16))
+  def toLong: Long                                  = foldPrefix("0x")(parseLong(dropSuffix(self, "lL")))(s => parseLong(dropSuffix(s, "lL"), 16))
+  def trimLines: String                             = mapLines(_.trim).trim
 
-  private def onull = if (self eq null) "" else self
-  private def bs    = '\\'
-
-  private def unwrapArg(arg: Any): AnyRef = arg.matchOr(arg.toRef) { case x: ScalaNumber => x.underlying }
-
-  private def foldPrefix[A](prefix: String)(none: => A, some: String => A): A = foldRemove(prefix.r.literal.starts)(none, some)
-  private def foldRemove[A](r: Regex)(none: => A, some: String => A): A       = remove(r) match { case `self` => none ; case s => some(s) }
-  private def foldSuffix[A](suffix: String)(none: => A, some: String => A): A = foldRemove(suffix.r.literal.ends)(none, some)
+  private def bs = '\\'
+  private def unwrapArg(arg: Any): AnyRef                                     = arg.matchOr(arg.toRef) { case x: ScalaNumber => x.underlying }
+  private def foldPrefix[A](prefix: String)(none: => A)(some: String => A): A = foldRemove(prefix.r.literal.starts)(none)(some)
+  private def foldRemove[A](r: Regex)(none: => A)(some: String => A): A       = remove(r) match { case `self` => none ; case s => some(s) }
+  private def foldSuffix[A](suffix: String)(none: => A)(some: String => A): A = foldRemove(suffix.r.literal.ends)(none)(some)
   private def dropSuffix(s: String, drop: String): String                     = s remove drop.r.characterClass.ends
 }
 

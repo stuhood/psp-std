@@ -91,7 +91,6 @@ package object std extends psp.std.StdPackage {
     loop(view(root), view())
   }
 
-
   // Operations involving encoding/decoding of string data.
   def utf8(xs: Array[Byte]): Utf8   = new Utf8(xs)
   def decodeName(s: String): String = s.mapSplit('.')(NameTransformer.decode)

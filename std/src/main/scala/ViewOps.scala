@@ -66,6 +66,8 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
   def +:(elem: A): View[A] = view(elem) ++ xs
   def :+(elem: A): View[A] = xs ++ view(elem)
 
+  def mapPartial(pf: Partial[A, A]): View[A] = xs map (x => pf.applyOr(x, x))
+
   def clusterBy[B: Eq](f: A => B): View[View[A]]      = groupBy[B](f).values
   def gather[B](p: Partial[A, View[B]]): View[B]      = xs flatMap p.zapply
   def sum(implicit z: AdditiveMonoid[A]): A           = z sum xs.trav
