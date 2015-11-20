@@ -66,7 +66,13 @@ package object std extends scala.AnyRef
     def apply(x: A)       = f(x)
   }
   implicit class DirectOps[A](val xs: Direct[A]) {
-    def apply(i: Index): A = xs elemAt i
+    def apply(i: Index): A                   = xs elemAt i
+    def indices: IndexRange                  = indexRange(0, xs.size.getInt)
+    def lastIndex: Index                     = Index(xs.size.get - 1)  // effectively maps both undefined and zero to no index.
+    def containsIndex(index: Index): Boolean = indices containsInt index.getInt
+
+    @inline def foreachIndex(f: Index => Unit): Unit  = if (xs.size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, i => f(Index(i)))
+    @inline def foreachIntIndex(f: Int => Unit): Unit = if (xs.size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, f)
   }
 
   def lexicalOrder: Order[String] = Order.fromInt(_ compareTo _)

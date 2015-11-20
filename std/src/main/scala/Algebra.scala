@@ -31,29 +31,4 @@ object Algebras {
       case _             => Not(f)
     }
   }
-
-  final class InSetAlgebra[A] extends BooleanAlgebra[InSet[A]] {
-    import InSet._
-
-    def and(x: InSet[A], y: InSet[A]): InSet[A] = (x, y) match {
-      case (Complement(xs), Complement(ys)) => complement(Union[A](xs, ys))
-      case (Complement(xs), ys)             => Diff[A](ys, xs)
-      case (xs, Complement(ys))             => Diff[A](xs, ys)
-      case _                                => Intersect[A](x, y)
-    }
-    def or(x: InSet[A], y: InSet[A]): InSet[A] = (x, y) match {
-      case (Complement(xs), Complement(ys)) => complement(Intersect(xs, ys))
-      case (Complement(xs), ys)             => complement(Diff(xs, ys))
-      case (xs, Complement(ys))             => complement(Diff(ys, xs))
-      case _                                => Union(x, y)
-    }
-    def complement(x: InSet[A]): InSet[A] = x match {
-      case Zero           => one
-      case One            => zero
-      case Complement(xs) => xs            // unwrap
-      case _              => Complement(x) // wrap
-    }
-    def zero: InSet[A] = Zero.castTo
-    def one: InSet[A]  = One.castTo
-  }
 }

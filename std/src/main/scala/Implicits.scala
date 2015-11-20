@@ -30,7 +30,6 @@ trait StdImplicits extends scala.AnyRef
   implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]             = ExSet impl x
   implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V]    = ExMap impl x
   implicit def promoteApiView[A](xs: View[A]): AtomicView[A, View[A]]     = View impl xs
-  implicit def promoteApiInSet[A](x: InSet[A]): InSet.Impl[A]             = InSet impl x
   implicit def promoteApiInMap[K, V](x: InMap[K, V]): InMap.Impl[K, V]    = InMap impl x
   implicit def promoteApiZipView[A, B](xs: ZipView[A, B]): Zip.Impl[A, B] = Zip impl xs
 }
@@ -123,8 +122,8 @@ trait JavaBuilds0 {
   implicit def buildJavaSet[A]: Builds[A, jSet[A]]                                                   = Builds.jSet[A]
   implicit def buildJavaList[A]: Builds[A, jList[A]]                                                 = Builds.jList[A]
   implicit def buildJavaMap[K, V]: Builds[K -> V, jMap[K, V]]                                        = Builds.jMap[K, V]
-  implicit def viewJavaIterable[A, CC[X] <: jIterable[X]](xs: CC[A]): AtomicView[A, CC[A]]           = View(xs)
-  implicit def viewJavaMap[K, V, CC[K, V] <: jMap[K, V]](xs: CC[K, V]): AtomicView[K -> V, CC[K, V]] = View(xs)
+  implicit def viewJavaIterable[A, CC[X] <: jIterable[X]](xs: CC[A]): AtomicView[A, CC[A]]           = View javaIterable xs
+  implicit def viewJavaMap[K, V, CC[K, V] <: jMap[K, V]](xs: CC[K, V]): AtomicView[K -> V, CC[K, V]] = View javaMap xs
   implicit def viewDirectoryStream[A](stream: DirectoryStream[A]): View[A]                           = inView(BiIterable(stream) foreach _)
 
   implicit def unbuildJavaIterable[A, CC[X] <: jIterable[X]] : UnbuildsAs[A, CC[A]]        = Unbuilds[A, CC[A]](Each fromJava _)
@@ -140,33 +139,33 @@ trait JavaBuilds extends JavaBuilds0 {
 trait ScalaBuilds extends JavaBuilds {
   implicit def unbuildScalaCollection[A, CC[X] <: GTOnce[X]] : UnbuildsAs[A, CC[A]]             = Unbuilds[A, CC[A]](Each fromScala _)
   implicit def buildScalaCollection[A, That](implicit z: CanBuild[A, That]): Builds[A, That]    = Builds.sCollection[A, That]
-  implicit def viewScalaCollection[A, CC[X] <: sCollection[X]](xs: CC[A]): AtomicView[A, CC[A]] = View fromScala xs
+  implicit def viewScalaCollection[A, CC[X] <: sCollection[X]](xs: CC[A]): AtomicView[A, CC[A]] = View(xs)
 
   implicit def unbuildScalaMap[K, V, CC[X, Y] <: scMap[X, Y]] : UnbuildsAs[K -> V, CC[K, V]]                   = Unbuilds[K -> V, CC[K, V]](Each fromScala _)
   implicit def buildScalaMap[K, V, That](implicit z: CanBuild[scala.Tuple2[K, V], That]): Builds[K -> V, That] = Builds.sMap[K, V, That]
-  implicit def viewScalaIndexedSeq[A, CC[X] <: sciIndexedSeq[X]](xs: CC[A]): DirectView[A, CC[A]]              = View direct (Direct fromScala xs)
+  implicit def viewScalaIndexedSeq[A, CC[X] <: sciIndexedSeq[X]](xs: CC[A]): DirectView[A, CC[A]]              = View directScala xs
 
   implicit def buildPspSet[A: Eq]: Builds[A, ExSet[A]]            = Builds.exSet[A]
   implicit def buildPspMap[K: Eq, V]: Builds[K -> V, ExMap[K, V]] = Builds.exMap[K, V]
 }
 trait StdBuilds0 extends ScalaBuilds {
   implicit def buildPspLinear[A] : Builds[A, Plist[A]]                           = Plist.newBuilder[A]
-  implicit def viewPspEach[A, CC[X] <: Each[X]](xs: CC[A]): AtomicView[A, CC[A]] = View each xs
+  implicit def viewPspEach[A, CC[X] <: Each[X]](xs: CC[A]): AtomicView[A, CC[A]] = View(xs)
   implicit def unbuildPspEach[A, CC[X] <: Each[X]] : UnbuildsAs[A, CC[A]]        = Unbuilds[A, CC[A]](xs => xs)
 }
 trait StdBuilds1 extends StdBuilds0 {
   implicit def unbuiltPspArray[A] : UnbuildsAs[A, Array[A]]           = Unbuilds[A, Array[A]](Direct fromArray _)
   implicit def buildPspArray[A: CTag]: Builds[A, Array[A]]            = Builds.array[A]
-  implicit def viewPspArray[A](xs: Array[A]): DirectView[A, Array[A]] = View direct (Direct fromArray xs)
+  implicit def viewPspArray[A](xs: Array[A]): DirectView[A, Array[A]] = View directArray xs
 }
 trait StdBuilds2 extends StdBuilds1 {
-  implicit def buildPspDirect[A] : Builds[A, Vec[A]]                                 = Vec.newBuilder[A] // Builds.direct[A]
+  implicit def buildPspDirect[A] : Builds[A, Vec[A]]                                 = Vec.newBuilder[A]
   implicit def viewPspDirect[A, CC[X] <: Direct[X]](xs: CC[A]): DirectView[A, CC[A]] = View direct xs
 }
 trait StdBuilds extends StdBuilds2 {
   implicit def unbuildPspString: UnbuildsAs[Char, String]          = Unbuilds[Char, String](Direct fromString _)
   implicit def buildPspString: Builds[Char, String]                = Builds.string
-  implicit def viewPspString(xs: String): DirectView[Char, String] = View direct (Direct fromString xs)
+  implicit def viewPspString(xs: String): DirectView[Char, String] = View direct xs
 }
 
 trait PrimitiveInstances {
@@ -180,8 +179,7 @@ trait PrimitiveInstances {
 }
 
 trait AlgebraInstances {
-  implicit def predicateAlgebra[A] : BooleanAlgebra[ToBool[A]]     = new Algebras.PredicateAlgebra[A]
-  implicit def intensionalSetAlgebra[A] : BooleanAlgebra[InSet[A]] = new Algebras.InSetAlgebra[A]
+  implicit def predicateAlgebra[A] : BooleanAlgebra[ToBool[A]] = new Algebras.PredicateAlgebra[A]
 }
 
 trait OrderInstancesLow {

@@ -11,7 +11,7 @@ sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] {
 
 object FlattenSlice {
   def unapply[A, Repr](xs: BaseView[A, Repr]): Option[(BaseView[A, Repr], IndexRange)] = xs match {
-    case xs: DirectView[_, _]     => Some(xs -> xs.indices)
+    case xs: DirectView[_, _]     => Some(xs -> xs.size.indices)
     case Mapped(xs, f)            => unapply(xs) map { case (xs, range) => (xs map f, range) }
     case Dropped(xs, Precise(0))  => unapply(xs)
     case DroppedR(xs, Precise(0)) => unapply(xs)
@@ -35,7 +35,7 @@ final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr]
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = linearlySlice(underlying, range, f)
 }
 
-final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Repr] with ops.HasPreciseSizeMethods {
+final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Repr] {
   type This = DirectView[A, Repr]
 
   def viewOps                                                   = vec("<vector>".s)
@@ -85,7 +85,7 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
     nextRange
   }
   def directlySlice[A](xs: Direct[A], range: IndexRange, f: A => Unit): IndexRange = {
-    xs.indices slice range foreach (i => f(xs(i)))
+    xs.size.indices slice range foreach (i => f(xs(i)))
     range << xs.size.getInt
   }
 }

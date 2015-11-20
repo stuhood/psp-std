@@ -3,9 +3,36 @@ package std
 
 import api._, StdEq._
 
-sealed abstract class CollectionSizeException(msg: String) extends RuntimeException(msg)
-final class InfiniteSizeException(msg: String) extends CollectionSizeException(msg)
-final class LongSizeException(msg: String) extends CollectionSizeException(msg)
+object View {
+  def directArray[A](xs: Array[A]): DirectView[A, Array[A]]                      = new DirectView[A, Array[A]](Direct fromArray xs)
+  def direct[A, CC[X] <: Direct[X]](xs: CC[A]): DirectView[A, CC[A]]             = new DirectView[A, CC[A]](xs)
+  def directScala[A, CC[X] <: sciIndexedSeq[X]](xs: CC[A]): DirectView[A, CC[A]] = new DirectView[A, CC[A]](Direct fromScala xs)
+  def directJava[A, CC[X] <: jList[X]](xs: CC[A]): DirectView[A, CC[A]]          = new DirectView[A, CC[A]](Direct fromJava xs)
+  def direct(xs: String): DirectView[Char, String]                               = new DirectView[Char, String](Direct fromString xs)
+
+  def javaIterable[A, CC[X] <: jIterable[X]](xs: CC[A]): LinearView[A, CC[A]] =
+    new LinearView[A, CC[A]](Each fromJava xs)
+
+  def javaMap[K, V, CC[K, V] <: jMap[K, V]](xs: CC[K, V]): LinearView[K->V, CC[K, V]] =
+    new LinearView[K->V, CC[K, V]](Each fromJavaMap xs)
+
+  def apply[A, R](xs: R): AtomicView[A, R] = {
+    val res = xs match {
+      case xs: Direct[A @unchecked]      => direct(xs)
+      case xs: Each[A @unchecked]        => new LinearView[A, R](xs)
+      case xs: sCollection[A @unchecked] => new LinearView[A, R](Each fromScala xs)
+      case xs: jIterable[A @unchecked]   => new LinearView[A, R](Each fromJava xs)
+      case _                             => abort(s"Not recognizable as a collection: ${xs.shortClass} $xs")
+    }
+    res.castTo
+  }
+
+  def each[A, Repr](xs: Each[A]): AtomicView[A, Repr]     = new LinearView(xs)
+  def impl[A](xs: api.View[A]): AtomicView[A, View[A]] = xs match {
+    case xs: AtomicView[A @unchecked, View[A] @unchecked] => xs
+    case _                                                => each[A, View[A]](Each(f => xs foreach f))
+  }
+}
 
 object Each {
   final case class WrapJavaMap[K, V](xs: jMap[K, V]) extends AnyVal with Each[K -> V] {

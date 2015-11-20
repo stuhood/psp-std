@@ -17,7 +17,6 @@ package object tests {
    *  function type is invariant. The same issue arises with intensional sets.
    */
   type InvariantPredicate[A] = A => Bool
-  type InvariantInSet[A]     = InSet[A]
 
   lazy val isTestDebug = sys.props contains "psp.test.debug"
 
@@ -55,10 +54,9 @@ package object tests {
     def filter(p: ToBool[A]): Arb[A] = Arb(x.arbitrary filter p)
   }
 
-  implicit def arbSize: Arb[Size]                           = Arb(gen.size)
-  implicit def arbWord: Arb[String]                         = Arb(gen.text.word)
-  implicit def arbitraryInSet[A : Arb : Eq] : Arb[InSet[A]] = arb[sciSet[A]] map (_.m.toExSet)
-  implicit def arbitraryPint: Arb[Pint]                     = Arb(Gen.choose(MinInt, MaxInt) map (x => Pint(x)))
+  implicit def arbSize: Arb[Size]       = Arb(gen.size)
+  implicit def arbWord: Arb[String]     = Arb(gen.text.word)
+  implicit def arbitraryPint: Arb[Pint] = Arb(Gen.choose(MinInt, MaxInt) map (x => Pint(x)))
   implicit class LiftConverter[A](gen: Gen[A]) {
     def to[B](implicit f: A => B): Gen[B] = gen map f
   }
@@ -139,10 +137,9 @@ package object tests {
     val prop = forAll((elem: A) => f(xs, elem) === f(ys, elem))
     (Test check prop)(identity).passed
   }
-  implicit def pintEq: Hash[Pint]                                        = inheritEq
-  implicit def pintShow: Show[Pint]                                      = inheritShow
-  implicit def predicateEq[A : Arbitrary] : Eq[InvariantPredicate[A]]    = observationalEq[InvariantPredicate, A, Boolean](_ apply _)
-  implicit def intensionalEq[A : Arbitrary : Eq] : Eq[InvariantInSet[A]] = observationalEq[InvariantInSet, A, Boolean](_ apply _)
+  implicit def pintEq: Hash[Pint]                                     = inheritEq
+  implicit def pintShow: Show[Pint]                                   = inheritShow
+  implicit def predicateEq[A : Arbitrary] : Eq[InvariantPredicate[A]] = observationalEq[InvariantPredicate, A, Boolean](_ apply _)
 
   implicit object IdentityAlgebra extends BooleanAlgebra[Boolean] {
     def and(x: Boolean, y: Boolean): Boolean = x && y
