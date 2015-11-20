@@ -1,7 +1,7 @@
 package psp
 package std
 
-import api._
+import api._, StdEq._
 
 final case class Split[A](left: View[A], right: View[A]) extends api.SplitView[A] {
   def mapLeft(f: View[A] => View[A]): Split[A]  = copy(left = f(left))
@@ -40,9 +40,9 @@ object Zip {
       None
     }
     def foreach(f: (A1, A2) => Unit): Unit = (lefts, rights) match {
-      case (xs: Direct[A1], ys: Direct[A2]) => (xs.size min ys.size).indices foreach (i => f(xs(i), ys(i)))
-      case (xs: Direct[A1], ys)             => (ys take xs.size).foreachWithIndex((y, i) => f(xs(i), y))
-      case (xs, ys: Direct[A2])             => (xs take ys.size).foreachWithIndex((x, i) => f(x, ys(i)))
+      case (xs: Direct[A1], ys: Direct[A2]) => min(xs.size, ys.size).indices foreach (i => f(xs(i), ys(i)))
+      case (xs: Direct[A1], ys)             => ys take xs.size foreachWithIndex ((y, i) => f(xs(i), y))
+      case (xs, ys: Direct[A2])             => xs take ys.size foreachWithIndex ((x, i) => f(x, ys(i)))
       case _                                => lefts.iterator |> (it => rights foreach (y => if (it.hasNext) f(it.next, y) else return))
     }
 

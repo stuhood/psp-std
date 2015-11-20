@@ -137,6 +137,13 @@ package object std extends psp.std.StdPackage {
   def sideEffect[A](result: A, exprs: Any*): A         = result
   def leftFormatString[A](n: Int): FormatFun           = new FormatFun(cond(n == 0, "%s", "%%-%ds" format n))
 
+  def max(l: Int, r: Int): Int     = if (l >= r) l else r
+  def max(l: Long, r: Long): Long  = if (l >= r) l else r
+  def max[A: Order](l: A, r: A): A = if (l >= r) l else r
+  def min(l: Int, r: Int): Int     = if (l <= r) l else r
+  def min(l: Long, r: Long): Long  = if (l <= r) l else r
+  def min[A: Order](l: A, r: A): A = if (l <= r) l else r
+
   // Java.
   def jConcurrentMap[K, V](xs: (K -> V)*): jConcurrentMap[K, V] = new jConcurrentHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
   def jList[A](xs: A*): jList[A]                                = java.util.Arrays.asList(xs: _*)

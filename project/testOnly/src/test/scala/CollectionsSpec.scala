@@ -90,7 +90,7 @@ class StringExtensions extends ScalacheckBundle {
 }
 
 class GridSpec extends ScalacheckBundle {
-  def bundle = "Policy, Grid Operations"
+  def bundle = "Grid Operations"
 
   def primePartition = (Indexed from 2).m mpartition (xs => _ % xs.head == 0)
   def primePartitionGrid(n: Int): View2D[Int]   = primePartition take n map (_ take n)

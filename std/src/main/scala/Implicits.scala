@@ -25,7 +25,7 @@ trait StdImplicits extends scala.AnyRef
 
   // Promotion of the api type (which has as few methods as possible) to the
   // concrete type which has all the other ones.
-  implicit def promoteApiIndex(x: Index): IndexImpl                       = Index impl x
+  implicit def promoteApiIndex(x: Index): Index.Impl                      = Index impl x
   implicit def promoteApiOrder[A](z: Order[A]): Order.Impl[A]             = Order impl z
   implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]             = ExSet impl x
   implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V]    = ExMap impl x
@@ -200,7 +200,7 @@ trait OrderInstances extends OrderInstancesLow {
   implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A] = orderBy[A](_.ordinal) // Order.fromInt[A](_.ordinal - _.ordinal)
 
   implicit def indexOrder: Order[Index]                                     = orderBy[Index](_.get)
-  implicit def preciseOrder[A <: Precise]: Order[A]                         = orderBy[Precise](_.longValue)
+  implicit def preciseOrder[A <: Precise]: Order[A]                         = orderBy[Precise](_.get)
   implicit def stringOrder: Order[String]                                   = Order.fromLong[String](_ compareTo _)
   implicit def tuple2Order[A: Order, B: Order] : Order[(A, B)]              = orderBy[(A, B)](fst) | snd
   implicit def tuple3Order[A: Order, B: Order, C: Order] : Order[(A, B, C)] = orderBy[(A, B, C)](_._1) | (_._2) | (_._3)

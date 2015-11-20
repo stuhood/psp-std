@@ -4,8 +4,8 @@ package std
 import api._
 
 object Fun {
-  private val Undefined: Opaque[Any, Nothing] = Opaque[Any, Nothing](x => throw new java.lang.IllegalArgumentException("" + x))
-  private val Empty: FilterIn[Any, Nothing]   = FilterIn[Any, Nothing](ConstantFalse, Undefined)
+  private val Undefined: Opaque[Any, Nothing] = Opaque[Any, Nothing](illegalArgumentException)
+  private val Empty: FilterIn[Any, Nothing]   = FilterIn[Any, Nothing](false, Undefined)
 
   def empty[A, B] : Fun[A, B]                     = Empty
   def apply[A, B](f: A => B): Opaque[A, B]        = Opaque(f)

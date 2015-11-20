@@ -36,9 +36,6 @@ trait InMap[-K, +V] extends Any                            { def lookup: Fun[K, 
 trait ExSet[A]      extends Any with Each[A] with InSet[A] { def equiv(x: A, y: A): Boolean }
 trait ExMap[K, +V]  extends Any with InMap[K, V]           { def lookup: FiniteDom[K, V]    }
 
-// TODO - maybe.
-// final case class LongIndex(x: Long) extends AnyVal with Index { def isEmpty = x < 0 ; def get: Long = x }
-// final case class IntIndex(x: Int) extends AnyVal with Index   { def isEmpty = x < 0 ; def get: Long = x }
 trait Index extends Any with Opt[Long]
 
 sealed trait MaybeView extends Any                { def isView: Boolean      }

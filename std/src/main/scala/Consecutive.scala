@@ -1,7 +1,7 @@
 package psp
 package std
 
-import api._
+import api._, StdEq._
 
 /** A class for anything derived from a consecutive sequence of Ints.
  *  It saves a lot of code to let int ranges be an instance of this with the identity function.
@@ -20,14 +20,15 @@ sealed class Consecutive[+A] private[std] (val startInt: Int, val lastInt: Int, 
   def elemAt(i: Index): A = f(startInt + i.getInt)
   def map[B](g: A => B)   = new Consecutive[B](startInt, lastInt, f andThen g)
 
+  def containsInt(n: Int): Bool               = startInt <= n && n <= lastInt
   def foreach(g: A => Unit): Unit             = if (!isEmpty) lowlevel.ll.foreachConsecutive(startInt, lastInt, f andThen g)
   def asIndices: IndexRange                   = Consecutive.to(startInt, lastInt) map (i => Index(i))
   def tail: Consecutive[A]                    = drop(1)
   def init: Consecutive[A]                    = dropRight(1)
   def drop(n: Precise): Consecutive[A]        = create(startInt + n.toInt, size - n)
   def dropRight(n: Precise): Consecutive[A]   = create(startInt, size - n)
-  def take(n: Precise): Consecutive[A]        = create(startInt, size min n)
-  def takeRight(n: Precise): Consecutive[A]   = (size min n) |> (s => create(endInt - s.toInt, s))
+  def take(n: Precise): Consecutive[A]        = create(startInt, min(size, n))
+  def takeRight(n: Precise): Consecutive[A]   = min(size, n) |> (s => create(endInt - s.toInt, s))
   def slice(s: Int, e: Int): Consecutive[A]   = if (e <= 0 || e <= s) empty else this drop s take e - s
   def slice(r: IndexRange): Consecutive[A]    = slice(r.startInt, r.endInt)
   def dropWhile(p: ToBool[A]): Consecutive[A] = prefixLength(p) |> (len => create(startInt + len, size - len))

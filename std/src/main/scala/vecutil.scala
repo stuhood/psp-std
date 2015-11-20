@@ -43,7 +43,6 @@ final case class Array5[@spec A](xs: Array6D[A]) extends ArrayN[A] {
 
 object ArrayN {
   type Typed[A, E] = ArrayN[A] { type Elem = E }
-
   def apply[@spec A : CTag](len: Int): Array0[A] = new Array0[A](newArray[A](len))
 }
 
@@ -56,19 +55,13 @@ class ArrayLevels[@spec A: CTag] {
   def getDisplay(n: Int): ArrayN[A]           = displays(n)
   def setDisplay(n: Int, xs: ArrayN[A]): Unit = displays(n) = xs
 
-  private def copyOfArray[B: CTag](a: Array[B]): Array[B] = {
-    val b = newArray[B](a.length)
-    arraycopy(a, 0, b, 0, a.length)
-    b
-  }
-
   private def copyOf(a: ArrayN[A]): ArrayN[A] = a match {
-    case Array0(xs) => Array0(copyOfArray(xs))
-    case Array1(xs) => Array1(copyOfArray(xs))
-    case Array2(xs) => Array2(copyOfArray(xs))
-    case Array3(xs) => Array3(copyOfArray(xs))
-    case Array4(xs) => Array4(copyOfArray(xs))
-    case Array5(xs) => Array5(copyOfArray(xs))
+    case Array0(xs) => Array0(copyArray(xs))
+    case Array1(xs) => Array1(copyArray(xs))
+    case Array2(xs) => Array2(copyArray(xs))
+    case Array3(xs) => Array3(copyArray(xs))
+    case Array4(xs) => Array4(copyArray(xs))
+    case Array5(xs) => Array5(copyArray(xs))
   }
 
   def stabilize(index: Int): Unit = {
@@ -80,7 +73,7 @@ class ArrayLevels[@spec A: CTag] {
 
   private[std] final def copyRange[E: CTag](array: ArrayN.Typed[A, E], oldLeft: Int, newLeft: Int): Array[E] = {
     val elems = new Array[E](32)
-    arraycopy(array, oldLeft, elems, newLeft, 32 - java.lang.Math.max(newLeft,oldLeft))
+    arraycopy(array, oldLeft, elems, newLeft, 32 - max(newLeft, oldLeft))
     elems
   }
 

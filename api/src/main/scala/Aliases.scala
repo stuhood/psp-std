@@ -81,8 +81,15 @@ trait Aliases extends scala.Any {
   def emptyValue[A](implicit z: Empty[A]): A   = z.empty
   def identity[A](x: A): A                     = x
   def implicitly[A](implicit x: A): A          = x
-  def newArray[A: CTag](length: Int): Array[A] = new Array[A](length)
   def none[A](): Option[A]                     = scala.None
   def show[A](implicit z: Show[A]): Show[A]    = z
   def some[A](x: A): Some[A]                   = scala.Some(x)
+
+  def newArray[A: CTag](length: Int): Array[A] = new Array[A](length)
+  def copyArray[A: CTag](src: Array[A]): Array[A] = {
+    val len    = src.length
+    val target = newArray[A](len)
+    java.lang.System.arraycopy(src, 0, target, 0, len)
+    target
+  }
 }

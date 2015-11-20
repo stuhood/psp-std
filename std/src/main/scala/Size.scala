@@ -11,10 +11,6 @@ object Size {
 
   def empty: Size   = Empty
   def unknown: Size = Unknown
-
-  def min(s1: Precise, s2: Precise): Precise = if (s1 <= s2) s1 else s2
-  def max(s1: Precise, s2: Precise): Precise = if (s1 >= s2) s1 else s2
-
   def apply(n: Long): Precise = Size(n)
 
   object GenBounded {
@@ -36,7 +32,7 @@ object Size {
   def bounded(lo: Size, hi: Size): Size = (lo, hi) match {
     case _ if lo === hi                     => lo
     case (lo: Precise, hi: Atomic)          => api.Size(lo, hi)
-    case (l1: Precise, Bounded(l2, h2))     => api.Size(l1 min l2, h2)
+    case (l1: Precise, Bounded(l2, h2))     => api.Size(min(l1, l2), h2)
     case (Infinite, Bounded(_, Infinite))   => Infinite
     case (Infinite, _)                      => Empty
     case (Bounded(l1, h1), Infinite)        => api.Size(l1, Infinite)
