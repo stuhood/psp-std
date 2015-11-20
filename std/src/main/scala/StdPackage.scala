@@ -22,10 +22,6 @@ abstract class StdPackage
          with psp.dmz.ScalaDmz
          with psp.dmz.JavaDmz {
 
-  // Higher than Direct.
-  implicit def arraySpecificOps[A](xs: Array[A]): ops.ArraySpecificOps[A]       = new ops.ArraySpecificOps[A](xs)
-  implicit def arrayClassTagOps[A: CTag](xs: Array[A]): ops.ArrayClassTagOps[A] = new ops.ArrayClassTagOps[A](xs)
-
   implicit val defaultRenderer: FullRenderer              = new FullRenderer
   implicit def docOrder(implicit z: Renderer): Order[Doc] = {
     implicit def lexical = lexicalOrder
@@ -43,19 +39,9 @@ abstract class StdPackage
   }
 
   implicit class DirectOps[A](val xs: Direct[A]) {
-    def head: A                      = apply(Index(0))
-    def apply(i: Index): A           = xs elemAt i
-    def mapNow[B](f: A => B): Vec[B] = xs.indices map (i => f(xs(i))) toVec
+    def apply(i: Index): A = xs elemAt i
   }
 
-  implicit class CleaveOps[R, A, B](xs: R)(implicit z: Pair.Cleave[R, A, B]) {
-    def mapLeft(f: A => A): R  = z.join(f(z left xs), z right xs)
-    def mapRight(f: B => B): R = z.join(z left xs, f(z right xs))
-  }
-  implicit class PairSplitOps[R, A, B](z: Pair.Split[R, A, B]) {
-    def left(x: R): A  = fst(z split x)
-    def right(x: R): B = snd(z split x)
-  }
   implicit class ApiOrderOps[A](val ord: Order[A]) {
     def |[B: Order](f: A => B): Order[A] = Order((x, y) => ord.cmp(x, y) || ?[Order[B]].cmp(f(x), f(y)))
   }

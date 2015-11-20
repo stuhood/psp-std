@@ -184,11 +184,12 @@ class ViewBasic extends ScalacheckBundle {
 class ViewSplitZip extends ScalacheckBundle {
   def bundle = "Views, Split/Zip"
 
-  def pdirect = 1 to 6 toDirect
-  def span    = pdirect span (_ <= 3)
-  def mod     = pdirect partition (_ % 2 == 0)
-  def zipped  = mod.left zip mod.right
-  def sums    = zipped map (_ + _)
+  def pvec   = 1 to 6 toVec
+  def span   = pvec span (_ <= 3)
+  def mod    = pvec partition (_ % 2 == 0)
+  def zipped = mod.left zip mod.right
+  def mixed  = mod.intersperse
+  def sums   = zipped map (_ + _)
 
   def props: Direct[NamedProp] = Direct(
     showsAs("[ 1, 2, 3 ]", span.left),
@@ -202,8 +203,12 @@ class ViewSplitZip extends ScalacheckBundle {
     showsAs("[ 3, 7, 11 ]", sums),
     showsAs("[ 3 ]", zipped filterLeft (_ == 4) rights),
     showsAs("[ 2, 4, 6, 1, 3, 5 ]", mod.rejoin),
+    showsAs("[ 2, 1, 4, 3, 6, 5 ]", mixed),
     showsAs("6 -> 5", zipped findLeft (_ == 6)),
-    showsAs("-", zipped findLeft (_ == 8))
+    showsAs("[ 2 -> 1 ]", zipped takeWhileFst (_ < 4)),
+    showsAs("[ 5 -> 6 ]", zipped dropWhileSnd (_ < 4) map swap),
+    showsAs("-", zipped findLeft (_ == 8)),
+    seqShows("10 -> 2, 30 -> 4", zipView(1 -> 2, 3 -> 4) mapLeft (_ * 10) force)
   )
 }
 

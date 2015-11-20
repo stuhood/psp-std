@@ -19,20 +19,19 @@ trait StdImplicits extends scala.AnyRef
   implicit def typeclassTupleCleave[A, B] : Pair.Cleave[A -> B, A, B]        = Pair.Cleave[A -> B, A, B](_ -> _, fst, snd)
   implicit def typeclassLinearSplit[A] : Pair.Split[Linear[A], A, Linear[A]] = Pair.Split(_.head, _.tail)
 
-  implicit def convertViewEach[A](xs: View[A]): Each[A]         = Each(xs foreach _)
-  implicit def opsSplitView[A](xs: SplitView[A]): Split[A]      = Split(xs.left, xs.right)
+  implicit def convertViewEach[A](xs: View[A]): Each[A]    = Each(xs foreach _)
+  implicit def opsSplitView[A](xs: SplitView[A]): Split[A] = Split(xs.left, xs.right)
 
   // Promotion of the api type (which has as few methods as possible) to the
   // concrete type which has all the other ones.
-
-  implicit def promoteApiIndex(x: Index): IndexImpl                          = Index impl x
-  implicit def promoteApiOrder[A](z: Order[A]): Order.Impl[A]                = Order impl z
-  implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]                = ExSet impl x
-  implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V]       = ExMap impl x
-  implicit def promoteApiView[A](xs: View[A]): AtomicView[A, View[A]]        = View impl xs
-  implicit def promoteApiInSet[A](x: InSet[A]): InSet.Impl[A]                = InSet impl x
-  implicit def promoteApiInMap[K, V](x: InMap[K, V]): InMap.Impl[K, V]       = InMap impl x
-  implicit def promoteApiZipView[A, B](xs: ZipView[A, B]): ZipViewImpl[A, B] = new ZipViewImpl(xs)
+  implicit def promoteApiIndex(x: Index): IndexImpl                       = Index impl x
+  implicit def promoteApiOrder[A](z: Order[A]): Order.Impl[A]             = Order impl z
+  implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]             = ExSet impl x
+  implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V]    = ExMap impl x
+  implicit def promoteApiView[A](xs: View[A]): AtomicView[A, View[A]]     = View impl xs
+  implicit def promoteApiInSet[A](x: InSet[A]): InSet.Impl[A]             = InSet impl x
+  implicit def promoteApiInMap[K, V](x: InMap[K, V]): InMap.Impl[K, V]    = InMap impl x
+  implicit def promoteApiZipView[A, B](xs: ZipView[A, B]): Zip.Impl[A, B] = Zip impl xs
 }
 
 trait GlobalShow {
@@ -91,6 +90,9 @@ trait StdOps extends StdOps3 {
   implicit def convertPredicateStreamFilter[A](p: ToBool[A]): DirectoryStreamFilter[A]    = new DirectoryStreamFilter[A] { def accept(entry: A) = p(entry) }
   implicit def opsViewConversions[A](xs: View[A]): Conversions[A]                         = new Conversions(Each[A](xs foreach _))
   implicit def unbuildableConv[A, R](xs: R)(implicit z: UnbuildsAs[A, R]): Conversions[A] = new Conversions[A](z unbuild xs)
+
+  implicit def opsArrayNoTag[A](xs: Array[A]): ops.ArraySpecificOps[A]         = new ops.ArraySpecificOps[A](xs)
+  implicit def opsArrayWithTag[A: CTag](xs: Array[A]): ops.ArrayClassTagOps[A] = new ops.ArrayClassTagOps[A](xs)
 }
 
 trait StdUniversal0 {
@@ -139,8 +141,8 @@ trait ScalaBuilds extends JavaBuilds {
   implicit def buildScalaMap[K, V, That](implicit z: CanBuild[scala.Tuple2[K, V], That]): Builds[K -> V, That] = Builds.sMap[K, V, That]
   implicit def viewScalaIndexedSeq[A, CC[X] <: sciIndexedSeq[X]](xs: CC[A]): DirectView[A, CC[A]]              = View direct (Direct fromScala xs)
 
-  implicit def buildPspSet[A: Eq]: Builds[A, ExSet[A]]                           = Builds.exSet[A]
-  implicit def buildPspMap[K: Eq, V]: Builds[K -> V, ExMap[K, V]]                = Builds.exMap[K, V]
+  implicit def buildPspSet[A: Eq]: Builds[A, ExSet[A]]            = Builds.exSet[A]
+  implicit def buildPspMap[K: Eq, V]: Builds[K -> V, ExMap[K, V]] = Builds.exMap[K, V]
 }
 trait StdBuilds0 extends ScalaBuilds {
   implicit def buildPspLinear[A] : Builds[A, Plist[A]]                           = Plist.newBuilder[A]

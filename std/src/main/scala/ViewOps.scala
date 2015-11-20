@@ -56,9 +56,12 @@ trait ApiViewOps[+A] extends Any {
   def zfirst[B](pf: A ?=> B)(implicit z: Empty[B]): B                       = find(pf.isDefinedAt).fold(z.empty)(pf)
   def zfoldl[B](f: (B, A) => B)(implicit z: Empty[B]): B                    = foldl(z.empty)(f)
   def zfoldr[B](f: (A, B) => B)(implicit z: Empty[B]): B                    = foldr(z.empty)(f)
-  def zipIndex: ZipView[A, Index]                                           = new Zipped2(xs, Each.indices)
-  def zipView[A1, A2](implicit z: Pair.Split[A, A1, A2]): ZipView[A1, A2]   = new Zipped0(xs)
-  def zip[B](ys: View[B]): ZipView[A, B]                                    = new Zipped2(xs, ys)
+  def zipIndex: ZipView[A, Index]                                           = Zip.zip2[A, Index](xs, Each.indices)
+  def zipView[A1, A2](implicit z: Pair.Split[A, A1, A2]): ZipView[A1, A2]   = Zip.zip0[A, A1, A2](xs)(z)
+  def zip[B](ys: View[B]): ZipView[A, B]                                    = Zip.zip2[A, B](xs, ys)
+
+  def zipped[L, R](implicit ev: A <:< (L -> R)): ZipView[L, R]     = Zip.zip0(xs)(Pair.Split(ev andThen fst, ev andThen snd))
+  def unzip[L, R](implicit ev: A <:< (L -> R)): View[L] -> View[R] = zipped[L, R] |> (x => x.lefts -> x.rights)
 }
 
 final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
@@ -98,9 +101,10 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
   def reducel(f: BinOp[A]): A = tail.foldl(head)(f)
   def reducer(f: BinOp[A]): A = tail.foldr(head)(f)
 
-  def zinit: View[A]                    = if (isEmpty) emptyValue[View[A]] else init
-  def ztail: View[A]                    = if (isEmpty) emptyValue[View[A]] else tail
-  def intersperse(ys: View[A]): View[A] = xs zip ys flatMap ((x, y) => vec(x, y))
+  def zinit: View[A]                      = if (isEmpty) emptyValue[View[A]] else init
+  def ztail: View[A]                      = if (isEmpty) emptyValue[View[A]] else tail
+  def intersperse(ys: View[A]): View[A]   = Split(xs, ys).intersperse
+  def cross[B](ys: View[B]): View[A -> B] = for (x <- xs ; y <- ys) yield x -> y
 
   def transpose[B](implicit ev: A <:< View[B]): View2D[B] = {
     val grid = xs map ev
