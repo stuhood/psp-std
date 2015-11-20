@@ -103,11 +103,8 @@ trait ShowEach1 extends ShowEach0 {
   implicit def showEach[A: Show](implicit z: FullRenderer): Show[Each[A]] = Show(xs => z showEach (xs map (_.doc)))
 }
 trait ShowEach extends ShowEach1 {
-  implicit def showMap[K: Show, V: Show, CC[X, Y] <: InMap[X, Y]] : Show[CC[K, V]] = Show {
-    case xs: ExMap[K, V] => xs.entries.tabular(x => fst(x).render, _ => "->", x => snd(x).render)
-    case xs              => s"$xs"
-  }
+  implicit def showExMap[K: Show, V: Show] : Show[ExMap[K, V]]        = Show(xs => tabular(xs.entries.pairs)(_.render))
   implicit def showZipped[A1: Show, A2: Show] : Show[ZipView[A1, A2]] = showBy[ZipView[A1, A2]](_.pairs)
-  implicit def showArray[A: Show] : Show[Array[A]] = showBy[Array[A]](Direct.fromArray)
-  implicit def showJavaEnum[A <: jEnum[A]] : Show[jEnum[A]] = inheritShow
+  implicit def showArray[A: Show] : Show[Array[A]]                    = showBy[Array[A]](Direct.fromArray)
+  implicit def showJavaEnum[A <: jEnum[A]] : Show[jEnum[A]]           = inheritShow
 }

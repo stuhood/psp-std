@@ -11,11 +11,12 @@ final class DocSeqOps(xs: Direct[Doc]) {
 final class ExMapOps[K, V](xs: ExMap[K, V]) {
   type Entry = K -> V
 
-  def keys: View[K]        = keySet.m
-  def values: View[V]      = keyVector map xs.lookup
-  def keySet: ExSet[K]     = xs.lookup.keys
-  def keyVector: Vec[K]    = keys.toVec
-  def entries: View[Entry] = keyVector mapZip xs.lookup
+  def keys: View[K]          = keySet.m
+  def values: View[V]        = keyVector map xs.lookup
+  def keySet: ExSet[K]       = xs.lookup.keys
+  def keyVector: Vec[K]      = keys.toVec
+  def entries: ZipView[K, V] = keyVector mapZip xs.lookup
+
   def filterValues(p: ToBool[V]): ExMap[K, V] = xs filterKeys (k => p(xs(k)))
 }
 final class ExSetOps[A](xs: ExSet[A]) {
