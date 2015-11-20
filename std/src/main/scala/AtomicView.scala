@@ -12,7 +12,6 @@ sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] {
 object FlattenSlice {
   def unapply[A, Repr](xs: BaseView[A, Repr]): Option[(BaseView[A, Repr], IndexRange)] = xs match {
     case xs: DirectView[_, _]     => Some(xs -> xs.indices)
-    case LabeledView(xs, _)       => unapply(xs)
     case Mapped(xs, f)            => unapply(xs) map { case (xs, range) => (xs map f, range) }
     case Dropped(xs, Precise(0))  => unapply(xs)
     case DroppedR(xs, Precise(0)) => unapply(xs)
@@ -36,16 +35,6 @@ final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr]
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = linearlySlice(underlying, range, f)
 }
 
-final class IndexedView[A, Repr](val underlying: Indexed[A]) extends AtomicView[A, Repr] {
-  type This = IndexedView[A, Repr]
-
-  def viewOps                                                   = vec("<indexed>".s)
-  def size: Size                                                = underlying.size
-  def elemAt(i: Index): A                                       = underlying elemAt i
-  def foreach(f: A => Unit): Unit                               = underlying foreach f
-  def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = ??? // underlying slice range foreach f
-}
-
 final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Repr] with ops.HasPreciseSizeMethods {
   type This = DirectView[A, Repr]
 
@@ -54,13 +43,6 @@ final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Rep
   def elemAt(i: Index): A                                       = underlying(i)
   def foreach(f: A => Unit): Unit                               = directlySlice(underlying, size.indices, f)
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = directlySlice(underlying, range, f)
-}
-
-final case class LabeledView[A, Repr](prev: BaseView[A, Repr], val viewOps: Vec[Doc]) extends BaseView[A, Repr] {
-  type This = LabeledView[A, Repr]
-  def foreach(f: A => Unit): Unit = prev foreach f
-  def description                 = viewOps.last
-  def size                        = prev.size
 }
 
 sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[A] {
@@ -72,9 +54,6 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
   type Contiguous[+X] = MapTo[X]
 
   def xs: this.type = this
-
-  def |:(label: String): MapTo[A] = new LabeledView(this, viewOps.init :+ label.s)
-  def :|(label: String): MapTo[A] = new LabeledView(this, viewOps.init :+ label.s)
 
   final def collect[B](pf: A ?=> B): MapTo[B]        = Collected(this, pf)
   final def drop(n: Precise): MapTo[A]               = Dropped(this, n)
@@ -128,7 +107,6 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
       type Pred = (ToBool[C] @unchecked) // silencing patmat warnings
       xs match {
         case FlattenSlice(xs, range)  => foreachSlice(xs, range, f)
-        case LabeledView(xs, _)       => loop[C](xs)(f)
         case Mapped(xs, g)            => loop(xs)(g andThen f)
         case FlatMapped(xs, g)        => loop(xs)(x => g(x) foreach f)
         case Filtered(xs, p: Pred)    => loop(xs)(x => if (p(x)) f(x))
@@ -181,14 +159,9 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
   )
 
   private def foreachSlice[A](xs: View[A], range: IndexRange, f: A => Unit): Unit = xs match {
-
-    case xs: AtomicView[_, _]                                     => xs.foreachSlice(range)(f)
-    case Mapped(prev, g)                                          => foreachSlice(prev, range, g andThen f)
-    case xs: Direct[A @unchecked]                                 => directlySlice(xs, range, f)
-    case Joined(HasSize(Size.Int(n)), ys) if n < range.startInt   => ys slice (range << n) foreach f
-    case Joined(ys @ HasSize(Size.Int(n)), _) if range.endInt < n => ys slice range foreach f
-    case Joined(ys1, ys2)                                         => linearlySlice(ys1, range, f) |> (remainingRange => linearlySlice(ys2, remainingRange, f))
-    case _                                                        => linearlySlice(xs, range, f)
+    case xs: AtomicView[_, _] => xs.foreachSlice(range)(f)
+    case Mapped(prev, g)      => foreachSlice(prev, range, g andThen f)
+    case _                    => linearlySlice(xs, range, f)
   }
 }
 

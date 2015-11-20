@@ -106,6 +106,9 @@ package object std extends psp.std.StdPackage {
     result
   }
 
+  def tabular[A](xs: View[A])(columns: ToString[A]*): String =
+    if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toVec, columns.m).render(inheritShow) else ""
+
   def abort(msg: String): Nothing                      = runtimeException(msg)
   def abortTrace(msg: String): Nothing                 = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
   def andClose[A <: jCloseable, B](x: A)(f: A => B): B = try f(x) finally x.close()

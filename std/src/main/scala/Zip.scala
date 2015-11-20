@@ -13,9 +13,9 @@ final case class Split[A](left: View[A], right: View[A]) extends api.SplitView[A
 
 object Zip {
   def impl[A, B](xs: ZipView[A, B]): Impl[A, B]                                          = new Impl[A, B](xs)
-  def zip0[AB, A, B](xs: View[AB])(implicit z: Pair.Split[AB, A, B]): ZipView0[AB, A, B] = new ZipView0[AB, A, B](xs)
-  def zip1[A, B](xs: View[A -> B]): ZipView1[A, B]                                       = new ZipView1[A, B](xs)
-  def zip2[A, B](l: View[A], r: View[B]): ZipView2[A, B]                                 = new ZipView2[A, B](l, r)
+  def zip0[AB, A, B](xs: View[AB])(implicit z: Pair.Split[AB, A, B]): ZipView0[AB, A, B] = new ZipView0(xs)
+  def zip1[A, B](xs: View[A -> B]): ZipView1[A, B]                                       = new ZipView1(xs)
+  def zip2[A, B](l: View[A], r: View[B]): ZipView2[A, B]                                 = new ZipView2(l, r)
 
   /** A ZipView has similar operations to a View, but with the benefit of
    *  being aware each element has a left and a right.
@@ -25,8 +25,8 @@ object Zip {
     type This       = ZipView[A1, A2]
     type Predicate2 = (A1, A2) => Bool
 
-    def lefts: View[A1]       = x.lefts
-    def rights: View[A2]      = x.rights
+    def lefts: View[A1]   = x.lefts
+    def rights: View[A2]  = x.rights
     def pairs: View[Both] = x.pairs
 
     def zfoldl[B](f: (B, A1, A2) => B)(implicit z: Empty[B]): B = foldl(z.empty)(f)
@@ -46,32 +46,32 @@ object Zip {
       case _                                => lefts.iterator |> (it => rights foreach (y => if (it.hasNext) f(it.next, y) else return))
     }
 
-    def corresponds(p: Predicate2)                                  = this map p forallTrue
+    def corresponds(p: Predicate2): Bool                            = this map p forallTrue
     def drop(n: Precise): This                                      = zip2(lefts drop n, rights drop n)
-    def filter(q: Predicate2)                                       = withFilter(q)
+    def dropWhileFst(p: ToBool[A1]): This                           = pairs dropWhile (xy => p(fst(xy))) zipped
+    def dropWhileSnd(p: ToBool[A2]): This                           = pairs dropWhile (xy => p(snd(xy))) zipped
+    def filter(q: Predicate2): This                                 = withFilter(q)
     def filterLeft(q: ToBool[A1]): This                             = withFilter((x, _) => q(x))
     def filterRight(q: ToBool[A2]): This                            = withFilter((_, y) => q(y))
     def findLeft(p: ToBool[A1]): Option[Both]                       = find((x, _) => p(x))
     def findRight(p: ToBool[A2]): Option[Both]                      = find((_, y) => p(y))
     def flatMap[B](f: (A1, A2) => Foreach[B]): View[B]              = inView(mf => foreach((x, y) => f(x, y) foreach mf))
+    def mapBoth[B1, B2](g: (A1, A2) => (B1 -> B2)): ZipView[B1, B2] = zip1(this map g)
     def mapLeft[B1](g: A1 => B1): ZipView[B1, A2]                   = zip2(lefts map g, rights)
     def mapRight[B2](g: A2 => B2): ZipView[A1, B2]                  = zip2(lefts, rights map g)
-    def mapBoth[B1, B2](g: (A1, A2) => (B1 -> B2)): ZipView[B1, B2] = zip1(this map g)
     def map[B](f: (A1, A2) => B): View[B]                           = inView(mf => foreach((x, y) => mf(f(x, y))))
     def take(n: Precise): This                                      = zip2(lefts take n, rights take n)
     def takeWhileFst(p: ToBool[A1]): This                           = pairs takeWhile (xy => p(fst(xy))) zipped
     def takeWhileSnd(p: ToBool[A2]): This                           = pairs takeWhile (xy => p(snd(xy))) zipped
-    def dropWhileFst(p: ToBool[A1]): This                           = pairs dropWhile (xy => p(fst(xy))) zipped
-    def dropWhileSnd(p: ToBool[A2]): This                           = pairs dropWhile (xy => p(snd(xy))) zipped
     def withFilter(p: Predicate2): This                             = inView[Both](mf => foreach((x, y) => if (p(x, y)) mf(x -> y))).zipped
 
-    def toScalaMap: sciMap[A1, A2]                        = to[sciMap[A1, A2]]
     def toJavaMap: jMap[A1, A2]                           = to[jMap[A1, A2]]
     def toMap(implicit z: Eq[A1]): ExMap[A1, A2]          = to[ExMap[A1, A2]]
+    def toScalaMap: sciMap[A1, A2]                        = to[sciMap[A1, A2]]
     def toSortedMap(implicit z: Order[A1]): ExMap[A1, A2] = toMap // TODO
+    def to[R](implicit z: Builds[Both, R]): R             = force[R]
 
-    def to[R](implicit z: Builds[Both, R]): R    = z build pairs
-    def force[R](implicit z: Builds[Both, R]): R = to[R]
+    def force[R](implicit z: Builds[Both, R]): R = z build pairs
   }
 
   /** ZipView0 means we're using a Pair.Split to interpret a collection holding the joined type.
