@@ -174,10 +174,10 @@ final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focu
     s
   }
 
-  def iterator: VectorIterator[A]                          = initIterator(new VectorIterator[A](startIndex, endIndex))
-  def reverseIterator: BiIterator.ReverseDirectIterator[A] = BiIterator direct this reverseIterator
-  def reverse: Vec[A]                                      = reverseIterator.toVec
-  def apply(index: Int): A                                 = getElemWithFocus(checkRangeConvert(index))
+  def iterator: VectorIterator[A]                    = initIterator(new VectorIterator[A](startIndex, endIndex))
+  def reverseIterator: BiIterator.ReverseIterator[A] = BiIterator reverse this
+  def reverse: Vec[A]                                = reverseIterator.toVec
+  def apply(index: Int): A                           = getElemWithFocus(checkRangeConvert(index))
 
   private def getElemWithFocus(idx: Int): A = getElem(idx, idx ^ focus)
   private[std] def checkRangeConvert(index: Int): Int = (
