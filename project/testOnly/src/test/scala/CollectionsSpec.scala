@@ -99,7 +99,7 @@ class GridSpec extends ScalacheckBundle {
   def showGrid(xss: View2D[Int]): String = {
     val yss = xss mmap (_.render)
     val width = yss.flatMap(x => x).mapNow(_.length).m.max
-    (yss mmap leftFormatString(width) map (_ mk_s " ") mk_s "\n").trim.trimLines
+    (yss mmap leftFormatString(width) map (_ mk_s ' ') mk_s '\n').trim.trimLines
   }
   def primePartition6 = sm"""
     |2   4   6   8   10  12

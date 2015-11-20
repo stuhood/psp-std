@@ -13,14 +13,14 @@ package gen {
     def concatenate: Gen[Regex]       = simple * (1 upTo 3) ^^ (_.m reducel (_ | _))
     def group: Gen[Regex]             = atom ^^ (_.capturingGroup)
     def letterPair: Gen[Char -> Char] = (letter, letter) filter (_ <= _)
-    def literal: Gen[Regex]           = letter * (0 upTo 5) ^^ (_ mk_s "" r)
+    def literal: Gen[Regex]           = letter * (0 upTo 5) ^^ (_.join_s.r)
     def quantified: Gen[Regex]        = (literal zip oneOf("+?*".seq))(_ append _.to_s)
     def range: Gen[Regex]             = (oneOf("", "^"), letterPair) map { case (neg, (s, e)) => s"[$neg$s-$e]".r }
     def simple: Gen[Regex]            = oneOf(atom, group, alternative)
   }
   class TextGenerator(val letter: Gen[Char], charsInWord: Gen[Int], wordsInLine: Gen[Int]) {
-    def word: Gen[String]                   = letter * charsInWord ^^ (_ mk_s "")
-    def line: Gen[String]                   = word * wordsInLine ^^ (_ mk_s " ")
+    def word: Gen[String]                   = letter * charsInWord ^^ (_ join_s)
+    def line: Gen[String]                   = word * wordsInLine ^^ (_ mk_s ' ')
     def nLines(n: Int): Gen[Direct[String]] = line * n
   }
 

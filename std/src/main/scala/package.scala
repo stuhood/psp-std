@@ -72,6 +72,9 @@ package object std extends psp.std.StdPackage {
   def println[A: Show](x: A): Unit = Console echoOut show"$x"
   def anyprintln(x: Any): Unit     = Console echoOut x.any_s
 
+  def applyIfNonEmpty[A](x: A)(f: A => A)(implicit z: Empty[A]): A =
+    if (z isEmptyValue x) x else f(x)
+
   def ??? : Nothing                                                            = throw new scala.NotImplementedError
   def assert(assertion: => Boolean, msg: => Any)(implicit z: Assertions): Unit = Assertions.using(z)(assertion, s"assertion failed: $msg")
 

@@ -18,7 +18,10 @@ trait Show[-A] extends Any { def show(x: A): String }
  *  Suitable only for types with a unique (useful) definition of empty - but that's
  *  a whole lot of types.
  */
-trait Empty[@spec(SpecTypes) +A] extends Any { def empty: A }
+trait Empty[@spec(SpecTypes) +A] extends Any {
+  def empty: A
+  def isEmptyValue[A1 >: A](x: A1): Bool = x == empty
+}
 
 /** Back and forth between a Repr and an Each[A].
  *  Not especially classic in this presentation.

@@ -97,7 +97,7 @@ package object tests {
   implicit def chooseSize: Choose[Precise] = Choose.xmap[Long, Precise](_.size, _.value)
   implicit def chooseNth: Choose[Nth]      = Choose.xmap[Long, Nth](_.nth, _.nth)
 
-  def preNewline(s: String): String = if (s contains "\n") "\n" + s.mapLines("| " append _) else s
+  def preNewline(s: String): String                               = if (s containsChar '\n') "\n" + s.mapLines("| " append _) else s
   def showsAs[A: Show](expected: String, x: A): NamedProp         = preNewline(expected) -> (expected =? show"$x")
   def seqShows[A: Show](expected: String, xs: Each[A]): NamedProp = preNewline(expected) -> (expected =? (xs mk_s ", "))
 
