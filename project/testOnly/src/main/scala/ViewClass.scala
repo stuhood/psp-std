@@ -48,7 +48,7 @@ final case class ScalaViewClass(name: String, xs: scIterable[Int]) extends ViewC
   def flatMap(f: Int => Foreach[Int]) = xs flatMap (x => new Each.ToScalaTrav(f(x)))
   def foreach(f: Int => Unit)         = xs foreach f
   def map(f: Int => Int)              = xs map f
-  def slice(range: IndexRange)        = xs slice (range.startInt, range.endInt)
+  def slice(range: IndexRange)        = xs slice (range.startInt, range.exclusiveEnd)
   def take(n: Precise)                = xs take n.toInt
   def takeRight(n: Precise)           = xs takeRight n.toInt
   def takeWhile(p: ToBool[Int])       = xs takeWhile p
@@ -69,7 +69,7 @@ final case class PolicyViewClass(name: String, xs: View[Int]) extends ViewClass 
   def flatMap(f: Int => Foreach[Int]) = xs flatMap f
   def foreach(f: Int => Unit)         = xs foreach f
   def map(f: Int => Int)              = xs map f
-  def slice(range: IndexRange)        = xs drop range.toDrop take range.toTake
+  def slice(range: IndexRange)        = xs drop range.startInt take range.size
   def take(n: Precise)                = xs take n
   def takeRight(n: Precise)           = xs takeRight n
   def takeWhile(p: ToBool[Int])       = xs takeWhile p

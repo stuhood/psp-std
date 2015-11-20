@@ -44,7 +44,7 @@ trait ApiViewOps[+A] extends Any {
   def mk_s(sep: Char)(implicit z: Show[A]): String                          = this mk_s sep.to_s
   def mk_s(sep: String)(implicit z: Show[A]): String                        = xs map z.show zreducel (_ append sep append _)
   def nonEmpty: Boolean                                                     = xs.size.isNonZero || !directIsEmpty
-  def slice(range: IndexRange): View[A]                                     = xs drop range.toDrop take range.toTake
+  def slice(range: IndexRange): View[A]                                     = xs drop range.startInt take range.size
   def sliceWhile(p: ToBool[A], q: ToBool[A]): View[A]                       = xs dropWhile p takeWhile q
   def tail: View[A]                                                         = xs drop 1
   def takeToFirst(p: ToBool[A]): View[A]                                    = xs span !p mapRight (_ take 1) rejoin
