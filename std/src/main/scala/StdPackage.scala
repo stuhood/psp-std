@@ -17,8 +17,7 @@ abstract class StdPackageObject extends scala.AnyRef
       with psp.dmz.JavaDmz {
 
   // Ugh. XXX
-  implicit def promoteSize(x: Int): Precise = Size(x)
-
+  implicit def promoteSize(x: Int): Precise                 = Size(x)
   implicit def opsFun[A, B](f: Fun[A, B]): ops.FunOps[A, B] = new ops.FunOps(f)
   implicit def wrapClass(x: jClass): JavaClass              = new JavaClassImpl(x)
   implicit def conforms[A] : (A <:< A)                      = new conformance[A]

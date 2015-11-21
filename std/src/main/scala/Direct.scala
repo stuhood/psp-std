@@ -5,6 +5,8 @@ import api._
 import scala.collection.mutable.WrappedArray
 
 object Direct {
+  type Impl[A] = Vec[A]
+
   final val Empty: Direct[Nothing] = Pure(Size(0), _ => sys error "<empty>")
 
   final case class WrapSeq[A](xs: scSeq[A]) extends AnyVal with DirectImpl[A] {
@@ -49,6 +51,11 @@ object Direct {
   def wrapArray[A](xs: Array[_]): Direct[A]            = WrapArray[A](xs)
   def pure[A](size: Precise, f: Index => A): Direct[A] = Pure(size, f)
   def reversed[A](xs: Direct[A]): Direct[A]            = Pure(xs.size, i => xs(xs.lastIndex - i.get))
+
+  def impl[A](xs: api.Direct[A]): Vec[A] = xs match {
+    case xs: Vec[A] => xs
+    case _          => xs.toVec
+  }
 
   def apply[A](xs: A*): Direct[A] = xs match {
     case xs: WrappedArray[_] => fromArray[A](xs.array.castTo[Array[A]])
