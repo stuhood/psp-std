@@ -18,6 +18,7 @@ abstract class StdPackageObject extends scala.AnyRef
 
   // Ugh. XXX
   implicit def promoteSize(x: Int): Precise                 = Size(x)
+  implicit def promoteIndex(x: Int): Index                  = Index(x)
   implicit def opsFun[A, B](f: Fun[A, B]): ops.FunOps[A, B] = new ops.FunOps(f)
   implicit def wrapClass(x: jClass): JavaClass              = new JavaClassImpl(x)
   implicit def conforms[A] : (A <:< A)                      = new conformance[A]
@@ -28,6 +29,11 @@ abstract class StdPackageObject extends scala.AnyRef
     def apply(x: A)       = f(x)
   }
   implicit class DirectOps[A](val xs: Direct[A]) {
+    def head: A = apply(0)
+    def last: A = apply(lastIndex)
+    def tail    = xs.drop(1)
+    def init    = xs.dropRight(1)
+
     def apply(i: Index): A                   = xs elemAt i
     def indices: IndexRange                  = indexRange(0, xs.size.getInt)
     def lastIndex: Index                     = Index(xs.size.get - 1)  // effectively maps both undefined and zero to no index.
@@ -93,18 +99,6 @@ abstract class StdPackageObject extends scala.AnyRef
     elapsed(nanoTime - start)
     result
   }
-
-  def sortInPlace[A](xs: Array[A]): Array[A] = sideEffect(xs, xs match {
-    case xs: Array[Byte]   => java.util.Arrays.sort(xs)
-    case xs: Array[Char]   => java.util.Arrays.sort(xs)
-    case xs: Array[Short]  => java.util.Arrays.sort(xs)
-    case xs: Array[Int]    => java.util.Arrays.sort(xs)
-    case xs: Array[Long]   => java.util.Arrays.sort(xs)
-    case xs: Array[Double] => java.util.Arrays.sort(xs)
-    case xs: Array[Float]  => java.util.Arrays.sort(xs)
-    case xs: Array[AnyRef] => java.util.Arrays.sort[AnyRef](xs, Eq.refComparator)
-    case _                 =>
-  })
 
   def tabular[A](xs: View[A])(columns: ToString[A]*): String =
     if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toVec, columns.m).render(inheritShow) else ""

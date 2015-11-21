@@ -7,6 +7,8 @@ import lowlevel.CircularBuffer
 sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] {
   type This <: AtomicView[A, Repr]
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange
+  def head: A
+  def reducel(f: BinOp[A]): A = tail.foldl(head)(f)
 }
 
 object FlattenSlice {
@@ -33,6 +35,10 @@ final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr]
 
   @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, fullIndexRange, f)
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = linearlySlice(underlying, range, f)
+  def head: A = {
+    foreach(x => return x)
+    ???
+  }
 }
 
 final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Repr] {
@@ -43,6 +49,7 @@ final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Rep
   def elemAt(i: Index): A                                       = underlying(i)
   def foreach(f: A => Unit): Unit                               = directlySlice(underlying, size.indices, f)
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = directlySlice(underlying, range, f)
+  def head: A = elemAt(0)
 }
 
 sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[A] {

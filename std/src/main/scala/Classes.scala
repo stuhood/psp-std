@@ -8,11 +8,6 @@ import api._, StdShow._
 object HasSize {
   def unapply(x: HasSize): Some[Size] = some(x.size)
 }
-object +: {
-  def unapply[A](xs: Array[A])       = if (xs.length == 0) None else Some(xs.head -> xs.tail)
-  def unapply[A](xs: Each[A])        = xs match { case Each(hd, _*) => Some(hd -> xs.tail) ; case _ => None }
-  def unapply[A](xs: sCollection[A]) = if (xs.isEmpty) None else Some(xs.head -> xs.tail)
-}
 class FormatFun(val fmt: String) extends (Any => String) with ForceShowDirect {
   def apply(x: Any): String = fmt format x
   def to_s = fmt

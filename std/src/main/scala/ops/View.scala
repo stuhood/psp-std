@@ -30,19 +30,17 @@ trait ApiViewOps[+A] extends Any {
   def foreachWithIndex(f: (A, Index) => Unit): Unit                       = foldl(Index(0))((idx, x) => try idx.next finally f(x, idx))
   def gatherClass[B: CTag] : View[B]                                      = xs collect classFilter[B]
   def grep(regex: Regex)(implicit z: Show[A]): View[A]                    = xs filter (regex isMatch _)
-  def head: A                                                             = (xs take 1).toVec.head
   def indexWhere(p: ToBool[A]): Index                                     = zipIndex findLeft p map snd or NoIndex
   def indicesWhere(p: ToBool[A]): View[Index]                             = zipIndex filterLeft p rights
   def init: View[A]                                                       = xs dropRight 1
   def isEmpty: Boolean                                                    = xs.size.isZero || directIsEmpty
-  def last: A                                                             = (xs takeRight 1).toVec.head
+  def join_s(implicit z: Show[A]): String                                 = this mk_s ""
   def mapApply[B, C](x: B)(implicit ev: A <:< (B => C)): View[C]          = xs map (f => ev(f)(x))
   def mapNow[B](f: A => B): Vec[B]                                        = xs map f toVec
   def mapWithIndex[B](f: (A, Index) => B): View[B]                        = inView[B](mf => foldWithIndex(())((res, x, i) => mf(f(x, i))))
   def mapZip[B](f: A => B): ZipView[A, B]                                 = Zip.zip2(xs, xs map f)
-  def join_s(implicit z: Show[A]): String                                 = this mk_s ""
   def mk_s(sep: Char)(implicit z: Show[A]): String                        = this mk_s sep.to_s
-  def mk_s(sep: String)(implicit z: Show[A]): String                      = xs map z.show zreducel (_ append sep append _)
+  def mk_s(sep: String)(implicit z: Show[A]): String                      = (xs map z.show).zfoldl[String]((res, x) => if (res == "") x else res append sep append x)
   def nonEmpty: Boolean                                                   = xs.size.isNonZero || !directIsEmpty
   def slice(range: IndexRange): View[A]                                   = xs drop range.startInt take range.size
   def sliceWhile(p: ToBool[A], q: ToBool[A]): View[A]                     = xs dropWhile p takeWhile q
@@ -50,6 +48,7 @@ trait ApiViewOps[+A] extends Any {
   def takeToFirst(p: ToBool[A]): View[A]                                  = xs span !p mapRight (_ take 1) rejoin
   def tee(f: A => String): View[A]                                        = xs map (_ doto (x => println(f(x))))
   def toRefs: View[Ref[A]]                                                = xs map (_.toRef)
+  def unzip[L, R](implicit ev: A <:< (L -> R)): View[L] -> View[R]        = zipped[L, R] |> (x => x.lefts -> x.rights)
   def withSize(size: Size): View[A]                                       = new Each.Impl[A](size, xs foreach _)
   def zfirst[B](pf: A ?=> B)(implicit z: Empty[B]): B                     = find(pf.isDefinedAt).fold(z.empty)(pf)
   def zfoldl[B](f: (B, A) => B)(implicit z: Empty[B]): B                  = foldl(z.empty)(f)
@@ -57,9 +56,7 @@ trait ApiViewOps[+A] extends Any {
   def zipIndex: ZipView[A, Index]                                         = Zip.zip2[A, Index](xs, Each.indices)
   def zipView[A1, A2](implicit z: Pair.Split[A, A1, A2]): ZipView[A1, A2] = Zip.zip0[A, A1, A2](xs)(z)
   def zip[B](ys: View[B]): ZipView[A, B]                                  = Zip.zip2[A, B](xs, ys)
-
-  def zipped[L, R](implicit ev: A <:< (L -> R)): ZipView[L, R]     = Zip.zip0(xs)(Pair.Split(ev andThen fst, ev andThen snd))
-  def unzip[L, R](implicit ev: A <:< (L -> R)): View[L] -> View[R] = zipped[L, R] |> (x => x.lefts -> x.rights)
+  def zipped[L, R](implicit ev: A <:< (L -> R)): ZipView[L, R]            = Zip.zip0(xs)(Pair.Split(ev andThen fst, ev andThen snd))
 }
 
 final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
@@ -98,19 +95,13 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
   def sortWith(cmp: OrderRelation[A]): View[A]            = orderOps(Order(cmp)).sorted
   def findOr(p: ToBool[A], alt: => A): A                  = find(p) | alt
 
-  def reducel(f: BinOp[A]): A = tail.foldl(head)(f)
-  def reducer(f: BinOp[A]): A = tail.foldr(head)(f)
-
-  def zinit: View[A]                      = if (isEmpty) emptyValue[View[A]] else init
-  def ztail: View[A]                      = if (isEmpty) emptyValue[View[A]] else tail
+  def zinit: View[A]                      = if (isEmpty) emptyValue[View[A]] else xs dropRight 1
+  def ztail: View[A]                      = if (isEmpty) emptyValue[View[A]] else xs drop 1
   def intersperse(ys: View[A]): View[A]   = Split(xs, ys).intersperse
   def cross[B](ys: View[B]): View[A -> B] = for (x <- xs ; y <- ys) yield x -> y
 
-  def transpose[B](implicit ev: A <:< View[B]): View2D[B] = {
-    val grid = xs map ev
-    def col(n: Index) = grid map (_ drop n.sizeExcluding head)
-    Each.indices map col
-  }
+  def transpose[B](implicit ev: A <:< View[B]): View2D[B] =
+    Each.indices map (n => xs flatMap (_ drop n.sizeExcluding take 1))
 
   def memo: Indexed.Memo[A] = new Indexed.Memo(xs)
 
@@ -131,11 +122,6 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
       }
     }
   }
-
-  def boundedClosure(maxDepth: Precise, f: A => View[A]): View[A] = (
-    if (maxDepth.isZero) xs
-    else xs ++ (xs flatMap f).boundedClosure(maxDepth - 1, f)
-  )
 }
 
 final class View2DOps[A](val xss: View2D[A]) {
@@ -176,12 +162,7 @@ final class HasOrder[A](xs: View[A])(implicit z: Order[A]) extends HasEq[A](xs) 
   def sorted: View[A] = xs.toRefArray.inPlace.sort
 }
 final class HasEmpty[A](xs: View[A])(implicit z: Empty[A]) {
-  def zapply(i: Index): A      = xs drop i.sizeExcluding zhead
-  def zfind(p: ToBool[A]): A   = xs.findOr(p, emptyValue)
-  def zhead: A                 = if (xs.isEmpty) emptyValue else xs.head
-  def zlast: A                 = if (xs.isEmpty) emptyValue else xs.last
-  def zreducel(f: BinOp[A]): A = if (xs.isEmpty) emptyValue else xs reducel f
-  def zreducer(f: BinOp[A]): A = if (xs.isEmpty) emptyValue else xs reducer f
+  def zfind(p: ToBool[A]): A = xs.findOr(p, emptyValue)
 }
 final class HasInitialValue[+A, B](xs: View[A], initial: B) {
   def indexed(f: (B, A, Index) => B): B = lowlevel.ll.foldLeftIndexed(xs, initial, f)

@@ -1,7 +1,7 @@
 package psp
 package std
 
-import api._, StdShow._
+import api._, StdShow._, StdEq._
 import java.lang.System.arraycopy
 import Api.SpecTypes
 import Vec._
@@ -37,12 +37,6 @@ object Vec {
     else if (index < (1 << 30)) 5
     else 6
   )
-
-  final case class Split[@fspec A](left: Vec[A], right: Vec[A]) extends api.SplitInvariantM[Vec, A] {
-    def mapLeft(f: ToSelf[Vec[A]]): Split[A]  = Split(f(left), right)
-    def mapRight(f: ToSelf[Vec[A]]): Split[A] = Split(left, f(right))
-    def rejoin: Vec[A]                        = left ++ right
-  }
 
   final class Builder[@fspec A]() extends Builds[A, Vec[A]] with VectorPointer[A @uV] {
     // possible alternative: start with display0 = null, blockIndex = -32, lo = 32
@@ -104,42 +98,33 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
   def length: Int         = endIndex - startIndex
   def size: Precise       = Size(length)
   def elemAt(i: Index): A = apply(i.getInt)
-  def isEmpty: Boolean    = length == 0
-  def nonEmpty: Boolean   = length > 0
+  def isEmpty             = length <= 0
 
   @inline def foreach(f: A => Unit): Unit = {
-    if (nonEmpty)
+    if (!isEmpty)
       lowlevel.ll.foreachConsecutive(0, lastIntIndex, i => f(apply(i)))
   }
 
-  def take(n: Int): Vec[A] =
+  def take(n: Index): Vec[A] =
     if (n <= 0) Vec.empty
     else if (n >= length) this
-    else dropBack0(startIndex + n)
+    else dropBack0(startIndex + n.getInt)
 
-  def drop(n: Int): Vec[A] =
-    if (n <= 0) this
+  def drop(n: Index): Vec[A] =
+    if (n.get <= 0) this
     else if (n >= length) Vec.empty
-    else dropFront0(startIndex + n)
+    else dropFront0(startIndex + n.getInt)
 
-  def takeRight(n: Int): Vec[A] =
-    if (n <= 0) Vec.empty
+  def takeRight(n: Index): Vec[A] =
+    if (n.get <= 0) Vec.empty
     else if (n >= length) this
-    else dropFront0(endIndex - n)
+    else dropFront0(endIndex - n.getInt)
 
-  def dropRight(n: Int): Vec[A] =
-    if (n <= 0) this
-    else if (endIndex - n > startIndex) dropBack0(endIndex - n)
+  def dropRight(n: Index): Vec[A] =
+    if (n.get <= 0) this
+    else if (endIndex - n.getInt > startIndex) dropBack0(endIndex - n.getInt)
     else Vec.empty
 
-  def head: A      = if (nonEmpty) apply(0) else unsupportedOperationException("empty.head")
-  def tail: Vec[A] = if (nonEmpty) drop(1) else unsupportedOperationException("empty.tail")
-  def last: A      = if (nonEmpty) apply(length - 1) else unsupportedOperationException("empty.last")
-  def init: Vec[A] = if (nonEmpty) dropRight(1) else unsupportedOperationException("empty.init")
-
-  def slice(start: Int, end: Int): Vec[A]  = this take end drop start
-  def splitAt(n: Int):  Vec.Split[A]       = Vec.Split(this take n, this drop n)
-  def span(p: ToBool[A]): Vec.Split[A]     = splitAt(iterator count p)
   def takeWhile(p: ToBool[A]): Vec[A]      = take(iterator count p)
   def dropWhile(p: ToBool[A]): Vec[A]      = drop(iterator count p)
   def takeRightWhile(p: ToBool[A]): Vec[A] = takeRight(reverseIterator count p)

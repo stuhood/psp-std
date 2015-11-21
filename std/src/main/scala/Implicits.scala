@@ -72,7 +72,6 @@ trait StdOps3 extends StdOps2 {
   implicit def opsHasAlgebraInfix[A: BooleanAlgebra](x: A): ops.AlgebraOps[A] = new ops.AlgebraOps[A](x)
   implicit def opsHasEmpty[A: Empty](x: View[A]): ops.HasEmpty[A]             = new ops.HasEmpty[A](x)
   implicit def opsHasEqInfix[A: Eq](x: A): ops.EqOps[A]                       = new ops.EqOps[A](x)
-  implicit def opsHasHashInfix[A: Hash](x: A): ops.HashOps[A]                 = new ops.HashOps[A](x)
   implicit def opsHasOrder[A: Order](x: View[A]): ops.HasOrder[A]             = new ops.HasOrder(x)
   implicit def opsHasShowEach[A: Show](x: Each[A]): ops.DocSeqOps             = new ops.DocSeqOps(x map (_.doc) toVec)
   implicit def opsHasShowView[A: Show](x: View[A]): ops.DocSeqOps             = opsHasShowEach(x)
