@@ -18,7 +18,7 @@ trait Show[-A] extends Any { def show(x: A): String }
  *  Suitable only for types with a unique (useful) definition of empty - but that's
  *  a whole lot of types.
  */
-trait Empty[@spec(SpecTypes) +A] extends Any {
+trait Empty[@fspec +A] extends Any {
   def empty: A
   def isEmptyValue[A1 >: A](x: A1): Bool = x == empty
 }
@@ -26,9 +26,10 @@ trait Empty[@spec(SpecTypes) +A] extends Any {
 /** Back and forth between a Repr and an Each[A].
  *  Not especially classic in this presentation.
  */
-trait Builds[@spec(SpecTypes) -Elem, +To] extends Any {
+trait Builds[@fspec -Elem, +To] extends Any {
   def build(xs: Each[Elem]): To
 }
+
 trait Unbuilds[Repr] extends Any {
   type Elem
   def unbuild(xs: Repr): Each[Elem]
@@ -39,7 +40,7 @@ trait Unbuilds[Repr] extends Any {
  *  to a wild stab into the `2^32` states of an Int. This is a
  *  controversial thing to do, in the year 2014. Not joking.
  */
-trait Order[-A] extends Any with Eq[A] {
+trait Order[@fspec -A] extends Any with Eq[A] {
   def cmp(x: A, y: A): Cmp
 }
 

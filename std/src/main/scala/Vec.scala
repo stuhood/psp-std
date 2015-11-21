@@ -18,10 +18,10 @@ object Vec {
   final val MASK5  = (1 << WIDTH) - 1 // reduces to the lower five bits
   final val MASK27 = ~MASK5
 
-  def empty[@spec(SpecTypes) A] : Vec[A]                        = NIL.castTo[Vec[A]]
-  def apply[@spec(SpecTypes) A](xs: A*): Vec[A]                 = newBuilder[A] build (Direct fromScala xs)
-  def unapplySeq[@spec(SpecTypes) A](x: Vec[A]): Some[scSeq[A]] = Some(x.seq)
-  def newBuilder[@spec(SpecTypes) A](): Builder[A]              = new Builder[A]()
+  def empty[@fspec A] : Vec[A]                        = NIL.castTo[Vec[A]]
+  def apply[@fspec A](xs: A*): Vec[A]                 = newBuilder[A] build (Direct fromScala xs)
+  def unapplySeq[@fspec A](x: Vec[A]): Some[scSeq[A]] = Some(x.seq)
+  def newBuilder[@fspec A](): Builder[A]              = new Builder[A]()
 
   private[std] val NIL = new Vec[Any](0, 0, 0)
   // Constants governing concat strategy for performance
@@ -38,13 +38,13 @@ object Vec {
     else 6
   )
 
-  final case class Split[@spec(SpecTypes) A](left: Vec[A], right: Vec[A]) extends api.SplitInvariantM[Vec, A] {
+  final case class Split[@fspec A](left: Vec[A], right: Vec[A]) extends api.SplitInvariantM[Vec, A] {
     def mapLeft(f: ToSelf[Vec[A]]): Split[A]  = Split(f(left), right)
     def mapRight(f: ToSelf[Vec[A]]): Split[A] = Split(left, f(right))
     def rejoin: Vec[A]                        = left ++ right
   }
 
-  final class Builder[@spec(SpecTypes) A]() extends Builds[A, Vec[A]] with VectorPointer[A @uV] {
+  final class Builder[@fspec A]() extends Builds[A, Vec[A]] with VectorPointer[A @uV] {
     // possible alternative: start with display0 = null, blockIndex = -32, lo = 32
     // to avoid allocating initial array if the result will be empty anyways
     this.display0 = new Array[AnyRef](32)
@@ -80,7 +80,7 @@ object Vec {
   }
 }
 
-final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focus: Int) extends VectorPointer[A @uV] with Direct[A] with ForceShowDirect {
+final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) extends VectorPointer[A @uV] with Direct[A] with ForceShowDirect {
   self =>
 
   @inline private def preStartIndex = startIndex - 1
@@ -145,7 +145,7 @@ final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focu
   def takeRightWhile(p: ToBool[A]): Vec[A] = takeRight(reverseIterator count p)
   def dropRightWhile(p: ToBool[A]): Vec[A] = dropRight(reverseIterator count p)
 
-  @inline def foldl[@spec(SpecTypes) B](zero: B)(f: (B, A) => B): B = {
+  @inline def foldl[@fspec B](zero: B)(f: (B, A) => B): B = {
     var res = zero
     if (length > 0)
       lowlevel.ll.foreachConsecutive(0, lastIntIndex, i => res = f(res, apply(i)))
@@ -506,7 +506,7 @@ final class Vec[@spec(SpecTypes) A](val startIndex: Int, val endIndex: Int, focu
 }
 
 
-final class VectorIterator[@spec(SpecTypes) A](_startIndex: Int, endIndex: Int) extends scIterator[A] with VectorPointer[A @uV] {
+final class VectorIterator[@fspec A](_startIndex: Int, endIndex: Int) extends scIterator[A] with VectorPointer[A @uV] {
   private[std] var blockIndex: Int = _startIndex & MASK27
   private[std] var lo: Int         = _startIndex & MASK5
   private[std] var endLo           = math.min(endIndex - blockIndex, 32)
@@ -536,7 +536,7 @@ final class VectorIterator[@spec(SpecTypes) A](_startIndex: Int, endIndex: Int) 
   }
 }
 
-sealed trait VectorPointer[@spec(SpecTypes) T] {
+sealed trait VectorPointer[@fspec T] {
   def allocateArray(len: Int): Array[AnyRef] = newArray[AnyRef](len)
 
   val displays: Displays = new Displays()
