@@ -68,17 +68,16 @@ final class InputStreamOps(val in: InputStream) extends AnyVal {
 }
 
 final class SizeOps(val lhs: Size) extends AnyVal {
-  import impl.Size._
-  import StdEq._
+  import Size._, StdEq._
 
   def getInt: Int = lhs match {
-    case Precise(n) => n.toInt
-    case s          => illegalArgumentException(s)
+    case Finite(n) => n.toInt
+    case s         => illegalArgumentException(s)
   }
-  def isNonZero     = loBound =!= Size.Zero
-  def isZero        = lhs === Size.Zero
-  def atLeast: Size = bounded(lhs, Infinite)
-  def atMost: Size  = bounded(Empty, lhs)
+  def isNonZero     = loBound =!= Zero
+  def isZero        = lhs === Zero
+  def atLeast: Size = Size.Range(lhs, Infinite)
+  def atMost: Size  = Size.Range(Zero, lhs)
 
   def loBound: Atomic = lhs match {
     case Bounded(lo, _) => lo
@@ -91,35 +90,26 @@ final class SizeOps(val lhs: Size) extends AnyVal {
    *  at least the size of the larger operand, but at most the sum
    *  of the two sizes.
    */
-  def union(rhs: Size): Size     = bounded(lhs max rhs, lhs + rhs)
-  def intersect(rhs: Size): Size = bounded(Size.Zero, lhs min rhs)
-  def diff(rhs: Size): Size      = bounded(lhs - rhs, lhs)
+  def union(rhs: Size): Size     = Size.Range(lhs max rhs, lhs + rhs)
+  def intersect(rhs: Size): Size = Size.Range(Size.Zero, lhs min rhs)
+  def diff(rhs: Size): Size      = Size.Range(lhs - rhs, lhs)
 
   def + (rhs: Size): Size = (lhs, rhs) match {
-    case (Infinite, _) | (_, Infinite)            => Infinite
-    case (Precise(l), Precise(r))                 => Size(l + r)
-    case (GenBounded(l1, h1), GenBounded(l2, h2)) => bounded(l1 + l2, h1 + h2)
+    case (Finite(l), Finite(r))                   => Finite(l + r)
+    case (Infinite, Finite(_))                    => Infinite
+    case (Finite(_), Infinite)                    => Infinite
+    case (Infinite, Infinite)                     => Infinite
+    case (Size.Range(l1, h1), Size.Range(l2, h2)) => Size.Range(l1 + l2, h1 + h2)
   }
   def - (rhs: Size): Size = (lhs, rhs) match {
-    case (Precise(l), Precise(r))         => Size(l - r)
-    case (Infinite, Finite(_, _))         => Infinite
-    case (Finite(_, _), Infinite)         => Empty
-    case (Finite(l1, h1), Finite(l2, h2)) => bounded(l1 - h2, h1 - l2)
-    case (Bounded(l1, h1), rhs: Precise)  => bounded(l1 - rhs, h1 - rhs)
-    case _                                => unknown
+    case (Finite(l), Finite(r))                   => Finite(l - r)
+    case (Finite(_), Infinite)                    => Zero
+    case (Infinite, Finite(_))                    => Infinite
+    case (Infinite, Infinite)                     => Unknown
+    case (Size.Range(l1, h1), Size.Range(l2, h2)) => Size.Range(l1 - h2, h1 - l2)
   }
-  def min(rhs: Size): Size = (lhs, rhs) match {
-    case (Infinite, _)                            => rhs
-    case (_, Infinite)                            => lhs
-    case (Precise(x), Precise(y))                 => if (x <= y) lhs else rhs
-    case (GenBounded(l1, h1), GenBounded(l2, h2)) => bounded(l1 min l2, h1 min h2)
-  }
-  def max(rhs: Size): Size = (lhs, rhs) match {
-    case (Infinite, _)                            => Infinite
-    case (_, Infinite)                            => Infinite
-    case (Precise(x), Precise(y))                 => if (x >= y) lhs else rhs
-    case (GenBounded(l1, h1), GenBounded(l2, h2)) => bounded(l1 max l2, h1 max h2)
-  }
+  def min(rhs: Size): Size = Size.min(lhs, rhs)
+  def max(rhs: Size): Size = Size.max(lhs, rhs)
 }
 
 final class FunOps[A, B](val f: Fun[A, B]) extends AnyVal {

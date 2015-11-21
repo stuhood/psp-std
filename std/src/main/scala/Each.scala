@@ -42,12 +42,12 @@ object Each {
   final case class WrapJava[A](xs: jIterable[A]) extends AnyVal with Each[A] {
     def size = xs match {
       case xs: jCollection[_] => xs.size
-      case _                  => api.Size.Unknown
+      case _                  => Size.Unknown
     }
     @inline def foreach(f: A => Unit): Unit = xs.iterator foreach f
   }
   final case class WrapScala[A](xs: sCollection[A]) extends AnyVal with Each[A] {
-    def size: Size = if (xs.hasDefiniteSize) xs.size else api.Size.Unknown
+    def size: Size = if (xs.hasDefiniteSize) xs.size else Size.Unknown
     @inline def foreach(f: A => Unit): Unit = xs foreach f
   }
 
@@ -77,8 +77,8 @@ object Each {
   }
   trait AtomicSize[+A] extends Any with Each[A] with HasAtomicSize
   trait InfiniteSize[+A] extends Any with AtomicSize[A] {
-    def isEmpty  = false
-    def size = Infinite
+    def isEmpty = false
+    def size    = Infinite
   }
   object KnownSize {
     def unapply[A](xs: Each[A]) = xs.size matchOpt { case x: Atomic => x }
@@ -113,7 +113,7 @@ object Each {
 
   def indices: Indexed[Index] = Indexed.indices
 
-  def apply[A](mf: Suspended[A]): Each[A]                    = new Impl[A](impl.Size.Unknown, mf)
+  def apply[A](mf: Suspended[A]): Each[A]                    = new Impl[A](Size.Unknown, mf)
   def const[A](elem: A): Constant[A]                         = Constant[A](elem)
   def continuallyWhile[A](p: ToBool[A])(expr: => A): Each[A] = continually(expr) takeWhile p
   def continually[A](elem: => A): Continually[A]             = Continually[A](() => elem)

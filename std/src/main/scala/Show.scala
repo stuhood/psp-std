@@ -83,7 +83,7 @@ trait ShowInstances extends ShowEach {
   implicit def showStackTraceElement: Show[java.lang.StackTraceElement] = Show(x => "\tat$x\n")
 
   implicit def showSize: Show[Size] = Show[Size] {
-    case Precise(size)         => pp"$size"
+    case Finite(size)          => pp"$size"
     case Bounded(lo, Infinite) => pp"$lo+"
     case Bounded(lo, hi)       => pp"[$lo,$hi]"
     case Infinite              => "<inf>"

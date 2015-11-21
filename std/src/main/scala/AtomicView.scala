@@ -1,7 +1,7 @@
 package psp
 package std
 
-import impl.Size._, api._, StdEq._, Unsafe.inheritedShow
+import api._, StdEq._, Unsafe.inheritedShow
 import lowlevel.CircularBuffer
 
 sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] {
@@ -13,18 +13,18 @@ sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] {
 
 object FlattenSlice {
   def unapply[A, Repr](xs: BaseView[A, Repr]): Option[(BaseView[A, Repr], IndexRange)] = xs match {
-    case xs: DirectView[_, _]     => Some(xs -> xs.size.indices)
-    case Mapped(xs, f)            => unapply(xs) map { case (xs, range) => (xs map f, range) }
-    case Dropped(xs, Precise(0))  => unapply(xs)
-    case DroppedR(xs, Precise(0)) => unapply(xs)
-    case Taken(xs, Precise(0))    => Some(emptyValue)
-    case TakenR(xs, Precise(0))   => Some(emptyValue)
-    case DroppedR(xs, n)          => unapply(xs) map { case (xs, range) => (xs, range dropRight n) }
-    case TakenR(xs, n)            => unapply(xs) map { case (xs, range) => (xs, range takeRight n) }
-    case Dropped(xs, n)           => unapply(xs) map { case (xs, range) => (xs, range drop n) }
-    case Taken(xs, n)             => unapply(xs) map { case (xs, range) => (xs, range take n) }
-    case HasSize(n: Precise)      => Some(xs -> n.indices)
-    case _                        => None
+    case xs: DirectView[_, _]    => Some(xs -> xs.size.indices)
+    case Mapped(xs, f)           => unapply(xs) map { case (xs, range) => (xs map f, range) }
+    case Dropped(xs, Size.Zero)  => unapply(xs)
+    case DroppedR(xs, Size.Zero) => unapply(xs)
+    case Taken(xs, Size.Zero)    => Some(emptyValue)
+    case TakenR(xs, Size.Zero)   => Some(emptyValue)
+    case DroppedR(xs, n)         => unapply(xs) map { case (xs, range) => (xs, range dropRight n) }
+    case TakenR(xs, n)           => unapply(xs) map { case (xs, range) => (xs, range takeRight n) }
+    case Dropped(xs, n)          => unapply(xs) map { case (xs, range) => (xs, range drop n) }
+    case Taken(xs, n)            => unapply(xs) map { case (xs, range) => (xs, range take n) }
+    case HasSize(n: Precise)     => Some(xs -> n.indices)
+    case _                       => None
   }
 }
 
@@ -123,7 +123,7 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
         case Joined(xs, ys)           => loop(xs)(f) ; loop(ys)(f)
         case DroppedR(xs, n: Precise) => foreachDropRight(xs, f, n)
         case TakenR(xs, n: Precise)   => foreachTakeRight(xs, f, n)
-        case Dropped(xs, Precise(n))  => foreachSlice(xs, Index(n) until Index(MaxLong), f)
+        case Dropped(xs, Finite(n))   => foreachSlice(xs, Index(n) until Index(MaxLong), f)
         case Taken(xs, n: Precise)    => foreachSlice(xs, n.indices, f)
         case xs: View[_]              => xs foreach f
         case _                        => abort(pp"Unexpected view class ${xs.shortClass}")
@@ -181,5 +181,5 @@ final case class TakenR      [A   , Repr](prev: BaseView[A, Repr], n: Precise)  
 final case class TakenWhile  [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](pp"takeW $p",    _.atMost)
 final case class DropWhile   [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](pp"dropW $p",    _.atMost)
 final case class Mapped      [A, B, Repr](prev: BaseView[A, Repr], f: A => B)       extends CompositeView[A, B, Repr](pp"map $f",      x => x)
-final case class FlatMapped  [A, B, Repr](prev: BaseView[A, Repr], f: A => Foreach[B]) extends CompositeView[A, B, Repr](pp"flatMap $f",  x => if (x.isZero) x else Unknown)
+final case class FlatMapped  [A, B, Repr](prev: BaseView[A, Repr], f: A => Foreach[B]) extends CompositeView[A, B, Repr](pp"flatMap $f",  x => if (x.isZero) x else Size.Unknown)
 final case class Collected   [A, B, Repr](prev: BaseView[A, Repr], pf: A ?=> B)     extends CompositeView[A, B, Repr](pp"collect $pf", _.atMost)
