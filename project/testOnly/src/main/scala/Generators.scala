@@ -59,6 +59,6 @@ package object gen {
 
   def precise: Gen[Precise] = chooseNum(1, MaxInt / 2) map (x => Size(x))
   def atomic: Gen[Atomic]   = frequency(10 -> precise, 1 -> Size.Zero, 1 -> Infinite)
-  def bounded: Gen[Bounded] = precise.flatMap(lo => atomic map (hi => api.Size(lo, hi))) collect classFilter[Bounded]
+  def bounded: Gen[Bounded] = precise.flatMap(lo => atomic map (hi => Size.Range(lo, hi))) collect classFilter[Bounded]
   def size: Gen[Size]       = oneOf(atomic, bounded)
 }

@@ -77,13 +77,14 @@ trait Aliases extends scala.Any {
   def StringContext = scala.StringContext
 
   // A few methods it is convenient to expose at this level.
-  def ?[A](implicit value: A): A               = value
-  def emptyValue[A](implicit z: Empty[A]): A   = z.empty
-  def identity[A](x: A): A                     = x
-  def implicitly[A](implicit x: A): A          = x
-  def none[A](): Option[A]                     = scala.None
-  def show[A](implicit z: Show[A]): Show[A]    = z
-  def some[A](x: A): Some[A]                   = scala.Some(x)
+  def ?[A](implicit value: A): A             = value
+  def abort(msg: String): Nothing            = throw new java.lang.RuntimeException(msg)
+  def emptyValue[A](implicit z: Empty[A]): A = z.empty
+  def identity[A](x: A): A                   = x
+  def implicitly[A](implicit x: A): A        = x
+  def none[A](): Option[A]                   = scala.None
+  def show[A](implicit z: Show[A]): Show[A]  = z
+  def some[A](x: A): Some[A]                 = scala.Some(x)
 
   def newArray[A: CTag](length: Int): Array[A] = new Array[A](length)
   def copyArray[A: CTag](src: Array[A]): Array[A] = {

@@ -24,31 +24,72 @@ import Api._
 
 sealed trait Size extends Any
 sealed trait Atomic extends Any with Size
-final case object Infinite                                      extends Atomic
+final case object Infinite extends Atomic
 final case class Bounded private[api] (lo: Precise, hi: Atomic) extends Size
-final case class Precise private[api] (get: Long)               extends AnyVal with Atomic {
+final class Precise private[api] (val get: Long) extends AnyVal with Atomic {
   def +(n: Long): Precise = Size(get + n)
   def -(n: Long): Precise = Size(get - n)
   def getInt: Int         = get.toInt
-  override def toString = s"$get"
+  override def toString   = s"$get"
+}
+
+final class SizeExtractor(val get: Long) extends AnyVal with Opt[Long] { def isEmpty = get < 0 }
+
+object Finite extends (Long => Precise) {
+
+  def apply(n: Long): Precise            = new Precise( if (n < 0) 0 else n )
+  def unapply(n: Precise): SizeExtractor = new SizeExtractor(n.get)
+
+  object Range {
+    def apply(lo: Long, hi: Long): Bounded = Bounded(Finite(lo), Finite(hi))
+    // Return (lo, hi) as sizes unless arg is or contains Infinite.
+    def unapply(x: Size): Option[(Long, Long)] = x match {
+      case Finite(n)                       => some((n, n))
+      case Bounded(Finite(lo), Finite(hi)) => some((lo, hi))
+      case _                               => none()
+    }
+  }
 }
 
 object Size {
   private val MaxInt = scala.Int.MaxValue.toLong
-  val Zero    = Precise(0)
-  val Unknown = Bounded(Zero, Infinite)
+  val Zero           = new Precise(0)
+  val One            = new Precise(1)
+  val Unknown        = Bounded(Zero, Infinite)
+  val NonEmpty       = Bounded(One, Infinite)
 
   object Int {
     def unapply(x: Precise): Option[Int] = if (x.get <= MaxInt) some(x.getInt) else none()
   }
 
-  /** Preserving associativity/commutativity of Size prevents us from
-   *  modifying values to enforce any invariants on Bounded.
-   */
-  def apply(size: Long): Precise              = Precise( if (size < 0L) 0L else size )
-  def apply(lo: Precise, hi: Atomic): Bounded = Bounded(lo, hi)
-}
+  def min(lhs: Size, rhs: Size): Size = (lhs, rhs) match {
+    case (Finite(x), Finite(y))                   => if (x <= y) lhs else rhs
+    case (_, Infinite)                            => lhs
+    case (Infinite, _)                            => rhs
+    case (Size.Range(l1, h1), Size.Range(l2, h2)) => Range(min(l1, l2), min(h1, h2))
+  }
+  def max(lhs: Size, rhs: Size): Size = (lhs, rhs) match {
+    case (Finite(x), Finite(y))                   => if (x >= y) lhs else rhs
+    case (Infinite, _) | (_, Infinite)            => Infinite
+    case (Size.Range(l1, h1), Size.Range(l2, h2)) => Range(max(l1, l2), max(h1, h2))
+  }
 
+  def apply(size: Long): Precise = new Precise( if (size < 0L) 0L else size )
+
+  object Range {
+    /** Preserving associativity/commutativity of Size prevents us from
+     *  modifying values to enforce any invariants on Bounded.
+     */
+    def apply(lo: Size, hi: Size): Size = if (lo == hi) lo else (lo, hi) match {
+      case (lo: Precise, hi: Atomic)             => Bounded(lo, hi)
+      case (Range(l1, h1), Range(l2, h2))        => apply(min(l1, l2), max(h1, h2))
+    }
+    def unapply(x: Size): Some[(Atomic, Atomic)] = x match {
+      case Bounded(lo, hi) => some((lo, hi))
+      case x: Atomic       => some((x, x))
+    }
+  }
+}
 
 /** A richer function abstraction.
  *
