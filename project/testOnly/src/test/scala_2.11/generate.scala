@@ -13,9 +13,9 @@ object Generator {
   def rhses = sciList("59d", "('b': Char)", "1")
   def envs  = sciList(
     "scalaLibraryCode" -> "",
-    "policyByEquals"   -> ".byEquals",
-    "policyByRef"      -> ".byRef",
-    "policyStraight"   -> ""
+    "pspByEquals"      -> ".byEquals",
+    "pspByRef"         -> ".byRef",
+    "pspStraight"      -> ""
   )
   def vals = for ((name, stub) <- envs) yield {
     val lines = for (l <- lhses; op <- ops; r <- rhses) yield s"$l$stub $op $r"
@@ -63,7 +63,7 @@ object Expressions {
     Array(true, false, true) contains ('b': Char)
     Array(true, false, true) contains 1
   """
-  final val policyByEquals = """
+  final val pspByEquals = """
     "abc".byEquals indexOf 59d
     "abc".byEquals indexOf ('b': Char)
     "abc".byEquals indexOf 1
@@ -89,7 +89,7 @@ object Expressions {
     Array(true, false, true).byEquals contains ('b': Char)
     Array(true, false, true).byEquals contains 1
   """
-  final val policyByRef = """
+  final val pspByRef = """
     "abc".byRef indexOf 59d
     "abc".byRef indexOf ('b': Char)
     "abc".byRef indexOf 1

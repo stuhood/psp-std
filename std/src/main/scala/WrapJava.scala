@@ -28,7 +28,7 @@ class JavaEnumeration[A](enum: jEnumeration[A]) {
 trait JavaClass extends Any {
   def clazz: jClass
 
-  private def toPolicy(x: jClass): JavaClass = new JavaClassImpl(x)
+  private def toPsp(x: jClass): JavaClass = new JavaClassImpl(x)
   def javaClass: JavaClass = this // implicit creation hook
 
   def isAnnotation     = clazz.isAnnotation
@@ -47,17 +47,17 @@ trait JavaClass extends Any {
   def fields: Vec[jField]                = clazz.getFields.toVec
   def getCanonicalName: String           = clazz.getCanonicalName
   def getClassLoader: ClassLoader        = clazz.getClassLoader
-  def getClasses: Vec[JavaClass]         = clazz.getClasses.toVec mapNow toPolicy
+  def getClasses: Vec[JavaClass]         = clazz.getClasses.toVec mapNow toPsp
   def getComponentType: JavaClass        = clazz.getComponentType
-  def getDeclaredClasses: Vec[JavaClass] = clazz.getDeclaredClasses.toVec mapNow toPolicy
+  def getDeclaredClasses: Vec[JavaClass] = clazz.getDeclaredClasses.toVec mapNow toPsp
   def getDeclaringClass: JavaClass       = clazz.getDeclaringClass
   def getEnclosingClass: JavaClass       = clazz.getEnclosingClass
-  def getInterfaces: Vec[JavaClass]      = clazz.getInterfaces.toVec mapNow toPolicy
-  def getSuperclass: Option[JavaClass]   = Option(clazz.getSuperclass) map toPolicy
+  def getInterfaces: Vec[JavaClass]      = clazz.getInterfaces.toVec mapNow toPsp
+  def getSuperclass: Option[JavaClass]   = Option(clazz.getSuperclass) map toPsp
   def hasModuleName: Boolean             = rawName endsWith "$"
   def methods: Vec[jMethod]              = clazz.getMethods.toVec
   def nameSegments: Vec[String]          = rawName splitChar '.'
-  def parentInterfaces: Vec[JavaClass]   = clazz.getInterfaces.toVec mapNow toPolicy
+  def parentInterfaces: Vec[JavaClass]   = clazz.getInterfaces.toVec mapNow toPsp
   def parents: Vec[JavaClass]            = getSuperclass.toVec ++ parentInterfaces
   def qualifiedName: String              = rawName.mapSplit('.')(decodeName)
   def rawName: String                    = clazz.getName

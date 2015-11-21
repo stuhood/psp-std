@@ -44,8 +44,8 @@ class Typecheck extends ScalacheckBundle {
 
   def props = Direct[NamedProp](
     divide("psp-show", typecheckedLines(pspShowCode)),
-    divide("psp-by-equals", typecheckedLines(policyByEquals), expectedTypecheck = 12),
-    divide("psp-by-ref", typecheckedLines(policyByRef), expectedTypecheck = 0),
+    divide("psp-by-equals", typecheckedLines(pspByEquals), expectedTypecheck = 12),
+    divide("psp-by-ref", typecheckedLines(pspByRef), expectedTypecheck = 0),
     divide("psp-straight", typecheckedLines(scalaLibraryCode), expectedTypecheck = 14),
     checkScala()
   )
