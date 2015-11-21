@@ -186,7 +186,7 @@ package object std extends scala.AnyRef
 
   def cond[A](p: Bool, thenp: => A, elsep: => A): A = if (p) thenp else elsep
   def view[A](xs: A*): View[A]                      = xs.toVec.m
-  def vec[@spec(SpecTypes) A](xs: A*): Vec[A]       = xs.toVec
+  def vec[@fspec A](xs: A*): Vec[A]                 = xs.toVec
   def set[A: Eq](xs: A*): ExSet[A]                  = xs.toExSet
   def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V]       = xs.m.toExMap
   def list[A](xs: A*): Plist[A]                     = xs.toPlist

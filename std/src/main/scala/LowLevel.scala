@@ -62,17 +62,17 @@ object ll {
   //       22: if_icmpne     5
   //       25: return
 
-  final def foldLeft[@spec(SpecTypes) A, @spec(SpecTypes) B](xs: Each[A], initial: B, f: (B, A) => B): B = {
+  final def foldLeft[@fspec A, @fspec B](xs: Each[A], initial: B, f: (B, A) => B): B = {
     var res = initial
     xs foreach (x => res = f(res, x))
     res
   }
-  final def foldLeftIndexed[@spec(SpecTypes) A, @spec(SpecTypes) B](xs: Each[A], initial: B, f: (B, A, Index) => B): B = {
+  final def foldLeftIndexed[@fspec A, @fspec B](xs: Each[A], initial: B, f: (B, A, Index) => B): B = {
     var res = initial
     xs.zipIndex foreach ((x, i) => res = f(res, x, i))
     res
   }
-  final def foldRight[@spec(SpecTypes) A, @spec(SpecTypes) B](xs: Each[A], initial: B, f: (A, B) => B): B = {
+  final def foldRight[@fspec A, @fspec B](xs: Each[A], initial: B, f: (A, B) => B): B = {
     val arr: Array[Ref[A]] = xs.toRefArray.inPlace.reverse.asInstanceOf[Array[Ref[A]]]
     var res: B = initial
     arr foreach (x => res = f(x, res))
@@ -83,25 +83,25 @@ object ll {
 /** Hand specialized on the left, @specialized on the right, value classes for tuple creation.
  */
 final class ArrowAssocInt(val self: Int) extends AnyVal {
-  @inline def -> [@spec(SpecTypes) B](y: B): Tuple2[Int, B] = Tuple2(self, y)
+  @inline def -> [@fspec B](y: B): Tuple2[Int, B] = Tuple2(self, y)
 }
 final class ArrowAssocLong(val self: Long) extends AnyVal {
-  @inline def -> [@spec(SpecTypes) B](y: B): Tuple2[Long, B] = Tuple2(self, y)
+  @inline def -> [@fspec B](y: B): Tuple2[Long, B] = Tuple2(self, y)
 }
 final class ArrowAssocDouble(val self: Double) extends AnyVal {
-  @inline def -> [@spec(SpecTypes) B](y: B): Tuple2[Double, B] = Tuple2(self, y)
+  @inline def -> [@fspec B](y: B): Tuple2[Double, B] = Tuple2(self, y)
 }
 final class ArrowAssocChar(val self: Char) extends AnyVal {
-  @inline def -> [@spec(SpecTypes) B](y: B): Tuple2[Char, B] = Tuple2(self, y)
+  @inline def -> [@fspec B](y: B): Tuple2[Char, B] = Tuple2(self, y)
 }
 final class ArrowAssocBoolean(val self: Boolean) extends AnyVal {
-  @inline def -> [@spec(SpecTypes) B](y: B): Tuple2[Boolean, B] = Tuple2(self, y)
+  @inline def -> [@fspec B](y: B): Tuple2[Boolean, B] = Tuple2(self, y)
 }
 final class ArrowAssocRef[A](val self: A) extends AnyVal {
   @inline def -> [B](y: B): Tuple2[A, B] = Tuple2(self, y)
 }
 
-final class CircularBuffer[@spec(SpecTypes) A](capacity: Precise) extends Direct.DirectImpl[A] with AndThis {
+final class CircularBuffer[@fspec A](capacity: Precise) extends Direct.DirectImpl[A] with AndThis {
   assert(!capacity.isZero, "CircularBuffer capacity cannot be 0")
 
   private[this] def cap: Int            = capacity.getInt
@@ -136,8 +136,8 @@ object ArrowAssoc {
   val Types = new scala.Specializable.Group((scala.Int, scala.Long, scala.Double, scala.Char, scala.Boolean))
 }
 object CircularBuffer {
-  def builder[@spec(SpecTypes) A](capacity: Precise): Builds[A, CircularBuffer[A]] = Builds(xs => CircularBuffer[A](capacity) ++= xs)
-  def apply[@spec(SpecTypes) A](capacity: Precise): CircularBuffer[A]              = new CircularBuffer[A](capacity)
+  def builder[@fspec A](capacity: Precise): Builds[A, CircularBuffer[A]] = Builds(xs => CircularBuffer[A](capacity) ++= xs)
+  def apply[@fspec A](capacity: Precise): CircularBuffer[A]              = new CircularBuffer[A](capacity)
 }
 object Streams {
   final val InputStreamBufferSize = 8192
