@@ -10,19 +10,17 @@ abstract class StdPackageObject extends scala.AnyRef
       with EmptyInstances
       with PrimitiveInstances
       with AlgebraInstances
-      with GlobalShow
       with StdImplicits
       with Aliases
       with psp.dmz.ScalaDmz
       with psp.dmz.JavaDmz {
 
   // Ugh. XXX
-  implicit def promoteSize(x: Int): Precise                 = Size(x)
-  implicit def promoteIndex(x: Int): Index                  = Index(x)
-  implicit def opsFun[A, B](f: Fun[A, B]): ops.FunOps[A, B] = new ops.FunOps(f)
-  implicit def wrapClass(x: jClass): JavaClass              = new JavaClassImpl(x)
-  implicit def conforms[A] : (A <:< A)                      = new conformance[A]
-
+  implicit def promoteSize(x: Int): Precise                    = Size(x)
+  implicit def promoteIndex(x: Int): Index                     = Index(x)
+  implicit def wrapClass(x: jClass): JavaClass                 = new JavaClassImpl(x)
+  implicit def conforms[A] : (A <:< A)                         = new conformance[A]
+  implicit def defaultRenderer: FullRenderer                   = new FullRenderer
   implicit def constantPredicate[A](value: Boolean): ToBool[A] = if (value) ConstantTrue else ConstantFalse
   implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = new (A ?=> B) {
     def isDefinedAt(x: A) = f isDefinedAt x
@@ -62,8 +60,8 @@ abstract class StdPackageObject extends scala.AnyRef
   private def echoOut(msg: Any): Unit = stdout println msg
 
   def render[A](x: A)(implicit z: Show[A]): String = z show x
-  def print[A: Show](x: A): Unit   = putOut(show"$x")
-  def println[A: Show](x: A): Unit = echoOut(show"$x")
+  def print[A: Show](x: A): Unit   = putOut(render(x))
+  def println[A: Show](x: A): Unit = echoOut(render(x))
   def anyprintln(x: Any): Unit     = echoOut(x.any_s)
 
   def applyIfNonEmpty[A](x: A)(f: A => A)(implicit z: Empty[A]): A =

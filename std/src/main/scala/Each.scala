@@ -75,8 +75,7 @@ object Each {
       ys foreach f
     }
   }
-  trait AtomicSize[+A] extends Any with Each[A] with HasAtomicSize
-  trait InfiniteSize[+A] extends Any with AtomicSize[A] {
+  trait InfiniteSize[+A] extends Any with Each[A] {
     def isEmpty = false
     def size    = Infinite
   }
@@ -84,10 +83,7 @@ object Each {
     def unapply[A](xs: Each[A]) = xs.size matchOpt { case x: Atomic => x }
   }
 
-  final case class Sized[A](underlying: Each[A], override val size: Precise) extends Each[A] with HasPreciseSize {
-
-    // implicitly[Order[Precise]]
-
+  final case class Sized[A](underlying: Each[A], override val size: Precise) extends Each[A] {
     def isEmpty = size.isZero
     @inline def foreach(f: A => Unit): Unit = {
       var count = Size(0)
