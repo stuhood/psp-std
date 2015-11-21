@@ -62,7 +62,10 @@ object Empty {
 }
 
 object StdEq extends EqInstances
-object StdShow extends ShowInstances
+object StdShow extends ShowInstances {
+  implicit def convertHasShowDocOps[A: Show](x: A): ops.DocOps      = new ops.DocOps(Doc(x))
+  implicit def convertHasShowDoc[A](x: A)(implicit z: Show[A]): Doc = Doc(x)
+}
 object Unsafe {
   implicit def inheritedEq[A] : Hash[A]       = inheritEq
   implicit def inheritedShow[A] : Show[A]     = inheritShow

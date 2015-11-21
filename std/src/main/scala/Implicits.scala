@@ -35,8 +35,8 @@ trait StdImplicits extends scala.AnyRef
 }
 
 trait GlobalShow {
-  implicit def convertHasShowDocOps[A: Show](x: A): ops.DocOps      = new ops.DocOps(Doc(x))
-  implicit def convertHasShowDoc[A](x: A)(implicit z: Show[A]): Doc = Doc(x)
+  // implicit def convertHasShowDocOps[A: Show](x: A): ops.DocOps      = new ops.DocOps(Doc(x))
+  // implicit def convertHasShowDoc[A](x: A)(implicit z: Show[A]): Doc = Doc(x)
   implicit def defaultRenderer: FullRenderer                        = new FullRenderer
   implicit def docOrder(implicit z: Renderer): Order[Doc]           = Order[Doc]((x, y) => lexicalOrder.cmp(render(x), render(y)))
 }
@@ -73,8 +73,8 @@ trait StdOps3 extends StdOps2 {
   implicit def opsHasEmpty[A: Empty](x: View[A]): ops.HasEmpty[A]             = new ops.HasEmpty[A](x)
   implicit def opsHasEqInfix[A: Eq](x: A): ops.EqOps[A]                       = new ops.EqOps[A](x)
   implicit def opsHasOrder[A: Order](x: View[A]): ops.HasOrder[A]             = new ops.HasOrder(x)
-  implicit def opsHasShowEach[A: Show](x: Each[A]): ops.DocSeqOps             = new ops.DocSeqOps(x map (_.doc) toVec)
-  implicit def opsHasShowView[A: Show](x: View[A]): ops.DocSeqOps             = opsHasShowEach(x)
+  implicit def opsHasShowEach[A: Show](x: Each[A]): ops.DocSeqOps             = new ops.DocSeqOps(x map (x => Doc(x)) toVec)
+  implicit def opsHasShowView[A: Show](x: View[A]): ops.DocSeqOps             = opsHasShowEach(x.toEach)
   implicit def opsInputStream(x: InputStream): ops.InputStreamOps             = new ops.InputStreamOps(x)
   implicit def opsInt(x: Int): ops.IntOps                                     = new ops.IntOps(x)
   implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A]    = new ops.JavaIteratorOps[A](x)

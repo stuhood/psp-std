@@ -62,8 +62,8 @@ abstract class StdPackageObject extends scala.AnyRef
   private def echoOut(msg: Any): Unit = stdout println msg
 
   def render[A](x: A)(implicit z: Show[A]): String = z show x
-  def print[A: Show](x: A): Unit   = putOut(show"$x")
-  def println[A: Show](x: A): Unit = echoOut(show"$x")
+  def print[A: Show](x: A): Unit   = putOut(render(x))
+  def println[A: Show](x: A): Unit = echoOut(render(x))
   def anyprintln(x: Any): Unit     = echoOut(x.any_s)
 
   def applyIfNonEmpty[A](x: A)(f: A => A)(implicit z: Empty[A]): A =

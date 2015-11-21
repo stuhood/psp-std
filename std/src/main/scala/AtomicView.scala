@@ -1,7 +1,7 @@
 package psp
 package std
 
-import api._, StdEq._, Unsafe.inheritedShow
+import api._, StdEq._, StdShow._, Unsafe.inheritedShow
 import lowlevel.CircularBuffer
 
 sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] {
