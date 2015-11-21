@@ -39,6 +39,17 @@ final class InPlace[A](val xs: Array[A]) extends AnyVal {
     xs(i1) = xs(i2)
     xs(i2) = tmp
   }
+  private def sortInPlace[A](xs: Array[A]): Unit = xs match {
+    case xs: Array[Byte]   => java.util.Arrays.sort(xs)
+    case xs: Array[Char]   => java.util.Arrays.sort(xs)
+    case xs: Array[Short]  => java.util.Arrays.sort(xs)
+    case xs: Array[Int]    => java.util.Arrays.sort(xs)
+    case xs: Array[Long]   => java.util.Arrays.sort(xs)
+    case xs: Array[Double] => java.util.Arrays.sort(xs)
+    case xs: Array[Float]  => java.util.Arrays.sort(xs)
+    case xs: Array[AnyRef] => java.util.Arrays.sort[AnyRef](xs, Eq.refComparator)
+    case _                 =>
+  }
 
   def insertionSort(implicit z: Order[A]): Array[A] = sideEffect(xs, Sorting.insertionSort[A](xs)(z, null))
   def quickSort(implicit z: Order[A]): Array[A]     = sideEffect(xs, Sorting.quickSort[A](xs)(z, null))

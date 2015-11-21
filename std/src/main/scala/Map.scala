@@ -37,17 +37,3 @@ object ExMap {
     def filterKeys(p: ToBool[K]): ExMap[K, V] = ExMap(keys filter p, f)
   }
 }
-object InMap {
-  def empty[K, V] : InMap[K, V]              = apply(Fun.empty)
-  def apply[K, V](f: Fun[K, V]): InMap[K, V] = new Impl(f)
-  def impl[K, V](xs: InMap[K, V]): Impl[K, V] = xs match {
-    case xs: Impl[K, V] => xs
-    case _              => new Impl(xs.lookup)
-  }
-
-  final class Impl[K, V](val lookup: Fun[K, V]) extends InMap[K, V] {
-    def apply(key: K): V                      = lookup(key)
-    def map[V1](f: V => V1): InMap[K, V1]     = InMap(lookup mapOut f)
-    def filterKeys(p: ToBool[K]): InMap[K, V] = InMap(lookup filterIn p)
-  }
-}

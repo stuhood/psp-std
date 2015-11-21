@@ -18,9 +18,8 @@ trait Indexed[@fspec +A] extends Any with Each[A]                        { def e
 trait Direct[@fspec +A]  extends Any with Indexed[A] with HasPreciseSize
 trait Linear[@fspec +A]  extends Any with Each[A]    with IsEmpty        { def head: A ; def tail: Linear[A] }
 
-trait InMap[-K, +V] extends Any                  { def lookup: Fun[K, V]                               }
-trait ExSet[A]      extends Any with Each[A]     { def apply(x: A): Bool ; def equiv(x: A, y: A): Bool }
-trait ExMap[K, +V]  extends Any with InMap[K, V] { def lookup: FiniteDom[K, V]                         }
+trait ExSet[A]      extends Any with Each[A] { def apply(x: A): Bool       }
+trait ExMap[K, +V]  extends Any              { def lookup: FiniteDom[K, V] }
 
 trait Index extends Any with Opt[Long]
 

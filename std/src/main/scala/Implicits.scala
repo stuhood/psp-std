@@ -29,8 +29,8 @@ trait StdImplicits extends scala.AnyRef
   implicit def promoteApiOrder[A](z: Order[A]): Order.Impl[A]             = Order impl z
   implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]             = ExSet impl x
   implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V]    = ExMap impl x
+  implicit def promoteApiDirect[A](x: Direct[A]): Direct.Impl[A]          = Direct impl x
   implicit def promoteApiView[A](xs: View[A]): AtomicView[A, View[A]]     = View impl xs
-  implicit def promoteApiInMap[K, V](x: InMap[K, V]): InMap.Impl[K, V]    = InMap impl x
   implicit def promoteApiZipView[A, B](xs: ZipView[A, B]): Zip.Impl[A, B] = Zip impl xs
 }
 
@@ -72,7 +72,6 @@ trait StdOps3 extends StdOps2 {
   implicit def opsHasAlgebraInfix[A: BooleanAlgebra](x: A): ops.AlgebraOps[A] = new ops.AlgebraOps[A](x)
   implicit def opsHasEmpty[A: Empty](x: View[A]): ops.HasEmpty[A]             = new ops.HasEmpty[A](x)
   implicit def opsHasEqInfix[A: Eq](x: A): ops.EqOps[A]                       = new ops.EqOps[A](x)
-  implicit def opsHasHashInfix[A: Hash](x: A): ops.HashOps[A]                 = new ops.HashOps[A](x)
   implicit def opsHasOrder[A: Order](x: View[A]): ops.HasOrder[A]             = new ops.HasOrder(x)
   implicit def opsHasShowEach[A: Show](x: Each[A]): ops.DocSeqOps             = new ops.DocSeqOps(x map (_.doc) toVec)
   implicit def opsHasShowView[A: Show](x: View[A]): ops.DocSeqOps             = opsHasShowEach(x)
