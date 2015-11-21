@@ -116,7 +116,7 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
         case Joined(xs, ys)           => loop(xs)(f) ; loop(ys)(f)
         case DroppedR(xs, n: Precise) => foreachDropRight(xs, f, n)
         case TakenR(xs, n: Precise)   => foreachTakeRight(xs, f, n)
-        case Dropped(xs, Precise(n))  => foreachSlice(xs, Index(n) until MaxIndex, f)
+        case Dropped(xs, Precise(n))  => foreachSlice(xs, Index(n) until Index(MaxLong), f)
         case Taken(xs, n: Precise)    => foreachSlice(xs, n.indices, f)
         case xs: View[_]              => xs foreach f
         case _                        => abort(pp"Unexpected view class ${xs.shortClass}")
