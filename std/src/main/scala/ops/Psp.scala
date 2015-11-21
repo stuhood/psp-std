@@ -35,27 +35,23 @@ final class ExSetOps[A](xs: ExSet[A]) {
   def mapOnto[B](f: A => B): ExMap[A, B] = ExMap(xs, Fun(f))
 }
 
-trait HasPreciseSizeMethods extends Any {
-  def size: Precise
-
-  def indices: IndexRange                  = indexRange(0, size.getInt)
-  def lastIndex: Index                     = Index(size.get - 1)  // effectively maps both undefined and zero to no index.
-  def containsIndex(index: Index): Boolean = indices containsInt index.getInt
-
-  @inline def foreachIndex(f: Index => Unit): Unit  = if (size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, i => f(Index(i)))
-  @inline def foreachIntIndex(f: Int => Unit): Unit = if (size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, f)
-}
-
 final class TimesBuilder(val times: Precise) {
   def const[A](elem: A): Each[A]   = Each const elem take times
   def eval[A](body: => A): Each[A] = Each continually body take times
 }
 
-final class PreciseOps(val size: Precise) extends AnyRef with HasPreciseSizeMethods {
-  def toInt: Int = size.getInt
-  def times      = new TimesBuilder(size)
-  def + (n: Precise): Precise = size + n.get
-  def - (n: Precise): Precise = size - n.get
+final class PreciseOps(val size: Precise) {
+  def toInt: Int          = size.getInt
+  def times               = new TimesBuilder(size)
+  def indices: IndexRange = indexRange(0, size.getInt)
+  def lastIndex: Index    = Index(size.get - 1)  // effectively maps both undefined and zero to no index.
+
+  def + (n: Precise): Precise              = size + n.get
+  def - (n: Precise): Precise              = size - n.get
+  def containsIndex(index: Index): Boolean = indices containsInt index.getInt
+
+  @inline def foreachIndex(f: Index => Unit): Unit  = if (size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, i => f(Index(i)))
+  @inline def foreachIntIndex(f: Int => Unit): Unit = if (size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, f)
 }
 
 final class InputStreamOps(val in: InputStream) extends AnyVal {

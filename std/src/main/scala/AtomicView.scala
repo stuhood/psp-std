@@ -23,8 +23,7 @@ object FlattenSlice {
     case TakenR(xs, n)           => unapply(xs) map { case (xs, range) => (xs, range takeRight n) }
     case Dropped(xs, n)          => unapply(xs) map { case (xs, range) => (xs, range drop n) }
     case Taken(xs, n)            => unapply(xs) map { case (xs, range) => (xs, range take n) }
-    case HasSize(n: Precise)     => Some(xs -> n.indices)
-    case _                       => None
+    case _                       => xs.size matchOpt { case x: Precise => xs -> x.indices }
   }
 }
 
@@ -98,6 +97,9 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
 }
 
 sealed trait InvariantBaseView[A, Repr] extends BaseView[A, Repr] with InvariantView[A] {
+  type JoinTo[X] = InvariantView[X]
+  type SplitTo[X] = Split[X]
+
   final def join(that: InvariantView[A]): InvariantView[A] = Joined(this, that)
   final def splitAt(index: Index): Split[A]                = Split(take(index.sizeExcluding), drop(index.sizeExcluding))
   final def span(p: ToBool[A]): Split[A]                   = Split(takeWhile(p), dropWhile(p))

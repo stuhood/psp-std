@@ -5,9 +5,6 @@ import api._, StdShow._
 
 /** Motley objects for which a file of residence is not obvious.
  */
-object HasSize {
-  def unapply(x: HasSize): Some[Size] = some(x.size)
-}
 class FormatFun(val fmt: String) extends (Any => String) with ForceShowDirect {
   def apply(x: Any): String = fmt format x
   def to_s = fmt
