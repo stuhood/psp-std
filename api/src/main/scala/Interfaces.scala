@@ -3,7 +3,9 @@ package api
 
 import Api._
 
-trait Index extends Any with Opt[Long]
+trait IndexOrNth extends Any with Opt[Long]
+trait Index extends Any with IndexOrNth
+trait Nth extends Any with IndexOrNth
 
 /** Name-based extractor methods. These interfaces aren't necessary
  *  for it (thus "name-based") but provide helpful structure when used.

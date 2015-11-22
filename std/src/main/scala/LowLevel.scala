@@ -101,7 +101,7 @@ final class ArrowAssocRef[A](val self: A) extends AnyVal {
   @inline def -> [B](y: B): Tuple2[A, B] = Tuple2(self, y)
 }
 
-final class CircularBuffer[@fspec A](capacity: Precise) extends Direct[A] with AndThis {
+final class CircularBuffer[@fspec A](capacity: Precise) extends Direct[A] {
   assert(!capacity.isZero, "CircularBuffer capacity cannot be 0")
 
   private[this] def cap: Int            = capacity.getInt
@@ -116,8 +116,8 @@ final class CircularBuffer[@fspec A](capacity: Precise) extends Direct[A] with A
   def isFull                         = seen >= cap
   def elemAt(index: Index): A        = buffer((readPointer + index.getInt) % cap).castTo[A]
   def size: Precise                  = min(capacity, Size(seen))
-  def ++=(xs: Foreach[A]): this.type = andThis(xs foreach setHead)
-  def += (x: A): this.type           = andThis(this setHead x)
+  def ++=(xs: Foreach[A]): this.type = sideEffect(this, xs foreach setHead)
+  def += (x: A): this.type           = sideEffect(this, setHead(x))
   def push(x: A): A                  = if (isFull) sideEffect(this.head, setHead(x)) else abort("push on non-full buffer")
 }
 final class ByteBufferInputStream(b: ByteBuffer) extends InputStream {

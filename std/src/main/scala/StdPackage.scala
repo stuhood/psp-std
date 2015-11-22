@@ -77,9 +77,6 @@ abstract class StdPackageObject extends scala.AnyRef
 
   def ??? : Nothing = throw new scala.NotImplementedError
 
-  def assert(assertion: => Boolean, msg: => Any)(implicit z: Assertions): Unit =
-    Assertions.using(z)(assertion, s"assertion failed: $msg")
-
   def classOf[A: CTag](): Class[_ <: A]      = classTag[A].runtimeClass.castTo[Class[_ <: A]]
   def classTag[A: CTag] : CTag[A]            = implicitly[CTag[A]]
   def classFilter[A: CTag] : Partial[Any, A] = Partial(_.isClass[A], _.castTo[A])
@@ -95,7 +92,6 @@ abstract class StdPackageObject extends scala.AnyRef
   }
 
   // Operations involving encoding/decoding of string data.
-  def utf8(xs: Array[Byte]): Utf8   = new Utf8(xs)
   def decodeName(s: String): String = s.mapSplit('.')(NameTransformer.decode)
   def encodeName(s: String): String = s.mapSplit('.')(NameTransformer.encode)
 
@@ -106,8 +102,8 @@ abstract class StdPackageObject extends scala.AnyRef
     result
   }
 
-  def tabular[A](xs: View[A])(columns: ToString[A]*): String =
-    if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toVec, columns.m).render(inheritShow) else ""
+  def assert(assertion: => Boolean, msg: => Any): Unit =
+    if (!assertion) runtimeException("" + msg)
 
   def abortTrace(msg: String): Nothing                 = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
   def andClose[A <: jCloseable, B](x: A)(f: A => B): B = try f(x) finally x.close()
