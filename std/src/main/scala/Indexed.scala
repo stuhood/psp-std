@@ -56,7 +56,7 @@ object Indexed {
       }
     }
     private[this] def advanceTo(index: Index): A = {
-      if (index.isUndefined) abort(s"NoIndex")
+      if (index.isInvalid) abort(s"NoIndex")
 
       thread
       while (index.sizeIncluding > seen && hasNext) {
@@ -65,7 +65,7 @@ object Indexed {
       memo(index.getInt)
     }
     def isDefinedAt(i: Index): Boolean = {
-      !i.isUndefined && (
+      !i.isInvalid && (
            (seen containsIndex i)
         || (Try(sideEffect(true, advanceTo(i))) | false)
       )

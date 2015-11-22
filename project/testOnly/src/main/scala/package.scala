@@ -69,6 +69,8 @@ package object tests {
 
   implicit def arbProduct[A1: Arb, A2: Arb](implicit z: Arb[(A1, A2)]): Arb[A1->A2] = Arb(z.arbitrary ^^ (x => x))
 
+  implicit def arbIndex: Arb[Index]     = Arb(gen.index)
+  implicit def arbNth: Arb[Nth]         = Arb(gen.index ^^ (_.toNth))
   implicit def arbSize: Arb[Size]       = Arb(gen.size)
   implicit def arbWord: Arb[String]     = Arb(gen.text.word)
   implicit def arbitraryPint: Arb[Pint] = Arb(gen.int ^^ Pint)

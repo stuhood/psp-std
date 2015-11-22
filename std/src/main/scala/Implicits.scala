@@ -16,6 +16,10 @@ trait StdImplicits extends scala.AnyRef
 
   self =>
 
+  implicit class DirectOpsLow[A](val xs: Direct[A]) {
+    def apply(i: Nth): A  = xs elemAt i.toIndex
+  }
+
   implicit def typeclassTupleCleave[A, B] : Pair.Cleave[A -> B, A, B]        = Pair.Cleave[A -> B, A, B](_ -> _, fst, snd)
   implicit def typeclassLinearSplit[A] : Pair.Split[Linear[A], A, Linear[A]] = Pair.Split(_.head, _.tail)
 
@@ -26,6 +30,7 @@ trait StdImplicits extends scala.AnyRef
   // Promotion of the api type (which has as few methods as possible) to the
   // concrete type which has all the other ones.
   implicit def promoteApiIndex(x: Index): Index.Impl                              = Index impl x
+  implicit def promoteApiNth(x: Nth): Nth.Impl                                    = Nth impl x
   implicit def promoteApiOrder[A](z: Order[A]): Order.Impl[A]                     = Order impl z
   implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]                     = ExSet impl x
   implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V]            = ExMap impl x
@@ -222,7 +227,6 @@ trait EmptyInstances extends EmptyInstances0 {
 trait EqInstances extends OrderInstances {
   implicit def classWrapperEq: Hash[JavaClass] = inheritEq
   implicit def classEq: Hash[Class[_]]         = inheritEq
-  implicit def offsetEq: Hash[Offset]          = inheritEq
   implicit def pathEq: Eq[jPath]               = shownEq[jPath](inheritShow)
   implicit def sizeEq: Hash[Size]              = inheritEq
   implicit def arrayEq[A: Eq] : Eq[Array[A]]   = eqBy[Array[A]](_.toDirect)

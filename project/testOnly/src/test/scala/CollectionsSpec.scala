@@ -37,12 +37,16 @@ class ADTSpec extends ScalacheckBundle {
     xs mapNow m1
     seen.trim
   }
+
   def props = vec(
     "size.+ is commutative"   -> commutative[Size](_ + _),
     "size.max is associative" -> associative[Size](_ max _),
     "size.max is commutative" -> commutative[Size](_ max _),
     "size.min is associative" -> associative[Size](_ min _),
     "size.min is commutative" -> commutative[Size](_ min _),
+    "index/nth are consistent" -> forAll((x: Index) => if (x.isEmpty) x.toNth.isEmpty else x.get + 1 == x.toNth.get),
+    "nth/index are consistent" -> forAll((x: Nth) => if (x.isEmpty) x.toIndex.isEmpty else x.get - 1 == x.toIndex.get),
+    seqShows("1, 1", vec(xs(Index(0)), xs(Nth(1)))),
     seqShows("2, 4, 6", xs map f1),
     seqShows("6, 12, 18", xs map f2),
     seqShows("6, 12", xs collect f3),
@@ -53,7 +57,7 @@ class ADTSpec extends ScalacheckBundle {
     showsAs("-", f4 get 3),
     showsAs("99", f4(3)),
     showsAs("f(1): 2 f(2): 4 f(3): 6", m1trace)
-    )
+  )
 }
 
 class StringExtensions extends ScalacheckBundle {

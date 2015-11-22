@@ -20,7 +20,7 @@ package object std extends psp.std.StdPackageObject {
   final val ->        = psp.api.Pair
   final val Array     = scala.Array
   final val Failure   = scala.util.Failure
-  final val NoIndex   = Index.undefined
+  final val NoIndex   = Index.invalid
   final val None      = scala.None
   final val Option    = scala.Option
   final val Some      = scala.Some
