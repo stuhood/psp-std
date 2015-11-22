@@ -15,10 +15,16 @@ import sc.{ mutable => scm, immutable => sci }
  *   - Arrays are everywhere special
  *   - Lists are specially optimized by the compiler
  *   - StringContext is required for string interpolation
+ *   - ClassTags are synthesized by the compiler
  *   - BigDecimal/BigInt are treated specially for equality
  *   - Dynamic has special semantics
+ *   - Function1 has special syntax and much special handling
+ *   - PartialFunction has all of Function1's and then some
+ *   - DelayedInit is very special but it's garbage so omitted
  */
 trait ScalaLib {
+  self: ExternalLibs =>
+
   // The top and bottom types.
   type Any     = scala.Any
   type AnyRef  = scala.AnyRef
@@ -37,7 +43,7 @@ trait ScalaLib {
   type Short   = scala.Short
   type Unit    = scala.Unit
 
-  // scala types which it seems counterproductive to rename.
+  // scala magic types, mostly not renamed.
   type Array[A]      = scala.Array[A]
   type BigDecimal    = scala.math.BigDecimal
   type BigInt        = scala.math.BigInt
@@ -79,4 +85,19 @@ trait ScalaLib {
 
   // You can't use string interpolation without a StringContext term in scope.
   def StringContext = scala.StringContext
+
+  // Companions for which I have found a need.
+  final val Array     = scala.Array
+  final val Failure   = scala.util.Failure
+  final val None      = scala.None
+  final val Option    = scala.Option
+  final val Some      = scala.Some
+  final val Success   = scala.util.Success
+  final val Try       = scala.util.Try
+  final val sciList   = sci.List
+  final val sciMap    = sci.Map
+  final val sciSeq    = sci.Seq
+  final val sciSet    = sci.Set
+  final val sciVector = sci.Vector
+  final val scmMap    = scm.Map
 }

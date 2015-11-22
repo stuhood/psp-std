@@ -5,15 +5,26 @@ import java.nio.file.Paths
 import java.nio.file.{ attribute => jnfa }
 import psp.api._
 import scala.reflect.NameTransformer
+import psp.ext.ExternalLibs
 
 abstract class StdPackageObject extends scala.AnyRef
       with EmptyInstances
       with PrimitiveInstances
       with AlgebraInstances
       with StdImplicits
-      with Aliases
-      with psp.ext.ScalaLib
-      with psp.ext.JavaLib {
+      with PspApi {
+
+
+  // Type aliases I don't like enough to have in the API.
+  type Bag[A]               = ExMap[A, Precise]
+  type Bool                 = Boolean
+  type CanBuild[-Elem, +To] = scala.collection.generic.CanBuildFrom[_, Elem, To]
+  type IndexRange           = Consecutive[api.Index]
+  type IntRange             = Consecutive[Int]
+  type LongRange            = Consecutive[Long]
+  type Renderer             = Show[Doc]
+  type UnbuildsAs[+A, R]    = Unbuilds[R] { type Elem <: A }
+  type View2D[+A]           = View[View[A]]
 
   // Ugh. XXX
   implicit def promoteSize(x: Int): Precise                    = Size(x)
@@ -80,8 +91,6 @@ abstract class StdPackageObject extends scala.AnyRef
   def classOf[A: CTag](): Class[_ <: A]      = classTag[A].runtimeClass.castTo[Class[_ <: A]]
   def classTag[A: CTag] : CTag[A]            = implicitly[CTag[A]]
   def classFilter[A: CTag] : Partial[Any, A] = Partial(_.isClass[A], _.castTo[A])
-  def jPath(path: String): jPath             = Paths get path
-  def jFile(path: String): jFile             = new jFile(path)
 
   def transitiveClosure[A: Eq](root: A)(expand: A => Foreach[A]): View[A] = inView { f =>
     def loop(in: View[A], seen: View[A]): Unit = in filterNot seen.contains match {
@@ -118,20 +127,15 @@ abstract class StdPackageObject extends scala.AnyRef
   def randomPosInt(max: Int): Int                      = scala.util.Random.nextInt(max + 1)
   def leftFormatString[A](n: Int): FormatFun           = new FormatFun(cond(n == 0, "%s", "%%-%ds" format n))
 
+  def jConcurrentMap[K, V](xs: (K -> V)*): jConcurrentMap[K, V] = new jConcurrentHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
+  def jMap[K, V](xs: (K -> V)*): jMap[K, V]                     = new jHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
+
   def max(l: Int, r: Int): Int     = if (l >= r) l else r
   def max(l: Long, r: Long): Long  = if (l >= r) l else r
   def max[A: Order](l: A, r: A): A = if (l >= r) l else r
   def min(l: Int, r: Int): Int     = if (l <= r) l else r
   def min(l: Long, r: Long): Long  = if (l <= r) l else r
   def min[A: Order](l: A, r: A): A = if (l <= r) l else r
-
-  // Java.
-  def jConcurrentMap[K, V](xs: (K -> V)*): jConcurrentMap[K, V] = new jConcurrentHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
-  def jList[A](xs: A*): jList[A]                                = java.util.Arrays.asList(xs: _*)
-  def jMap[K, V](xs: (K -> V)*): jMap[K, V]                     = new jHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
-  def jSet[A](xs: A*): jSet[A]                                  = new jHashSet[A] doto (b => xs foreach b.add)
-  def jUri(x: String): jUri                                     = java.net.URI create x
-  def jUrl(x: String): jUrl                                     = jUri(x).toURL
 
   def fst[A, B](x: A -> B): A          = x._1
   def snd[A, B](x: A -> B): B          = x._2

@@ -9,6 +9,12 @@ import java.{ io => jio }
 import java.nio.{ file => jnf }
 import java.nio.charset.Charset
 
+private[ext] object Util {
+  def doto[A](x: A)(f: A => Unit): A           = sideEffect(x, f(x))
+  def sideEffect[A](result: A, exprs: Any*): A = result
+}
+import Util._
+
 trait JavaLib {
   // Exceptional factories.
   def assertionError(msg: String): Nothing                = throw new AssertionError(msg)
@@ -19,16 +25,24 @@ trait JavaLib {
   def unsupportedOperationException(msg: String): Nothing = throw new UnsupportedOperationException(msg)
 
   // A selection of popular static methods from javaland.
+  def contextClassLoader: ClassLoader = currentThread.getContextClassLoader
   def currentThread: Thread           = jl.Thread.currentThread
   def defaultCharset: Charset         = Charset.defaultCharset
   def fileSeparator: String           = jio.File.separator
   def milliTime: Long                 = jl.System.currentTimeMillis
   def nanoTime: Long                  = jl.System.nanoTime
   def systemClassLoader: ClassLoader  = jl.ClassLoader.getSystemClassLoader
-  def contextClassLoader: ClassLoader = currentThread.getContextClassLoader
-  def utf8Charset: Charset            = Charset forName "UTF-8"
   def threadSleep(ms: Long): Unit     = jl.Thread.sleep(ms)
   def threadYield(): Unit             = jl.Thread.`yield`
+  def utf8Charset: Charset            = Charset forName "UTF-8"
+
+  // A selection of creators for commonly required java types.
+  def jFile(path: String): jFile = new jFile(path)
+  def jPath(path: String): jPath = jnf.Paths get path
+  def jList[A](xs: A*): jList[A] = ju.Arrays.asList(xs: _*)
+  def jSet[A](xs: A*): jSet[A]   = doto(new jHashSet[A])(xs foreach _.add)
+  def jUri(x: String): jUri      = java.net.URI create x
+  def jUrl(x: String): jUrl      = jUri(x).toURL
 
   // A few operations involving time and date.
   def formattedDate(format: String)(date: jDate): String = new java.text.SimpleDateFormat(format) format date
@@ -94,4 +108,11 @@ trait JavaLib {
   type jTreeSet[A]              = ju.TreeSet[A]
   type jUri                     = java.net.URI
   type jUrl                     = java.net.URL
+
+  // Inlinable constants.
+  final val MaxInt  = jl.Integer.MAX_VALUE
+  final val MaxLong = jl.Long.MAX_VALUE
+  final val MinInt  = jl.Integer.MIN_VALUE
+  final val MinLong = jl.Long.MIN_VALUE
+  final val EOL     = jl.System getProperty "line.separator"
 }

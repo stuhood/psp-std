@@ -160,8 +160,8 @@ package object tests {
     }
   }
 
-  def printResult[A: Show](msg: String)(result: A): A              = result doto (r => println(show"$msg: $r"))
-  def printResultIf[A: Show : Eq](x: A, msg: String)(result: A): A = result doto (r => if (r === x) println(show"$msg: $r"))
+  def printResult[A: Show](msg: String)(result: A): A              = doto(result)(r => println(show"$msg: $r"))
+  def printResultIf[A: Show : Eq](x: A, msg: String)(result: A): A = doto(result)(r => if (r === x) println(show"$msg: $r"))
 
   /** How to check for function equivalence? In the absence of mathematical breakthroughs,
    *  recursively throw scalacheck at it again, verifying arbitrary inputs have the same result.

@@ -26,18 +26,18 @@ object Builds {
   def jSet[A](): Builds[A, jSet[A]]                                                          = jSet(new jHashSet[A])
   def jSortedSet[A: Order](): Builds[A, jSortedSet[A]]                                       = jSortedSet(new jTreeSet[A](Order.comparator[A]))
   def jSortedMap[K: Order, V](): Builds[K -> V, jSortedMap[K, V]]                            = jSortedMap(new jTreeMap[K, V](Order.comparator[K]))
-  def sCollection[A, That](implicit z: CanBuild[A, That]): Builds[A, That]                   = apply(xs => z() doto (b => xs foreach (b += _)) result)
-  def sMap[K, V, That](implicit z: CanBuild[scala.Tuple2[K, V], That]): Builds[K -> V, That] = apply(xs => z() doto (b => xs foreach (x => b += (fst(x) -> snd(x)))) result)
-  def string(): Builds[Char, String]                                                         = apply(xs => new StringBuilder doto (b => xs foreach (c => b append c)) toString)
+  def sCollection[A, That](implicit z: CanBuild[A, That]): Builds[A, That]                   = apply(xs => doto(z())(b => xs foreach (b += _)) result)
+  def sMap[K, V, That](implicit z: CanBuild[scala.Tuple2[K, V], That]): Builds[K -> V, That] = apply(xs => doto(z())(b => xs foreach (x => b += (fst(x) -> snd(x)))) result)
+  def string(): Builds[Char, String]                                                         = apply(xs => doto(new StringBuilder)(b => xs foreach (c => b append c)) toString)
 
   private def array[A](b: scmBuilder[A, Array[A]]): Builds[A, Array[A]]  = apply(b ++= _.trav result)
-  private def jList[A](js: jArrayList[A]): Builds[A, jList[A]]           = apply(xs => js doto (js => xs foreach (js add _)))
-  private def jMap[K, V](js: jHashMap[K, V]): Builds[K -> V, jMap[K, V]] = apply(xs => js doto (js => xs foreach (kv => js.put(fst(kv), snd(kv)))))
-  private def jSet[A](js: jHashSet[A]): Builds[A, jSet[A]]               = apply(xs => js doto (js => xs foreach js.add))
-  private def jSortedSet[A](js: jTreeSet[A]): Builds[A, jSortedSet[A]]   = apply(xs => js doto (js => xs foreach js.add))
+  private def jList[A](js: jArrayList[A]): Builds[A, jList[A]]           = apply(xs => doto(js)(js => xs foreach (js add _)))
+  private def jMap[K, V](js: jHashMap[K, V]): Builds[K -> V, jMap[K, V]] = apply(xs => doto(js)(js => xs foreach (kv => js.put(fst(kv), snd(kv)))))
+  private def jSet[A](js: jHashSet[A]): Builds[A, jSet[A]]               = apply(xs => doto(js)(js => xs foreach js.add))
+  private def jSortedSet[A](js: jTreeSet[A]): Builds[A, jSortedSet[A]]   = apply(xs => doto(js)(js => xs foreach js.add))
 
   private def jSortedMap[K, V](js: jTreeMap[K, V]): Builds[K -> V, jSortedMap[K, V]] =
-    apply(xs => js doto (js => xs foreach (kv => js.put(fst(kv), snd(kv)))))
+    apply(xs => doto(js)(js => xs foreach (kv => js.put(fst(kv), snd(kv)))))
 
   final class Impl[Elem, To](val f: Foreach[Elem] => To) extends AnyVal with Builds[Elem, To] {
     def build(xs: Foreach[Elem]): To   = f(xs)

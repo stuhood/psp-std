@@ -12,6 +12,14 @@ import java.lang.{ Math => math }
  */
 
 object Vec {
+  type Array0D[A] = A
+  type Array1D[A] = Array[A]
+  type Array2D[A] = Array[Array[A]]
+  type Array3D[A] = Array[Array[Array[A]]]
+  type Array4D[A] = Array[Array[Array[Array[A]]]]
+  type Array5D[A] = Array[Array[Array[Array[Array[A]]]]]
+  type Array6D[A] = Array[Array[Array[Array[Array[Array[A]]]]]]
+
   final val WIDTH = 5
   final val MASK5  = (1 << WIDTH) - 1 // reduces to the lower five bits
   final val MASK27 = ~MASK5

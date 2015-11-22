@@ -14,8 +14,8 @@ object Build extends sbt.Build {
   def stdArgs             = wordSeq("-Yno-predef -Yno-adapted-args -Yno-imports -unchecked") // -Ymacro-debug-verbose
   def testDependencies    = Def setting Seq(Deps.scalaReflect.value, scalacheck.copy(configurations = None))
 
-  lazy val api = project setup "psp's non-standard api"
-  lazy val std = project setup "psp's non-standard standard library" dependsOn api also spire
+  lazy val api = project setup "psp's non-standard api" also spire
+  lazy val std = project setup "psp's non-standard standard library" dependsOn api
 
   /***
    *** Everything below this line is to navigate the maze that is sbt.
