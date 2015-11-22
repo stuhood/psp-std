@@ -39,6 +39,10 @@ package object tests {
 
   import Prop._
 
+
+  def assert(assertion: => Boolean, msg: => Any)(implicit z: Assertions): Unit =
+    Assertions.using(z)(assertion, s"assertion failed: $msg")
+
   def arb[A](implicit z: Arb[A]): Arb[A] = z
 
   def commutative[T: Arb : Eq](op: BinOp[T]): Prop = forAll((p1: T, p2: T) => printResultIf(false, s"op($p1, $p2)")(sameBehavior(op(p1, p2), op(p2, p1))))
@@ -178,5 +182,25 @@ package object tests {
 }
 
 package tests {
+  trait Assertions {
+    def failed(msg: => String): Unit
+    def assert(assertion: Boolean, msg: => String): Unit = if (!assertion) failed(msg)
+  }
+  object Assertions {
+    private[this] var instance: Assertions = DefaultAssertions
+    def using[A](x: Assertions)(assertion: => Boolean, msg: => String): Unit = {
+      val saved = instance
+      instance = x
+      try instance.assert(assertion, msg) finally instance = saved
+    }
+    implicit object DefaultAssertions extends Assertions {
+      def failed(msg: => String): Unit = assertionError(msg)
+    }
+  }
+  object ImmediateTraceAssertions extends Assertions {
+    def failed(msg: => String): Unit =
+      new AssertionError(msg) |> (t => sideEffect(t.printStackTrace, throw t))
+  }
+
   final case class Pint(x: Int) { override def toString = s"$x" }
 }

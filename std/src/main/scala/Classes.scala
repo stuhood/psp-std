@@ -9,28 +9,10 @@ class FormatFun(val fmt: String) extends (Any => String) with ForceShowDirect {
   def apply(x: Any): String = fmt format x
   def to_s = fmt
 }
-object ?=> {
-  def apply[A, B](p: ToBool[A], f: A => B): A ?=> B = { case x if p(x) => f(x) }
-  def unapply[A, B](f: Fun[A, B]) = Some((f isDefinedAt _, f apply _))
-}
 object sys {
-  def error(msg: String): Nothing = scala.sys.error(msg)
-  def props                       = scala.sys.props
-  def env                         = scala.sys.env
+  def props = scala.sys.props
+  def env   = scala.sys.env
 }
-final case class FunctionGrid[A, B](values: View[A], functions: View[A => B]) {
-  def rows: View2D[B]   = values map (v => functions map (f => f(v)))
-  def columns:View2D[B] = functions map (f => values map (v => f(v)))
-
-  def renderLines(implicit z: Show[B]): Vec[String]               = {
-    val widths    = columns map (_ map z.show map (_.length) max)
-    val formatFns = widths map leftFormatString
-
-    rows map (formatFns zip _ map (_ apply _) mk_s ' ')
-  }
-  def render(implicit z: Show[B]): String = renderLines.joinLines
-}
-
 class Partial[A, B](p: ToBool[A], f: A => B) extends (A ?=> B) {
   def isDefinedAt(x: A): Boolean            = p(x)
   def apply(x: A): B                        = f(x)
@@ -41,13 +23,6 @@ object Partial {
   implicit def liftPartial[A, B](pf: A ?=> B): Partial[A, B] = apply(pf)
   def apply[A, B](pf: A ?=> B): Partial[A, B]                = apply(pf isDefinedAt _, pf apply _)
   def apply[A, B](p: ToBool[A], f: A => B): Partial[A, B]    = new Partial(p, f)
-}
-
-object Grid {
-  def apply[A](f: A => (A, A)): A => View[A] = {
-    def loop(x: A): View[A] = f(x) |> { case (a, b) => a +: loop(b) }
-    loop
-  }
 }
 
 object Empty {
@@ -67,41 +42,6 @@ object Unsafe {
   implicit def inheritedEq[A] : Hash[A]       = inheritEq
   implicit def inheritedShow[A] : Show[A]     = inheritShow
   implicit def shownOrder[A: Show] : Order[A] = orderBy[A](render[A])
-}
-
-trait AndThis { def andThis(x: Unit, xs: Unit*): this.type = this }
-
-final class Utf8(val bytes: Array[Byte]) extends AnyVal with ForceShowDirect {
-  def chars: Array[Char] = scala.io.Codec fromUTF8 bytes
-  def to_s: String       = new String(chars)
-}
-
-final class LabeledFunction[-T, +R](f: T => R, val to_s: String) extends (T ?=> R) with ForceShowDirect {
-  def isDefinedAt(x: T) = f match {
-    case f: ?=>[_,_] => f isDefinedAt x
-    case _           => true
-  }
-  def apply(x: T): R = f(x)
-}
-
-trait Assertions {
-  def failed(msg: => String): Unit
-  def assert(assertion: Boolean, msg: => String): Unit = if (!assertion) failed(msg)
-}
-object Assertions {
-  private[this] var instance: Assertions = DefaultAssertions
-  def using[A](x: Assertions)(assertion: => Boolean, msg: => String): Unit = {
-    val saved = instance
-    instance = x
-    try instance.assert(assertion, msg) finally instance = saved
-  }
-  implicit object DefaultAssertions extends Assertions {
-    def failed(msg: => String): Unit = assertionError(msg)
-  }
-}
-object ImmediateTraceAssertions extends Assertions {
-  def failed(msg: => String): Unit =
-    new AssertionError(msg) |> (t => sideEffect(t.printStackTrace, throw t))
 }
 
 final class OrderBy[A] { def apply[B](f: A => B)(implicit z: Order[B]): Order[A] = Order[A]((x, y) => z.cmp(f(x), f(y)))                     }

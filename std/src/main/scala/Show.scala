@@ -96,6 +96,22 @@ trait ShowEach1 extends ShowEach0 {
   implicit def showEach[A: Show](implicit z: FullRenderer): Show[Each[A]] = Show(xs => z showEach (xs map (_.doc)))
 }
 trait ShowEach extends ShowEach1 {
+  case class FunctionGrid[A, B](values: View[A], functions: View[A => B]) {
+    def rows: View2D[B]   = values map (v => functions map (f => f(v)))
+    def columns:View2D[B] = functions map (f => values map (v => f(v)))
+
+    def renderLines(implicit z: Show[B]): Vec[String]               = {
+      val widths    = columns map (_ map z.show map (_.length) max)
+      val formatFns = widths map leftFormatString
+
+      rows map (formatFns zip _ map (_ apply _) mk_s ' ')
+    }
+    def render(implicit z: Show[B]): String = renderLines.joinLines
+  }
+
+  private def tabular[A](xs: View[A])(columns: ToString[A]*): String =
+    if (xs.nonEmpty && columns.nonEmpty) FunctionGrid(xs.toVec, columns.m).render(inheritShow) else ""
+
   implicit def showExMap[K: Show, V: Show] : Show[ExMap[K, V]]        = Show(xs => tabular(xs.entries.pairs)(_.render))
   implicit def showZipped[A1: Show, A2: Show] : Show[ZipView[A1, A2]] = showBy[ZipView[A1, A2]](_.pairs)
   implicit def showArray[A: Show] : Show[Array[A]]                    = showBy[Array[A]](_.toVec)

@@ -20,6 +20,14 @@ class CollectionResult(viewOp: ViewClass.Op, testedFn: RecorderCounter => ViewCl
   def to_s    = fshow"$name%12s  $result%s"
 }
 
+final class LabeledFunction[-T, +R](f: T => R, val to_s: String) extends (T ?=> R) with ForceShowDirect {
+  def isDefinedAt(x: T) = f match {
+    case f: scala.PartialFunction[_,_] => f isDefinedAt x
+    case _                             => true
+  }
+  def apply(x: T): R = f(x)
+}
+
 class OperationCounts extends ScalacheckBundle {
   private[this] var displaysRemaining = maxDisplay
 
@@ -57,7 +65,7 @@ class OperationCounts extends ScalacheckBundle {
     chooseSmall ^^ lop(n => s"*$n"       -> (_ map multiply(n))),
     chooseSmall ^^ lop(n => s"/$n"       -> (_ withFilter divides(n))),
     chooseSmall ^^ lop(n => s"!/$n"      -> (_ filterNot divides(n))),
-    chooseSmall ^^ lop(n => s"%/$n"      -> (_ collect ?=>(divides(n), _ / n))),
+    chooseSmall ^^ lop(n => s"%/$n"      -> (_ collect Partial(divides(n), _ / n))),
     chooseSmall ^^ lop(n => s"x=>(x, x)" -> (_ flatMap (x => vec(x, x)))),
     chooseRange ^^ lop(r => s"slice $r"  -> (_ slice r))
   )
