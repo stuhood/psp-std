@@ -14,12 +14,11 @@ package std
 import api._
 
 object Builds {
-  def apply[Elem, To](f: Each[Elem] => To): Builds[Elem, To] = new Impl(f)
+  def apply[Elem, To](f: Foreach[Elem] => To): Builds[Elem, To] = new Impl(f)
 
   def array[A: CTag]: Builds[A, Array[A]]                                                    = array(Array.newBuilder[A])
   def direct[A](): Builds[A, Vec[A]]                                                         = Vec.newBuilder[A]
   def list[A](): Builds[A, Plist[A]]                                                         = Plist.newBuilder[A]
-  def each[A]: Builds[A, Each[A]]                                                            = apply(identity)
   def exMap[K : Eq, V] : Builds[K -> V, ExMap[K, V]]                                         = jMap[K, V] map (ExMap fromJava _)
   def exSet[A : Eq]: Builds[A, ExSet[A]]                                                     = jSet[A] map (ExSet fromJava _)
   def jList[A](): Builds[A, jList[A]]                                                        = jList(new jArrayList[A])
@@ -40,8 +39,8 @@ object Builds {
   private def jSortedMap[K, V](js: jTreeMap[K, V]): Builds[K -> V, jSortedMap[K, V]] =
     apply(xs => js doto (js => xs foreach (kv => js.put(fst(kv), snd(kv)))))
 
-  final class Impl[Elem, To](val f: Each[Elem] => To) extends AnyVal with Builds[Elem, To] {
-    def build(xs: Each[Elem]): To      = f(xs)
+  final class Impl[Elem, To](val f: Foreach[Elem] => To) extends AnyVal with Builds[Elem, To] {
+    def build(xs: Foreach[Elem]): To   = f(xs)
     def apply(mf: Suspended[Elem]): To = build(Each(mf))
   }
 }

@@ -19,7 +19,7 @@ trait Linear[@fspec +A]  extends Any with Each[A]    with IsEmpty        { def h
 trait ExSet[A]      extends Any with Each[A] { def apply(x: A): Bool       }
 trait ExMap[K, +V]  extends Any              { def lookup: FiniteDom[K, V] }
 
-trait Foreach[+A] extends Any with MaybeView {
+trait Foreach[+A] extends Any {
   def size: Size
   def foreach(f: A => Unit): Unit
 }
@@ -29,35 +29,32 @@ trait IsView           extends Any with MaybeView { final def isView = true  }
 trait NotView          extends Any with MaybeView { final def isView = false }
 
 trait View[@fspec +A] extends Any with Foreach[A] with IsView {
-  type MapTo[+X]      <: View[X]
-  type Contiguous[+X] <: MapTo[X]
-
   def viewOps: Direct[Doc]
+  def force[That](implicit z: Builds[A, That]): That
 
   /** Contiguous operations share the property that the result is always
    *  a (possibly empty) uninterrupted subsequence of the elements of the
    *  target collection.
    */
-  def drop(n: Precise): Contiguous[A]
-  def dropRight(n: Precise): Contiguous[A]
-  def dropWhile(p: ToBool[A]): Contiguous[A]
-  def take(n: Precise): Contiguous[A]
-  def takeRight(n: Precise): Contiguous[A]
-  def takeWhile(p: ToBool[A]): Contiguous[A]
+  def drop(n: Precise): View[A]
+  def dropRight(n: Precise): View[A]
+  def dropWhile(p: ToBool[A]): View[A]
+  def take(n: Precise): View[A]
+  def takeRight(n: Precise): View[A]
+  def takeWhile(p: ToBool[A]): View[A]
 
-  def collect[B](pf: A ?=> B): MapTo[B]
-  def map[B](f: A => B): MapTo[B]
-  def flatMap[B](f: A => Foreach[B]): MapTo[B]
-  def withFilter(p: ToBool[A]): MapTo[A]
-  def splitAt(index: Index): SplitView[A]
+  def collect[B](pf: A ?=> B): View[B]
+  def map[B](f: A => B): View[B]
+  def flatMap[B](f: A => Foreach[B]): View[B]
+  def withFilter(p: ToBool[A]): View[A]
+  def span(p: ToBool[A]): SplitView[A]
+  def partition(p: ToBool[A]): SplitView[A]
 }
 
 /** When the operation has an `A` in negative position.
  */
-trait InvariantView[A] extends Any with View[A] {
-  def join(that: InvariantView[A]): InvariantView[A]
-  def partition(p: ToBool[A]): SplitView[A]
-  def span(p: ToBool[A]): SplitView[A]
+trait IView[A] extends Any with View[A] {
+  def join(that: IView[A]): IView[A]
 }
 
 /** When a View is split into two disjoint views.

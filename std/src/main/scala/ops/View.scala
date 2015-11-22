@@ -53,18 +53,18 @@ trait ApiViewOps[+A] extends Any {
   def zfirst[B](pf: A ?=> B)(implicit z: Empty[B]): B                     = find(pf.isDefinedAt).fold(z.empty)(pf)
   def zfoldl[B](f: (B, A) => B)(implicit z: Empty[B]): B                  = foldl(z.empty)(f)
   def zfoldr[B](f: (A, B) => B)(implicit z: Empty[B]): B                  = foldr(z.empty)(f)
-  def zipIndex: ZipView[A, Index]                                         = Zip.zip2[A, Index](xs, Each.indices)
+  def zipIndex: ZipView[A, Index]                                         = Zip.zip2[A, Index](xs, Indexed.indices)
   def zipView[A1, A2](implicit z: Pair.Split[A, A1, A2]): ZipView[A1, A2] = Zip.zip0[A, A1, A2](xs)(z)
   def zip[B](ys: View[B]): ZipView[A, B]                                  = Zip.zip2[A, B](xs, ys)
   def zipped[L, R](implicit ev: A <:< (L -> R)): ZipView[L, R]            = Zip.zip0(xs)(Pair.Split(ev andThen fst, ev andThen snd))
 }
 
-final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
+final class IViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
   def +:(elem: A): View[A] = view(elem) ++ xs
   def :+(elem: A): View[A] = xs ++ view(elem)
 
-  def mapPartial(pf: Partial[A, A]): View[A] = xs map (x => pf.applyOr(x, x))
-
+  def mapPartial(pf: Partial[A, A]): View[A]          = xs map (x => pf.applyOr(x, x))
+  def splitAt(index: Index): Split[A]                 = Split(xs take index.sizeExcluding, xs drop index.sizeExcluding)
   def clusterBy[B: Eq](f: A => B): View[View[A]]      = groupBy[B](f).values
   def gather[B](p: Partial[A, View[B]]): View[B]      = xs flatMap p.zapply
   def sum(implicit z: AdditiveMonoid[A]): A           = z sum xs.trav
@@ -95,13 +95,11 @@ final class InvariantViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
   def sortWith(cmp: OrderRelation[A]): View[A]            = orderOps(Order(cmp)).sorted
   def findOr(p: ToBool[A], alt: => A): A                  = find(p) | alt
 
-  def zinit: View[A]                      = if (isEmpty) emptyValue[View[A]] else xs dropRight 1
-  def ztail: View[A]                      = if (isEmpty) emptyValue[View[A]] else xs drop 1
   def intersperse(ys: View[A]): View[A]   = Split(xs, ys).intersperse
   def cross[B](ys: View[B]): View[A -> B] = for (x <- xs ; y <- ys) yield x -> y
 
   def transpose[B](implicit ev: A <:< View[B]): View2D[B] =
-    Each.indices map (n => xs flatMap (_ drop n.sizeExcluding take 1))
+    Indexed.indices map (n => xs flatMap (_ drop n.sizeExcluding take 1))
 
   def memo: Indexed.Memo[A] = new Indexed.Memo(xs)
 

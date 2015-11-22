@@ -14,7 +14,7 @@ package gen {
     def group: Gen[Regex]             = atom ^^ (_.capturingGroup)
     def letterPair: Gen[Char -> Char] = (letter, letter) filter (_ <= _)
     def literal: Gen[Regex]           = letter * (0 upTo 5) ^^ (_.join_s.r)
-    def quantified: Gen[Regex]        = (literal zipWith oneOf("+?*".seq))(_ append _.to_s)
+    def quantified: Gen[Regex]        = (literal zipWith oneOf("+?*".charSeq))(_ append _.to_s)
     def range: Gen[Regex]             = (oneOf("", "^"), letterPair) map { case (neg, (s, e)) => s"[$neg$s-$e]".r }
     def simple: Gen[Regex]            = oneOf(atom, group, alternative)
   }
@@ -51,7 +51,7 @@ package object gen {
 
   def intRange(start: Gen[Int], end: Gen[Int]): Gen[IntRange]     = (start, end) >> psp.std.intRange
   def longRange(start: Gen[Long], end: Gen[Long]): Gen[LongRange] = (start, end) >> psp.std.longRange
-  def letterFrom(s: String): Gen[Char]                            = oneOf(s.seq)
+  def letterFrom(s: String): Gen[Char]                            = oneOf(s.charSeq)
   def indexFrom[A](r: Consecutive[A]): Gen[Index]                 = frequency(1 -> NoIndex, 1 -> Index(0), 20 -> oneOf(r.indices.seq), 1 -> r.lastIndex.next)
   def indexRangeFrom(sMax: Int, eMax: Int): Gen[IndexRange]       = intRange(0 upTo sMax, 0 upTo eMax) ^^ (_ map (_.toLong) map Index)
   def validIndexFrom(r: IntRange): Gen[Index]                     = oneOf(r.indices.seq)

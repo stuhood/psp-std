@@ -19,7 +19,7 @@ object Vec {
   final val MASK27 = ~MASK5
 
   def empty[@fspec A] : Vec[A]                        = NIL.castTo[Vec[A]]
-  def apply[@fspec A](xs: A*): Vec[A]                 = newBuilder[A] build (Direct fromScala xs)
+  def apply[@fspec A](xs: A*): Vec[A]                 = newBuilder[A] build (Direct scala xs)
   def unapplySeq[@fspec A](x: Vec[A]): Some[scSeq[A]] = Some(x.seq)
   def newBuilder[@fspec A](): Builder[A]              = new Builder[A]()
 
@@ -47,7 +47,7 @@ object Vec {
     private[this] var blockIndex = 0
     private[this] var lo = 0
 
-    def build(xs: Each[A]): Vec[A] = {
+    def build(xs: Foreach[A]): Vec[A] = {
       xs foreach add
       result
     }

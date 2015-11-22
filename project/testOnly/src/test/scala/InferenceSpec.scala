@@ -5,7 +5,7 @@ import psp.std._, api._, StdEq._, StdShow._
 
 class SliceSpec extends ScalacheckBundle {
   def bundle = "Slice Operations"
-  def checkSlice[A : Eq : Show](xs: Direct[A], start: Int, end: Int, expect: Direct[A]): Direct[NamedProp] = Direct(
+  def checkSlice[A : Eq : Show](xs: Direct[A], start: Int, end: Int, expect: Direct[A]): Direct[NamedProp] = vec(
     show"$xs.slice($start, $end) === $expect"              -> Prop((xs slice indexRange(start, end)).force[Direct[A]] === expect),
     show"$xs drop $start take ($end - $start) === $expect" -> Prop((xs drop start take end - start).force[Direct[A]] === expect)
   )
@@ -17,7 +17,7 @@ class InferenceSpec extends ScalacheckBundle {
   def bundle = "Type Inference, Views"
 
   val as: Array[Int]     = Array(1, 2, 3)
-  val ds: Direct[Int]    = Direct(1, 2, 3)
+  val ds: Direct[Int]    = vec(1, 2, 3)
   val fs: Each[Int]      = Each(ds foreach _)
   val ls: sciList[Int]   = sciList(1, 2, 3)
   val ss: String         = "123"
