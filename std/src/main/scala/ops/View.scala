@@ -65,7 +65,6 @@ final class IViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
 
   def mapPartial(pf: Partial[A, A]): View[A]          = xs map (x => pf.applyOr(x, x))
   def splitAt(index: Index): Split[A]                 = Split(xs take index.sizeExcluding, xs drop index.sizeExcluding)
-  def clusterBy[B: Eq](f: A => B): View[View[A]]      = groupBy[B](f).values
   def gather[B](p: Partial[A, View[B]]): View[B]      = xs flatMap p.zapply
   def sum(implicit z: AdditiveMonoid[A]): A           = z sum xs.trav
   def product(implicit z: MultiplicativeMonoid[A]): A = z prod xs.trav
@@ -88,6 +87,9 @@ final class IViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
     val res = buf.toMap map { case (k, v) => seen(k) -> v.m }
     res.m.toMap[ExMap]
   }
+
+  /** Probably this should be groupBy. */
+  def mapBy[B: Eq, C](f: A => B, g: View[A] => C): ExMap[B, C] = groupBy[B](f) map g
 
   private[this] def orderOps(z: Order[A]): HasOrder[A] = new HasOrder[A](xs)(z)
 
