@@ -1,16 +1,21 @@
 package psp
-package dmz
+package ext
 
-import scala._
+import scala.{ Any, Nothing, Long, Unit, StringContext }
 import scala.annotation.unchecked.{ uncheckedVariance => uV }
 import java.{ lang => jl }
 import java.{ util => ju }
 import java.{ io => jio }
 import java.nio.{ file => jnf }
 import java.nio.charset.Charset
-import java.lang.String
 
-trait JavaDmz extends Any {
+private[ext] object Util {
+  def doto[A](x: A)(f: A => Unit): A           = sideEffect(x, f(x))
+  def sideEffect[A](result: A, exprs: Any*): A = result
+}
+import Util._
+
+trait JavaLib {
   // Exceptional factories.
   def assertionError(msg: String): Nothing                = throw new AssertionError(msg)
   def illegalArgumentException(msg: Any): Nothing         = throw new IllegalArgumentException(s"$msg")
@@ -20,16 +25,24 @@ trait JavaDmz extends Any {
   def unsupportedOperationException(msg: String): Nothing = throw new UnsupportedOperationException(msg)
 
   // A selection of popular static methods from javaland.
+  def contextClassLoader: ClassLoader = currentThread.getContextClassLoader
   def currentThread: Thread           = jl.Thread.currentThread
   def defaultCharset: Charset         = Charset.defaultCharset
   def fileSeparator: String           = jio.File.separator
   def milliTime: Long                 = jl.System.currentTimeMillis
   def nanoTime: Long                  = jl.System.nanoTime
   def systemClassLoader: ClassLoader  = jl.ClassLoader.getSystemClassLoader
-  def contextClassLoader: ClassLoader = currentThread.getContextClassLoader
-  def utf8Charset: Charset            = Charset forName "UTF-8"
   def threadSleep(ms: Long): Unit     = jl.Thread.sleep(ms)
   def threadYield(): Unit             = jl.Thread.`yield`
+  def utf8Charset: Charset            = Charset forName "UTF-8"
+
+  // A selection of creators for commonly required java types.
+  def jFile(path: String): jFile = new jFile(path)
+  def jPath(path: String): jPath = jnf.Paths get path
+  def jList[A](xs: A*): jList[A] = ju.Arrays.asList(xs: _*)
+  def jSet[A](xs: A*): jSet[A]   = doto(new jHashSet[A])(xs foreach _.add)
+  def jUri(x: String): jUri      = java.net.URI create x
+  def jUrl(x: String): jUrl      = jUri(x).toURL
 
   // A few operations involving time and date.
   def formattedDate(format: String)(date: jDate): String = new java.text.SimpleDateFormat(format) format date
@@ -42,6 +55,7 @@ trait JavaDmz extends Any {
   type Exception                     = jl.Exception
   type IOException                   = jio.IOException
   type IllegalArgumentException      = jl.IllegalArgumentException
+  type IndexOutOfBoundsException     = jl.IndexOutOfBoundsException
   type NoSuchElementException        = ju.NoSuchElementException
   type RuntimeException              = jl.RuntimeException
   type Throwable                     = jl.Throwable
@@ -58,6 +72,7 @@ trait JavaDmz extends Any {
   type InputStream              = jio.InputStream
   type OutputStream             = jio.OutputStream
   type PrintStream              = jio.PrintStream
+  type String                   = jl.String
   type StringBuilder            = jl.StringBuilder
   type Thread                   = jl.Thread
 
@@ -93,4 +108,11 @@ trait JavaDmz extends Any {
   type jTreeSet[A]              = ju.TreeSet[A]
   type jUri                     = java.net.URI
   type jUrl                     = java.net.URL
+
+  // Inlinable constants.
+  final val MaxInt  = jl.Integer.MAX_VALUE
+  final val MaxLong = jl.Long.MAX_VALUE
+  final val MinInt  = jl.Integer.MIN_VALUE
+  final val MinLong = jl.Long.MIN_VALUE
+  final val EOL     = jl.System getProperty "line.separator"
 }

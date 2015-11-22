@@ -3,7 +3,6 @@ package std
 package ops
 
 import api._, StdShow._, StdEq._
-import Api.SpecTypes
 
 trait ApiViewOps[+A] extends Any {
   def xs: View[A]

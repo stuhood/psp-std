@@ -72,7 +72,7 @@ trait Constructions[M[X]] {
   def scalaMap[A,B](xs: scMap[A, B]): M[A->B] = construct(xs.size, xs foreach _)
 
   def scala[A](xs: GTOnce[A]): M[A] = xs match {
-    case xs: sciTraversable[A] => construct(xs.size, xs foreach _)
-    case _                     => scala(xs.to[sciStream])
+    case xs: scTraversable[A] => construct(xs.size, xs foreach _)
+    case _                    => scala(xs.to[sciStream])
   }
 }

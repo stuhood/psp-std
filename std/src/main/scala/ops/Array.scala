@@ -3,8 +3,6 @@ package std
 package ops
 
 import api._
-import java.lang.System.arraycopy
-import Api.SpecTypes
 import spire.math.Sorting
 
 final class ArrayClassTagOps[A: CTag](val xs: Array[A]) {

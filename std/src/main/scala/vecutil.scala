@@ -1,7 +1,6 @@
 package psp
 package std
 
-import java.lang.System.arraycopy
 import Vec._
 import StdShow._
 
@@ -73,7 +72,7 @@ class ArrayLevels[@spec A: CTag] {
 
   private[std] final def copyRange[E: CTag](array: ArrayN.Typed[A, E], oldLeft: Int, newLeft: Int): Array[E] = {
     val elems = new Array[E](32)
-    arraycopy(array, oldLeft, elems, newLeft, 32 - max(newLeft, oldLeft))
+    arraycopy[E](array.xs, oldLeft, elems, newLeft, 32 - max(newLeft, oldLeft))
     elems
   }
 
@@ -127,11 +126,8 @@ final class Displays {
 
   def levels = (1 to depth).toVec.reverseIterator
 
-  private def copyOf(a: Array[AnyRef]): Array[AnyRef] =
-    new Array[AnyRef](a.length) doto (b => arraycopy(a, 0, b, 0, a.length))
-
   def stabilize(idx: Base32): Unit = {
-    levels foreach (n => displays(n) = copyOf(displays(n)))
+    levels foreach (n => displays(n) = copyArray(displays(n)))
     levels foreach (n => displays(n)(idx digitAt n) = displays(n - 1))
   }
 

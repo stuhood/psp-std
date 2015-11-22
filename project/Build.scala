@@ -14,14 +14,14 @@ object Build extends sbt.Build {
   def stdArgs             = wordSeq("-Yno-predef -Yno-adapted-args -Yno-imports -unchecked") // -Ymacro-debug-verbose
   def testDependencies    = Def setting Seq(Deps.scalaReflect.value, scalacheck.copy(configurations = None))
 
-  lazy val api = project setup "psp's non-standard api"
-  lazy val std = project setup "psp's non-standard standard library" dependsOn (api, dmz) also spire
+  lazy val api = project setup "psp's non-standard api" also spire
+  lazy val std = project setup "psp's non-standard standard library" dependsOn api
 
   /***
    *** Everything below this line is to navigate the maze that is sbt.
    ***/
 
-  def subprojects   = List[sbt.Project](api, dmz, std)
+  def subprojects   = List[sbt.Project](api, std)
   def projectRefs   = convertSeq(subprojects): List[ProjectReference]
   def classpathDeps = convertSeq(subprojects): List[ClasspathDep[ProjectReference]]
 
@@ -74,7 +74,6 @@ object Build extends sbt.Build {
           watchSources <++= consoleOnly.allSources
   )
 
-  lazy val dmz         = project.hidden setup "psp's non-standard dmz"
   lazy val consoleOnly = project.helper.usesCompiler.usesAmmonite dependsOn (testOnly % "test->test") deps (consoleDependencies: _*)
   lazy val testOnly    = project.helper aggregate (projectRefs: _*) settings (
           testOptions in Test  +=  Tests.Argument(TestFrameworks.ScalaCheck, "-verbosity", "1"),
