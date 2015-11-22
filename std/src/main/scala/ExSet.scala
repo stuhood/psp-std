@@ -5,7 +5,7 @@ import api._, Unsafe.inheritedShow
 
 object ExSet {
   def apply[A: Eq](xs: Each[A]): ExSet[A]  = new Impl[A](xs, ?)
-  def elems[A: Eq](xs: A*): ExSet[A]       = apply[A](Direct(xs: _*))
+  def elems[A: Eq](xs: A*): ExSet[A]       = apply[A](vec(xs: _*))
   def fromJava[A](xs: jSet[A]): ExSet[A]   = new FromJava(xs)
   def fromScala[A](xs: scSet[A]): ExSet[A] = new FromScala(xs.toSet)
 

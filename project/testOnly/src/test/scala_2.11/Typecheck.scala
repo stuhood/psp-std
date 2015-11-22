@@ -17,6 +17,7 @@ class Typecheck extends ScalacheckBundle {
 
   // We don't want to protect scala library from itself so let's unmask augmentString etc.
   def checkScala() = {
+
     // These two definitions are here to shadow implicits
     val opsWrapString = null
     val viewPspString = null
@@ -42,7 +43,7 @@ class Typecheck extends ScalacheckBundle {
     )
   }
 
-  def props = Direct[NamedProp](
+  def props = vec[NamedProp](
     divide("psp-show", typecheckedLines(pspShowCode)),
     divide("psp-by-equals", typecheckedLines(pspByEquals), expectedTypecheck = 12),
     divide("psp-by-ref", typecheckedLines(pspByRef), expectedTypecheck = 0),

@@ -17,11 +17,11 @@ trait BiIterator[+A] extends jIterator[A @uV] with scIterator[A] {
 object BiIterator {
   def empty[A] : BiIterator[A] = Empty
 
-  def apply[A](xs: Each[A]): BiIterator[A]                           = direct(xs.toDirect)
-  def array[A](xs: Array[A]): BiIterator[A]                          = direct(Direct fromArray xs)
-  def direct[A](xs: Direct[A]): DirectIterator[A]                    = new DirectIterator(xs)
-  def reverse[A](xs: Direct[A]): ReverseIterator[A]                  = new ReverseIterator(xs)
-  def enumeration[A](enum: jEnumeration[A]): BiIterator[A]           = new EnumerationIterator(enum)
+  def apply[A](xs: Foreach[A]): BiIterator[A]              = direct(Direct each xs)
+  def array[A](xs: Array[A]): BiIterator[A]                = direct(Direct array xs)
+  def direct[A](xs: Direct[A]): DirectIterator[A]          = new DirectIterator(xs)
+  def reverse[A](xs: Direct[A]): ReverseIterator[A]        = new ReverseIterator(xs)
+  def enumeration[A](enum: jEnumeration[A]): BiIterator[A] = new EnumerationIterator(enum)
 
   final class EnumerationIterator[A](enum: jEnumeration[A]) extends BiIterator[A] {
     def hasNext = enum.hasMoreElements
@@ -53,9 +53,10 @@ object BiIterable {
   private class JavaBased[A](xs: jIterable[A])   extends BiIterableImpl(xs.iterator |> (it => new Impl(it.hasNext, it.next)))
   private class ScalaBased[A](xs: scIterable[A]) extends BiIterableImpl(xs.iterator |> (it => new Impl(it.hasNext, it.next)))
 
-  def apply[A](xs: Each[A]): BiIterable[A]       = apply[A](xs.toDirect)
+  def apply[A](xs: Foreach[A]): BiIterable[A]    = apply[A](Direct each xs)
   def apply[A](xs: Direct[A]): BiIterable[A]     = new DirectBased(xs)
-  def apply[A](xs: Array[A]): BiIterable[A]      = apply[A](Direct fromArray xs)
+  def apply[A](xs: Array[A]): BiIterable[A]      = apply[A](Direct array xs)
   def apply[A](xs: jIterable[A]): BiIterable[A]  = new JavaBased(xs)
   def apply[A](xs: scIterable[A]): BiIterable[A] = new ScalaBased(xs)
+  def apply[A](s: String): BiIterable[Char]      = apply(Direct string s)
 }

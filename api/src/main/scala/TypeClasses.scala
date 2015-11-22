@@ -27,12 +27,12 @@ trait Empty[@fspec +A] extends Any {
  *  Not especially classic in this presentation.
  */
 trait Builds[@fspec -Elem, +To] extends Any {
-  def build(xs: Each[Elem]): To
+  def build(xs: Foreach[Elem]): To
 }
 
 trait Unbuilds[Repr] extends Any {
   type Elem
-  def unbuild(xs: Repr): Each[Elem]
+  def unbuild(xs: Repr): Foreach[Elem]
 }
 
 /** Contravariance vs. implicits, the endless battle.

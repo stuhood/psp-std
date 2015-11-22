@@ -4,7 +4,7 @@ package std
 import api._, StdEq._, StdShow._, Unsafe.inheritedShow
 import lowlevel.CircularBuffer
 
-sealed abstract class AtomicView[A, Repr] extends InvariantBaseView[A, Repr] {
+sealed abstract class AtomicView[A, Repr] extends IBaseView[A, Repr] {
   type This <: AtomicView[A, Repr]
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange
   def head: A
@@ -56,8 +56,7 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
   def toEach: Each[A] = Each(foreach)
 
   type This <: BaseView[A, Repr]
-  type MapTo[+X]      = BaseView[X, Repr]
-  type Contiguous[+X] = MapTo[X]
+  type MapTo[+X] = BaseView[X, Repr]
 
   def xs: this.type = this
 
@@ -96,17 +95,13 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
   }
 }
 
-sealed trait InvariantBaseView[A, Repr] extends BaseView[A, Repr] with InvariantView[A] {
-  type JoinTo[X] = InvariantView[X]
-  type SplitTo[X] = Split[X]
-
-  final def join(that: InvariantView[A]): InvariantView[A] = Joined(this, that)
-  final def splitAt(index: Index): Split[A]                = Split(take(index.sizeExcluding), drop(index.sizeExcluding))
-  final def span(p: ToBool[A]): Split[A]                   = Split(takeWhile(p), dropWhile(p))
-  final def partition(p: ToBool[A]): Split[A]              = Split(withFilter(p), withFilter(!p))
+sealed trait IBaseView[A, Repr] extends BaseView[A, Repr] with IView[A] {
+  final def join(that: IView[A]): IView[A]    = Joined(this, that)
+  final def span(p: ToBool[A]): Split[A]      = Split(takeWhile(p), dropWhile(p))
+  final def partition(p: ToBool[A]): Split[A] = Split(withFilter(p), withFilter(!p))
 }
 
-sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEffect: ToSelf[Size]) extends InvariantBaseView[B, Repr] {
+sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEffect: ToSelf[Size]) extends IBaseView[B, Repr] {
   def prev: View[A]
   def size    = sizeEffect(prev.size)
   def viewOps = prev.viewOps.castTo[Vec[Doc]] :+ description
@@ -174,7 +169,7 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
   }
 }
 
-final case class Joined [A, B >: A, Repr](prev: BaseView[A, Repr], ys: View[B])     extends CompositeView[A, B, Repr](pp"++ $ys",      _ + ys.size)
+final case class Joined [A,         Repr](prev: IBaseView[A, Repr], ys: IView[A])   extends CompositeView[A, A, Repr](pp"++ $ys",      _ + ys.size)
 final case class Filtered    [A   , Repr](prev: BaseView[A, Repr], p: ToBool[A])    extends CompositeView[A, A, Repr](pp"filter $p",   _.atMost)
 final case class Dropped     [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"drop $n",     _ - n)
 final case class DroppedR    [A   , Repr](prev: BaseView[A, Repr], n: Precise)      extends CompositeView[A, A, Repr](pp"dropR $n",    _ - n)

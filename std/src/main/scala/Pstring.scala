@@ -24,10 +24,10 @@ final class SplitCharView(val xs: Vec[String], sep: Char) extends Direct[String]
 }
 
 final class Pstring(val self: String) extends AnyVal with ForceShowDirect {
+  private def chars: Array[Char] = self.toCharArray
+  // import self.{ toCharArray => chars }
   // Let this hang out here - uncommenting it reveals which string
   // implicits are being depended upon.
-  //
-  // private def opsWrapString = null
 
   def r: Regex     = Regex(self)
   def u: jUrl      = jUrl(self)
@@ -43,7 +43,8 @@ final class Pstring(val self: String) extends AnyVal with ForceShowDirect {
   def append(that: String): String                  = self + that   /** Note to self: don't touch this `+`. */
   def bytes: Array[Byte]                            = self.getBytes
   def capitalize: String                            = applyIfNonEmpty[String](self)(s => s.head.toUpper.to_s append s.tail.force)
-  def chars: Array[Char]                            = self.toCharArray
+  def charVec: Vec[Char]                            = charSeq.toVec
+  def charSeq: scSeq[Char]                          = chars.m.seq
   def containsChar(ch: Char): Boolean               = chars.m contains ch
   def format(args : Any*): String                   = java.lang.String.format(self, args map unwrapArg: _*)
   def length: Int                                   = self.length

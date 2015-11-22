@@ -6,18 +6,16 @@ import api._
 final class Conversions[A](val xs: View[A]) extends AnyVal with ConversionsImpl[A]
 
 final class Unbuilder[A, Repr](repr: Repr)(implicit z: UnbuildsAs[A, Repr]) {
-  def xs: View[A] = z unbuild repr
-  def m: AtomicView[A, Repr] = xs match {
-    case xs: Direct[A] => new DirectView(xs)
-    case xs            => new LinearView(xs)
-  }
+  def xs: View[A]            = m
+  def m: AtomicView[A, Repr] = new LinearView(Each each (z unbuild repr))
 }
 object Unbuilds {
-  def apply[A, Repr](f: Repr => Each[A]): UnbuildsAs[A, Repr] = new Impl[A, Repr](f)
+  def apply[A, R](f: R => Foreach[A]): UnbuildsAs[A, R] = new Impl[A, R](f)
+  def impl[A, R](f: UnbuildsAs[A, R]): Impl[A, R]       = new Impl(f unbuild _)
 
-  final class Impl[A, Repr](val f: Repr => Each[A]) extends AnyVal with Unbuilds[Repr] {
+  final class Impl[A, Repr](val f: Repr => Foreach[A]) extends AnyVal with Unbuilds[Repr] {
     type Elem = A
-    def unbuild(xs: Repr): Each[A] = f(xs)
+    def unbuild(xs: Repr): Foreach[A] = f(xs)
   }
 }
 
@@ -57,8 +55,24 @@ trait ConversionsImpl[A] extends Any {
   def toScalaVector: sciVector[A]              = to[sciVector]
   def toVec: Vec[A]                            = to[Vec]
 
-  /** Conveniences. */
   def iterator: BiIterator[A] = BiIterator(xs)
-  def trav: scTraversable[A]  = to[scTraversable] // flatMap, usually
-  def seq: scSeq[A]           = to[scSeq]         // varargs or unapplySeq, usually
+}
+
+trait Constructions[M[X]] {
+  def construct[A](size: Size, mf: Suspended[A]): M[A]
+
+  def const[A](elem: A): M[A]         = pure(mf => while(true) mf(elem))
+  def each[A](xs: Foreach[A]): M[A]   = construct(xs.size, xs foreach _)
+  def elems[A](xs: A*): M[A]          = scala(xs)
+  def empty[A] : M[A]                 = construct(Size.Zero, vec() foreach _)
+  def java[A](xs: jIterable[A]): M[A] = pure(BiIterable(xs) foreach _)
+  def pure[A](f: Suspended[A]): M[A]  = construct(Size.Unknown, f)
+
+  def javaMap[A,B](xs: jMap[A, B]): M[A->B]   = construct(xs.size, mf => xs.keySet foreach (k => mf((k, xs get k))))
+  def scalaMap[A,B](xs: scMap[A, B]): M[A->B] = construct(xs.size, xs foreach _)
+
+  def scala[A](xs: GTOnce[A]): M[A] = xs match {
+    case xs: sciTraversable[A] => construct(xs.size, xs foreach _)
+    case _                     => scala(xs.to[sciStream])
+  }
 }

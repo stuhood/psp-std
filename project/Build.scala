@@ -10,7 +10,7 @@ import scoverage.ScoverageKeys._
 object Build extends sbt.Build {
   def consoleDependencies = List(jsr305, ammonite)
   def optimizeArgs        = wordSeq("-optimise -Yinline-warnings")
-  def stdArgs             = wordSeq("-Yno-predef -Yno-adapted-args -Yno-imports -unchecked")
+  def stdArgs             = wordSeq("-Yno-predef -Yno-adapted-args -Yno-imports -unchecked") // -Ymacro-debug-verbose
   def testDependencies    = Def setting Seq(Deps.scalaReflect.value, scalacheck.copy(configurations = None))
 
   lazy val api = project setup "psp's non-standard api"

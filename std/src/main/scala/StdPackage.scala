@@ -32,13 +32,21 @@ abstract class StdPackageObject extends scala.AnyRef
     def tail    = xs.drop(1)
     def init    = xs.dropRight(1)
 
-    def apply(i: Index): A                   = xs elemAt i
-    def indices: IndexRange                  = indexRange(0, xs.size.getInt)
-    def lastIndex: Index                     = Index(xs.size.get - 1)  // effectively maps both undefined and zero to no index.
+    def reverse: Direct[A]  = Direct reversed xs
+    def apply(i: Index): A  = xs elemAt i
+    def indices: IndexRange = indexRange(0, xs.size.getInt)
+    def lastIndex: Index    = Index(xs.size.get - 1)  // effectively maps both undefined and zero to no index.
+
     def containsIndex(index: Index): Boolean = indices containsInt index.getInt
 
     @inline def foreachIndex(f: Index => Unit): Unit  = if (xs.size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, i => f(Index(i)))
     @inline def foreachIntIndex(f: Int => Unit): Unit = if (xs.size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, f)
+  }
+
+  implicit final class ForeachOps[A](val xs: Foreach[A]) {
+    private[this] def to[CC[X]](implicit z: Builds[A, CC[A]]): CC[A] = z build Each(xs foreach _)
+    def trav: scTraversable[A] = to[scTraversable] // flatMap, usually
+    def seq: scSeq[A]          = to[scSeq]         // varargs or unapplySeq, usually
   }
 
   def lexicalOrder: Order[String] = Order.fromInt(_ compareTo _)
@@ -142,6 +150,6 @@ abstract class StdPackageObject extends scala.AnyRef
   def set[A: Eq](xs: A*): ExSet[A]                  = xs.toExSet
   def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V]       = xs.m.toExMap
   def list[A](xs: A*): Plist[A]                     = xs.toPlist
-  def inView[A](mf: Suspended[A]): View[A]          = Each(mf).m
+  def inView[A](mf: Suspended[A]): View[A]          = new LinearView(Each(mf))
   def zipView[A, B](xs: (A, B)*): ZipView[A, B]     = Zip zip1 xs.m
 }

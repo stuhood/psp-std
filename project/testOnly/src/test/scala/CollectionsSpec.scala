@@ -73,7 +73,7 @@ class StringExtensions extends ScalacheckBundle {
   // take/dropRight with values around MinInt.
   def mostInts = arb[Int] filter (_ > MinInt + 5000)
 
-  def props: Direct[NamedProp] = Direct(
+  def props: Direct[NamedProp] = vec(
     "stripSuffix" -> newProp2[String](_ stripSuffix _)(_ stripSuffix _),
     "stripPrefix" -> newProp2[String](_ stripPrefix _)(_ stripPrefix _),
     "take"        -> newProp2[Int](_ take _)(_ take _ build),
@@ -118,7 +118,7 @@ class GridSpec extends ScalacheckBundle {
   |12  33  85  133 253 377
   """
 
-  def props = Direct(
+  def props = vec(
     seqShows("[ 2, 4, 6, ... ], [ 3, 9, 15, ... ], [ 5, 25, 35, ... ]", primePartition take 3),
     showsAs(primePartition6, showGrid(primePartitionGrid(6))),
     showsAs(primePartition6_t, showGrid(primePartitionGrid_t(6)))
@@ -183,8 +183,8 @@ class ViewBasic extends ScalacheckBundle {
         { case xs -> (idx -> size) => xs(idx) }
       ),
       "splitAt/drop" -> sameOutcomes[RTriple, View[Int]](
-        { case xs -> (idx -> size) => xs splitAt idx onRight (_ drop size) },
-        { case xs -> (idx -> size) => xs drop size splitAt idx onRight identity }
+        { case xs -> (idx -> size) => xs.m splitAt idx onRight (_ drop size) },
+        { case xs -> (idx -> size) => xs.m drop size splitAt idx onRight identity }
       )
       // Just to observe the scalacheck arguments being generated
       // , "dump" -> sameOutcomes[RTriple, Unit](
@@ -241,7 +241,7 @@ class ViewSplitZip extends ScalacheckBundle {
   def mixed  = mod.intersperse
   def sums   = zipped map (_ + _)
 
-  def props: Direct[NamedProp] = Direct(
+  def props: Direct[NamedProp] = vec(
     showsAs("[ 1, 2, 3 ]", span.left),
     showsAs("[ 4, 5, 6 ]", span.right),
     showsAs("[ 2, 4, 6 ]", mod.left),

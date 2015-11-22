@@ -18,7 +18,6 @@ final class Consecutive[+A] private (val startInt: Int, val lastInt: Int, f: Int
   def containsInt(n: Int): Bool         = startInt <= n && n < exclusiveEnd
   def containsIndex(index: Index)       = size containsIndex index
   def map[B](g: A => B): Consecutive[B] = new Consecutive(startInt, lastInt, f andThen g)
-  def reverse: Direct[A]                = Direct reversed this
   def asIndices: IndexRange             = startInt to lastInt map (i => Index(i))
 
   def drop(n: Precise): Consecutive[A]      = create(startInt + n.toInt, size - n)
@@ -40,7 +39,7 @@ object Consecutive {
   private val Empty = new Consecutive[Nothing](0, -1, indexOutOfBoundsException)
 
   def empty: Consecutive[Nothing]                                 = Empty
-  def downTo(start: Int, end: Int): Direct[Int]                   = Direct reversed to(end, start)
+  def downTo(start: Int, end: Int): Direct[Int]                   = to(end, start).reverse
   def to(start: Int, end: Int): IntRange                          = if (end < start) empty else new Consecutive(start, end, id)
   def until(start: Int, end: Int): IntRange                       = if (end <= start) empty else new Consecutive(start, end - 1, id)
   def until[A](start: Int, end: Int, f: Int => A): Consecutive[A] = if (end <= start) empty else new Consecutive(start, end - 1, f)
