@@ -12,8 +12,8 @@ abstract class StdPackageObject extends scala.AnyRef
       with AlgebraInstances
       with StdImplicits
       with Aliases
-      with psp.dmz.ScalaDmz
-      with psp.dmz.JavaDmz {
+      with psp.ext.ScalaLib
+      with psp.ext.JavaLib {
 
   // Ugh. XXX
   implicit def promoteSize(x: Int): Precise                    = Size(x)
@@ -116,7 +116,6 @@ abstract class StdPackageObject extends scala.AnyRef
   def nullAs[A] : A                                    = null.asInstanceOf[A]
   def option[A](p: Boolean, x: => A): Option[A]        = if (p) Some(x) else None
   def randomPosInt(max: Int): Int                      = scala.util.Random.nextInt(max + 1)
-  def sideEffect[A](result: A, exprs: Any*): A         = result
   def leftFormatString[A](n: Int): FormatFun           = new FormatFun(cond(n == 0, "%s", "%%-%ds" format n))
 
   def max(l: Int, r: Int): Int     = if (l >= r) l else r

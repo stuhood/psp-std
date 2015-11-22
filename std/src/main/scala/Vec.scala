@@ -2,8 +2,6 @@ package psp
 package std
 
 import api._, StdShow._, StdEq._
-import java.lang.System.arraycopy
-import Api.SpecTypes
 import Vec._
 import java.lang.{ Math => math }
 

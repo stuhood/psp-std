@@ -4,7 +4,6 @@ package lowlevel
 
 import api._, StdEq._
 import scala.Tuple2
-import Api.SpecTypes
 import java.nio.ByteBuffer
 import java.io.{ ByteArrayOutputStream, BufferedInputStream }
 

@@ -1,16 +1,15 @@
 package psp
-package dmz
+package ext
 
-import scala._
+import scala.{ Any, Nothing, Long, Unit, StringContext }
 import scala.annotation.unchecked.{ uncheckedVariance => uV }
 import java.{ lang => jl }
 import java.{ util => ju }
 import java.{ io => jio }
 import java.nio.{ file => jnf }
 import java.nio.charset.Charset
-import java.lang.String
 
-trait JavaDmz extends Any {
+trait JavaLib {
   // Exceptional factories.
   def assertionError(msg: String): Nothing                = throw new AssertionError(msg)
   def illegalArgumentException(msg: Any): Nothing         = throw new IllegalArgumentException(s"$msg")
@@ -42,6 +41,7 @@ trait JavaDmz extends Any {
   type Exception                     = jl.Exception
   type IOException                   = jio.IOException
   type IllegalArgumentException      = jl.IllegalArgumentException
+  type IndexOutOfBoundsException     = jl.IndexOutOfBoundsException
   type NoSuchElementException        = ju.NoSuchElementException
   type RuntimeException              = jl.RuntimeException
   type Throwable                     = jl.Throwable
@@ -58,6 +58,7 @@ trait JavaDmz extends Any {
   type InputStream              = jio.InputStream
   type OutputStream             = jio.OutputStream
   type PrintStream              = jio.PrintStream
+  type String                   = jl.String
   type StringBuilder            = jl.StringBuilder
   type Thread                   = jl.Thread
 
