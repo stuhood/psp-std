@@ -47,12 +47,13 @@ object INREPL {
    *  you want to require a Show[A] instance.
    */
   implicit final class ReplOpsWithShow[A, R](val xs: R)(implicit val z: UnbuildsAs[A, R]) {
-    private def run(f: Each[A] => Each[String]): R = try xs finally f(z unbuild xs) foreach println
+    private def run(f: Each[A] => Each[String]): R = sideEffect(xs, f(Each(z unbuild xs foreach _)) foreach (x => println(x)))
 
     def >                                            = run(_ map (_.any_s))
     def >>(implicit z: Show[A])                      = run(_ map z.show)
     def !>(implicit ord: Order[A], z: Show[A]): Unit = run(_.m.sorted map z.show)
   }
 
-  implicit def showToAmmonite[A](implicit z: Show[A]): pprint.PPrinter[A] = pprint.PPrinter[A]((t, c) => BiIterator[String](vec(z show t)))
+  implicit def showToAmmonite[A](implicit z: Show[A]): pprint.PPrinter[A] =
+    pprint.PPrinter[A]((t, c) => BiIterator[String](vec(z show t)))
 }
