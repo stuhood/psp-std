@@ -12,9 +12,10 @@ trait ApiViewOps[+A] extends Any {
     true
   }
 
+  def apply(index: Index): A                                              = xs drop index.sizeExcluding head
   def count(p: ToBool[A]): Int                                            = foldl[Int](0)((res, x) => if (p(x)) res + 1 else res)
   def dropIndex(index: Index): View[A]                                    = xs splitAt index mapRight (_ drop 1) rejoin
-  def exists(p: ToBool[A]): Boolean                                       = foldl[Boolean](false)((res, x) => if (p(x)) return true else res)
+  def exists(p: ToBool[A]): Boolean                                       = foldl(false)((res, x) => if (p(x)) return true else res)
   def filter(p: ToBool[A]): View[A]                                       = xs withFilter p
   def filterNot(p: ToBool[A]): View[A]                                    = xs withFilter !p
   def find(p: ToBool[A]): Option[A]                                       = foldl(none[A])((res, x) => if (p(x)) return Some(x) else res)
@@ -24,16 +25,18 @@ trait ApiViewOps[+A] extends Any {
   def fold[@fspec B](implicit z: Empty[B]): HasInitialValue[A, B]         = foldFrom(z.empty)
   def foldl[@fspec B](zero: B)(f: (B, A) => B): B                         = foldFrom(zero) left f
   def foldr[@fspec B](zero: B)(f: (A, B) => B): B                         = foldFrom(zero) right f
-  def forall(p: ToBool[A]): Boolean                                       = foldl(true)((res, x) => if (!p(x)) return false else res)
+  def forall(p: ToBool[A]): Boolean                                       = foldl(true)((_, x) => p(x) || { return false })
   def forallTrue(implicit ev: A <:< Boolean): Boolean                     = forall(ev)
-  def foreachWithIndex(f: (A, Index) => Unit): Unit                       = foldl(Index(0))((idx, x) => try idx.next finally f(x, idx))
+  def foreachWithIndex(f: (A, Index) => Unit): Unit                       = foldl(Index(0))((idx, x) => sideEffect(idx.next, f(x, idx)))
   def gatherClass[B: CTag] : View[B]                                      = xs collect classFilter[B]
   def grep(regex: Regex)(implicit z: Show[A]): View[A]                    = xs filter (regex isMatch _)
+  def head: A                                                             = (xs take 1).force.head
   def indexWhere(p: ToBool[A]): Index                                     = zipIndex findLeft p map snd or NoIndex
   def indicesWhere(p: ToBool[A]): View[Index]                             = zipIndex filterLeft p rights
   def init: View[A]                                                       = xs dropRight 1
   def isEmpty: Boolean                                                    = xs.size.isZero || directIsEmpty
   def join_s(implicit z: Show[A]): String                                 = this mk_s ""
+  def last: A                                                             = xs takeRight 1 head
   def mapApply[B, C](x: B)(implicit ev: A <:< (B => C)): View[C]          = xs map (f => ev(f)(x))
   def mapNow[B](f: A => B): Vec[B]                                        = xs map f toVec
   def mapWithIndex[B](f: (A, Index) => B): View[B]                        = inView[B](mf => foldWithIndex(())((res, x, i) => mf(f(x, i))))
@@ -45,7 +48,7 @@ trait ApiViewOps[+A] extends Any {
   def sliceWhile(p: ToBool[A], q: ToBool[A]): View[A]                     = xs dropWhile p takeWhile q
   def tail: View[A]                                                       = xs drop 1
   def takeToFirst(p: ToBool[A]): View[A]                                  = xs span !p mapRight (_ take 1) rejoin
-  def tee(f: A => String): View[A]                                        = xs map (_ doto (x => println(f(x))))
+  def tee(f: A => String): View[A]                                        = xs map (x => sideEffect(x, println(f(x))))
   def toRefs: View[Ref[A]]                                                = xs map (_.toRef)
   def unzip[L, R](implicit ev: A <:< (L -> R)): View[L] -> View[R]        = zipped[L, R] |> (x => x.lefts -> x.rights)
   def withSize(size: Size): View[A]                                       = new Each.Impl[A](size, xs foreach _)
@@ -64,9 +67,12 @@ final class IViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
 
   def mapPartial(pf: Partial[A, A]): View[A]          = xs map (x => pf.applyOr(x, x))
   def splitAt(index: Index): Split[A]                 = Split(xs take index.sizeExcluding, xs drop index.sizeExcluding)
+  def splitAround(index: Index): A -> Split[A]        = splitAt(index) |> (lr => (lr onRight (_.head)) -> (lr mapRight (_ tail)))
   def gather[B](p: Partial[A, View[B]]): View[B]      = xs flatMap p.zapply
   def sum(implicit z: AdditiveMonoid[A]): A           = z sum xs.trav
   def product(implicit z: MultiplicativeMonoid[A]): A = z prod xs.trav
+  def reducel(f: BinOp[A]): A                         = tail.foldl(head)(f)
+  def reducer(f: BinOp[A]): A                         = init.foldr(last)(f)
 
   /** This is kind of horrific but has the advantage of not being as busted.
    *  We need to not be using scala's map because it will always compare keys based

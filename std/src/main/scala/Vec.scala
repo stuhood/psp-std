@@ -86,7 +86,7 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
   @inline private def preStartIndex = startIndex - 1
 
   private def nextVec(s: Int, e: Int, f: Int): Vec[A] = new Vec[A](s, e, f)
-  private def newVec(s: Int, e: Int, f: Int): Vec[A]  = nextVec(s, e, f) doto (_ initFrom this)
+  private def newVec(s: Int, e: Int, f: Int): Vec[A]  = doto(nextVec(s, e, f))(_ initFrom this)
 
   private def updateDirty(s: Vec[A]): Vec[A] = { s.dirty = this.dirty ; s }
 
@@ -421,10 +421,10 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
   }
 
   private def copyRight(array: Array[AnyRef], left: Int): Array[AnyRef] =
-    new Array[AnyRef](array.length) doto (a2 => arraycopy(array, left, a2, left, a2.length - left))
+    doto(new Array[AnyRef](array.length))(a2 => arraycopy(array, left, a2, left, a2.length - left))
 
   private def copyLeft(array: Array[AnyRef], right: Int): Array[AnyRef] =
-    new Array[AnyRef](array.length) doto (a2 => arraycopy(array, 0, a2, 0, right))
+    doto(new Array[AnyRef](array.length))(a2 => arraycopy(array, 0, a2, 0, right))
 
   // requires structure is writable and at index cutIndex
   private[std] def cleanRightEdge(cutIndex: Int): Unit = {
@@ -693,7 +693,7 @@ sealed trait VectorPointer[@fspec T] {
 
   // STUFF BELOW USED BY APPEND / UPDATE
   private[std] final def copyOf(a: Array[AnyRef]) =
-    new Array[AnyRef](a.length) doto (b => arraycopy(a, 0, b, 0, a.length))
+    doto(new Array[AnyRef](a.length))(b => arraycopy(a, 0, b, 0, a.length))
 
   private[std] final def nullSlotAndCopy(array: Array[AnyRef], index: Int) = {
     val x = array(index)

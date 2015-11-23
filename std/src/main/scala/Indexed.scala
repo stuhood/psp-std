@@ -9,10 +9,11 @@ import java.util.concurrent.LinkedBlockingQueue
  *  We can memoize an Each into an Indexed.
  */
 object Indexed {
-  def indices: Indexed[Index]              = Pure(identity)
-  def from(start: BigInt): Indexed[BigInt] = Pure(i => start + i.get)
-  def from(start: Int): Indexed[Int]       = Pure(i => start + i.getInt)
-  def from(start: Long): Indexed[Long]     = Pure(i => start + i.get)
+  def indices: Indexed[Index]                  = Pure(identity)
+  def from(start: SafeLong): Indexed[SafeLong] = Pure(i => start + i.get)
+  def from(start: BigInt): Indexed[BigInt]     = Pure(i => start + i.get)
+  def from(start: Int): Indexed[Int]           = Pure(i => start + i.getInt)
+  def from(start: Long): Indexed[Long]         = Pure(i => start + i.get)
 
   final case class Pure[A](f: Index => A) extends AnyVal with Indexed[A] {
     def size                                = Size.Unknown
@@ -27,7 +28,7 @@ object Indexed {
   final class MemoIterator[+A](memo: Memo[A]) extends scIterator[A] {
     @volatile private[this] var index: Index = Index(0)
     def hasNext = memo isDefinedAt index
-    def next: A = try memo(index) finally index += 1
+    def next: A = sideEffect(memo(index), index += 1)
   }
 
   private def spawn[A](body: => A): Unit = {
@@ -46,7 +47,7 @@ object Indexed {
     private[this] def seen = Size(memo.length)
     private[this] def next(): A = handoff.poll match {
       case null => nullAs[A]
-      case elem => elem doto (x => memo = memo :+ x)
+      case elem => doto(elem)(x => memo = memo :+ x)
     }
     private[this] def hasNext: Boolean = !doneConsuming && {
       handoff.peek match {
