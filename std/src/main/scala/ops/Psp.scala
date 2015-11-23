@@ -15,7 +15,7 @@ final class DocOps(val lhs: Doc) extends AnyVal {
 
   def ~(rhs: Doc): Doc   = Doc.Cat(lhs, rhs)
   def <>(rhs: Doc): Doc  = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ rhs
-  def <+>(rhs: Doc): Doc = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ " ".s ~ rhs
+  def <+>(rhs: Doc): Doc = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ " " ~ rhs
 }
 final class ExMapOps[K, V](xs: ExMap[K, V]) {
   type Entry = K -> V
@@ -49,6 +49,9 @@ final class PreciseOps(val size: Precise) {
   def + (n: Precise): Precise              = size + n.get
   def - (n: Precise): Precise              = size - n.get
   def containsIndex(index: Index): Boolean = indices containsInt index.getInt
+
+  def min(rhs: Precise): Precise = if (size <= rhs) size else rhs
+  def max(rhs: Precise): Precise = if (size >= rhs) size else rhs
 
   @inline def foreachIndex(f: Index => Unit): Unit  = if (size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, i => f(Index(i)))
   @inline def foreachIntIndex(f: Int => Unit): Unit = if (size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, f)

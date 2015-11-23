@@ -10,13 +10,15 @@ class SpireSpec extends ScalacheckBundle {
   import spire._, implicits._
   import spire.syntax.literals.si._
 
+  val x = j"89 234 614 123 234 772"          // Long
   val y = big"123 456 789 987 654 321"       // BigInt
   val z = dec"1 234 456 789.123456789098765" // BigDecimal
 
   def props = vec(
     expectValue(y * 3)(Array(y, y, y).inPlace.shuffle.m.sum),
-    expectValue(y * y * y)(Array(y, y, y).inPlace.shuffle.m.product)
-    )
+    expectValue(y * y * y)(Array(y, y, y).inPlace.shuffle.m.product),
+    expectValue("89 234 614 123 234 772".toSafeLong)(x)
+  )
 }
 
 class ADTSpec extends ScalacheckBundle {
@@ -63,7 +65,8 @@ class ADTSpec extends ScalacheckBundle {
 class StringExtensions extends ScalacheckBundle {
   def bundle = "String Extensions"
 
-  def s                   = "123 monkey dog ^^.* hello mother 456"
+  def s = "123 monkey dog ^^.* hello mother 456"
+
   def scalaOps(s: String) = new StringOps(s)
 
   def newProp[A: Eq](f: StringOps => A, g: String => A): Prop = forAll((s: String) => sameBehavior(f(scalaOps(s)), g(s)))
@@ -89,8 +92,13 @@ class StringExtensions extends ScalacheckBundle {
     "tail"        -> newProp[String](_.tail, _.tail.force),
     "head"        -> newProp(_.head, _.head),
     "drop"        -> newProp[Char](_.head, _.head),
-    "reverse"     -> newProp[String](_.reverse, _.reverse.force)
-    )
+    "reverse"     -> newProp[String](_.reverse, _.reverseChars.force),
+    expectValue("")("".capitalize),
+    expectValue("Bob")("bob".capitalize),
+    expectValue("Bob johnson")("bob johnson".capitalize),
+    expectValue("Bob Johnson")("bob\njohnson".mapLines(_.capitalize).lines mk_s ' '),
+    expectValue("\u0001\u0002b\u0020b\u0003".sanitize)("??b b?")
+  )
 }
 
 class GridSpec extends ScalacheckBundle {
@@ -101,9 +109,11 @@ class GridSpec extends ScalacheckBundle {
   def primePartitionGrid_t(n: Int): View2D[Int] = primePartition.transpose take n map (_ take n)
 
   def showGrid(xss: View2D[Int]): String = {
-    val yss = xss mmap (_.render)
-    val width = yss.flatMap(x => x).mapNow(_.length).m.max
-    (yss mmap leftFormatString(width) map (_ mk_s ' ') mk_s '\n').trim.trimLines
+    val yss   = xss mmap (_.render)
+    val width = yss.flatten maxOf (_.length)
+    val fmt   = leftFormatString(width)
+
+    (yss mmap fmt map (_ mk_s ' ') joinLines).trimLines
   }
   def primePartition6 = sm"""
   |2   4   6   8   10  12
@@ -172,6 +182,7 @@ class ViewBasic extends ScalacheckBundle {
 
     implicit val arbRange = Arb[IntRange](Gen const (0 until len))
     implicit val arbTriple: Arb[RTriple] = arbRange flatMap (r => pair(r) flatMap (x => r -> x))
+    implicit val emptyInt = Empty[Int](MinInt)
 
     vec[NamedProp](
       "take/drop vs. slice" -> sameOutcomes[Triple[IntRange, Int, Int], IntRange](
@@ -189,7 +200,9 @@ class ViewBasic extends ScalacheckBundle {
       "splitAt/drop" -> sameOutcomes[RTriple, View[Int]](
         { case xs -> (idx -> size) => xs.m splitAt idx onRight (_ drop size) },
         { case xs -> (idx -> size) => xs.m drop size splitAt idx onRight identity }
-      )
+      ),
+      expectValue(MinInt)(view[Int]().zhead),
+      expectValue(5)(view(5).zhead)
       // Just to observe the scalacheck arguments being generated
       // , "dump" -> sameOutcomes[RTriple, Unit](
       //   { case xs -> (idx -> size) => { println(s"$xs -> ($idx -> $size)") ; () } },

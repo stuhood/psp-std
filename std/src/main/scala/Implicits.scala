@@ -63,6 +63,7 @@ trait StdOps2 extends StdOps1 {
   implicit def opsHasOrderInfix[A: Order](x: A): ops.OrderOps[A] = new ops.OrderOps[A](x)
   implicit def opsHasHash[A: Hash](x: View[A]): ops.HasHash[A]   = new ops.HasHash(x)
   implicit def opsView2D[A](x: View2D[A]): ops.View2DOps[A]      = new ops.View2DOps(x)
+  implicit def opsSize(x: Size): ops.SizeOps                     = new ops.SizeOps(x)
 }
 
 trait StdOps3 extends StdOps2 {
@@ -84,7 +85,6 @@ trait StdOps3 extends StdOps2 {
   implicit def opsLong(x: Long): ops.LongOps                                  = new ops.LongOps(x)
   implicit def opsOption[A](x: Option[A]): ops.OptionOps[A]                   = new ops.OptionOps[A](x)
   implicit def opsPrecise(x: Precise): ops.PreciseOps                         = new ops.PreciseOps(x)
-  implicit def opsSize(x: Size): ops.SizeOps                                  = new ops.SizeOps(x)
   implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                            = new ops.TryOps[A](x)
 
   implicit def opsPairSplit[R, A, B](xs: Foreach[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B] =
@@ -193,7 +193,7 @@ trait OrderInstances extends OrderInstancesLow {
   // This one doesn't work if it's A <:< jEnum[A], but jEnum[_] is just enough to get what we need.
   implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A]          = orderBy[A](_.ordinal)
   implicit def indexOrder: Order[Index]                                     = orderBy[Index](_.get)
-  implicit def preciseOrder[A <: Precise]: Order[A]                         = orderBy[Precise](_.get)
+  implicit def preciseOrder: Order[Precise]                                 = orderBy[Precise](_.get)
   implicit def stringOrder: Order[String]                                   = Order.fromLong[String](_ compareTo _)
   implicit def tuple2Order[A: Order, B: Order] : Order[(A, B)]              = orderBy[(A, B)](fst) | snd
   implicit def tuple3Order[A: Order, B: Order, C: Order] : Order[(A, B, C)] = orderBy[(A, B, C)](_._1) | (_._2) | (_._3)

@@ -1,7 +1,7 @@
 package psp
 package std
 
-import api._, StdEq._
+import api._
 import Consecutive.empty
 
 final class Consecutive[+A] private (val startInt: Int, val lastInt: Int, f: Int => A) extends Direct[A] with ForceShowDirect {
@@ -22,8 +22,8 @@ final class Consecutive[+A] private (val startInt: Int, val lastInt: Int, f: Int
 
   def drop(n: Precise): Consecutive[A]      = create(startInt + n.toInt, size - n)
   def dropRight(n: Precise): Consecutive[A] = create(startInt, size - n)
-  def take(n: Precise): Consecutive[A]      = create(startInt, min(size, n))
-  def takeRight(n: Precise): Consecutive[A] = min(size, n) |> (s => create(exclusiveEnd - s.toInt, s))
+  def take(n: Precise): Consecutive[A]      = create(startInt, size min n)
+  def takeRight(n: Precise): Consecutive[A] = (size min n) |> (s => create(exclusiveEnd - s.toInt, s))
   def slice(s: Int, e: Int): Consecutive[A] = if (e <= 0 || e <= s) empty else this drop s take e - s
   def slice(r: IndexRange): Consecutive[A]  = slice(r.startInt, r.exclusiveEnd)
   def tail: Consecutive[A]                  = this drop 1

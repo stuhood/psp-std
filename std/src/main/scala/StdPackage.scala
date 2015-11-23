@@ -127,13 +127,6 @@ abstract class StdPackageObject extends scala.AnyRef
   def randomPosInt(max: Int): Int                      = scala.util.Random.nextInt(max + 1)
   def leftFormatString[A](n: Int): FormatFun           = new FormatFun(cond(n == 0, "%s", "%%-%ds" format n))
 
-  def max(l: Int, r: Int): Int     = if (l >= r) l else r
-  def max(l: Long, r: Long): Long  = if (l >= r) l else r
-  def max[A: Order](l: A, r: A): A = if (l >= r) l else r
-  def min(l: Int, r: Int): Int     = if (l <= r) l else r
-  def min(l: Long, r: Long): Long  = if (l <= r) l else r
-  def min[A: Order](l: A, r: A): A = if (l <= r) l else r
-
   def fst[A, B](x: A -> B): A          = x._1
   def snd[A, B](x: A -> B): B          = x._2
   def tuple[A, B](x: A -> B): ((A, B)) = x._1 -> x._2
