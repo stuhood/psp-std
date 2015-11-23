@@ -81,7 +81,6 @@ trait StdOps3 extends StdOps2 {
   implicit def opsForeachHasShow[A: Show](x: Foreach[A]): ops.DocSeqOps       = new ops.DocSeqOps(Each[A](x foreach _) map (x => Doc(x)) toVec)
   implicit def opsInputStream(x: InputStream): ops.InputStreamOps             = new ops.InputStreamOps(x)
   implicit def opsInt(x: Int): ops.IntOps                                     = new ops.IntOps(x)
-  implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A]    = new ops.JavaIteratorOps[A](x)
   implicit def opsLong(x: Long): ops.LongOps                                  = new ops.LongOps(x)
   implicit def opsOption[A](x: Option[A]): ops.OptionOps[A]                   = new ops.OptionOps[A](x)
   implicit def opsPrecise(x: Precise): ops.PreciseOps                         = new ops.PreciseOps(x)
@@ -116,12 +115,6 @@ trait StdUniversal extends StdUniversal0 {
 
 /*** The builder/unbuilder/view hierarchy.
  */
-trait JavaBuilds {
-  implicit def viewJavaIterable[A, CC[X] <: jIterable[X]](xs: CC[A]): AtomicView[A, CC[A]]           = new LinearView(Each java xs)
-  implicit def viewJavaMap[K, V, CC[K, V] <: jMap[K, V]](xs: CC[K, V]): AtomicView[K -> V, CC[K, V]] = new LinearView(Each javaMap xs)
-  implicit def unbuildJavaIterable[A, CC[X] <: jIterable[X]] : UnbuildsAs[A, CC[A]]                  = Unbuilds[A, CC[A]](Each java _)
-  implicit def unbuildJavaMap[K, V, CC[K, V] <: jMap[K, V]] : UnbuildsAs[K -> V, CC[K, V]]           = Unbuilds[K -> V, CC[K, V]](Each javaMap _)
-}
 
 trait ScalaBuilds {
   implicit def unbuildScalaCollection[A, CC[X] <: GTOnce[X]] : UnbuildsAs[A, CC[A]]             = Unbuilds(Each scala _)
@@ -141,7 +134,7 @@ trait PspBuilds extends PspBuilds0 {
   implicit def buildPspMap[K: Eq, V]: Builds[K -> V, ExMap[K, V]]    = Builds.exMap[K, V]
 }
 
-trait StdBuilds0 extends PspBuilds with ScalaBuilds with JavaBuilds {
+trait StdBuilds0 extends PspBuilds with ScalaBuilds {
   implicit def buildPspLinear[A] : Builds[A, Plist[A]]                           = Plist.newBuilder[A]
   implicit def viewPspEach[A, CC[X] <: Each[X]](xs: CC[A]): AtomicView[A, CC[A]] = new LinearView(xs)
   implicit def unbuildPspEach[A, CC[X] <: Each[X]] : UnbuildsAs[A, CC[A]]        = Unbuilds[A, CC[A]](xs => xs)

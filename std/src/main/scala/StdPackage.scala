@@ -9,6 +9,7 @@ import psp.ext.ExternalLibs
 
 abstract class StdPackageObject extends scala.AnyRef
       with StdEmpty
+      with StdJava
       with PrimitiveInstances
       with AlgebraInstances
       with StdImplicits
@@ -27,12 +28,12 @@ abstract class StdPackageObject extends scala.AnyRef
   type View2D[+A]           = View[View[A]]
 
   // Ugh. XXX
-  implicit def promoteSize(x: Int): Precise                    = Size(x)
-  implicit def promoteIndex(x: Int): Index                     = Index(x)
-  implicit def wrapClass(x: jClass): JavaClass                 = new JavaClassImpl(x)
-  implicit def conforms[A] : (A <:< A)                         = new conformance[A]
-  implicit def defaultRenderer: FullRenderer                   = new FullRenderer
-  implicit def constantPredicate[A](value: Boolean): ToBool[A] = if (value) ConstantTrue else ConstantFalse
+  implicit def promoteSize(x: Int): Precise                          = Size(x)
+  implicit def promoteIndex(x: Int): Index                           = Index(x)
+  implicit def wrapClass(x: jClass): JavaClass                       = new JavaClassImpl(x)
+  implicit def conforms[A] : (A <:< A)                               = new conformance[A]
+  implicit def defaultRenderer: FullRenderer                         = new FullRenderer
+  implicit def constantPredicate[A](value: Boolean): ToBool[A]       = if (value) ConstantTrue else ConstantFalse
   implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = new (A ?=> B) {
     def isDefinedAt(x: A) = f isDefinedAt x
     def apply(x: A)       = f(x)

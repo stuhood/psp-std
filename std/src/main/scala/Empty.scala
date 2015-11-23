@@ -27,6 +27,7 @@ trait StdEmpty {
   implicit def emptyJavaMap[K, V] : Empty[jMap[K, V]]                 = Empty(new jHashMap[K, V])
   implicit def emptyJavaSet[A] : Empty[jSet[A]]                       = Empty(new jHashSet[A])
   implicit def emptyOption[A] : Empty.Const[Option[A]]                = Empty const None
+  implicit def emptyOptional[A] : Empty[jOptional[A]]                 = Empty(java.util.Optional.empty[A]())
   implicit def emptyTuple[A: Empty, B: Empty]: Empty[(A, B)]          = Empty(emptyValue[A] -> emptyValue[B])
   implicit def emptyView[A, R] : Empty[AtomicView[A, R]]              = Empty(new LinearView(Pnil))
 
