@@ -31,7 +31,6 @@ trait IsView           extends Any with MaybeView { final def isView = true  }
 trait NotView          extends Any with MaybeView { final def isView = false }
 
 trait View[@fspec +A] extends Any with Foreach[A] with IsView {
-  def viewOps: Direct[Doc]
   def force[That](implicit z: Builds[A, That]): That
 
   /** Contiguous operations share the property that the result is always

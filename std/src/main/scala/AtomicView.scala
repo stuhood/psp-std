@@ -29,7 +29,6 @@ object FlattenSlice {
 
 final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr] {
   type This      = LinearView[A, Repr]
-  def viewOps    = vec("<list>".s)
   def size: Size = underlying.size
 
   @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, fullIndexRange, f)
@@ -43,12 +42,11 @@ final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr]
 final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Repr] {
   type This = DirectView[A, Repr]
 
-  def viewOps                                                   = vec("<vector>".s)
   def size: Precise                                             = underlying.size
   def elemAt(i: Index): A                                       = underlying(i)
   def foreach(f: A => Unit): Unit                               = directlySlice(underlying, size.indices, f)
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = directlySlice(underlying, range, f)
-  def head: A = elemAt(0)
+  def head: A                                                   = elemAt(0)
 }
 
 sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[A] {
@@ -104,7 +102,6 @@ sealed trait IBaseView[A, Repr] extends BaseView[A, Repr] with IView[A] {
 sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEffect: ToSelf[Size]) extends IBaseView[B, Repr] {
   def prev: View[A]
   def size    = sizeEffect(prev.size)
-  def viewOps = prev.viewOps.castTo[Vec[Doc]] :+ description
 
   final def foreach(f: B => Unit): Unit = {
     def loop[C](xs: View[C])(f: C => Unit): Unit = {
