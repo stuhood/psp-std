@@ -5,6 +5,32 @@ import scala.collection.immutable.StringOps
 import std._, api._,StdEq._, StdShow._
 import Prop.forAll
 
+class EmptySpec extends ScalacheckBundle {
+  def bundle = "Empty"
+  class Bippy(val to_s: String) extends ForceShowDirect
+  val eint = -123
+  implicit def emptyBippy: Empty[Bippy] = Empty(new Bippy("-"))
+  implicit def emptyInt: Empty[Int] = Empty(eint)
+
+  def props = vec(
+    seqShows("-, -, -, mom", vec[Bippy](
+      sciList[Bippy]().m.zhead, vec[Bippy]().m.zhead,
+      Option.empty[Bippy].zget, Some(new Bippy("mom")).zget)
+    ),
+    seqShows(s"0, 0, $MinLong, -1, -1, 0", vec[Long](
+      emptyValue[jPath].any_s.length, emptyValue[jFile].any_s.length,
+      emptyValue[FileTime].toMillis, emptyValue[Index].get,
+      emptyValue[Nth].get, emptyValue[String].length)
+    ),
+    expectValue(eint)(view[Int]() zreducel (_ + _)),
+    expectValue(eint)(view[Int]().zfoldl[Int](_ + _)),
+    expectValue(3)(view(2, 3, 4) zreducer (_ - _)), // 2 - (3 - 4)
+    expectValue(-5)(view(2, 3, 4) zreducel (_ - _)), // (2 - 3) - 4
+    expectValue(7)(view(7) zreducel (_ * _)),
+    expectValue(7)(view(7) zreducer (_ * _))
+  )
+}
+
 class SpireSpec extends ScalacheckBundle {
   def bundle = "Reliance on spire"
   import spire._, implicits._

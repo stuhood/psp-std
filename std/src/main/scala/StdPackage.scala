@@ -8,7 +8,7 @@ import scala.reflect.NameTransformer
 import psp.ext.ExternalLibs
 
 abstract class StdPackageObject extends scala.AnyRef
-      with EmptyInstances
+      with StdEmpty
       with PrimitiveInstances
       with AlgebraInstances
       with StdImplicits

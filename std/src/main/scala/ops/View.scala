@@ -71,8 +71,11 @@ final class IViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
   def gather[B](p: Partial[A, View[B]]): View[B]      = xs flatMap p.zapply
   def sum(implicit z: AdditiveMonoid[A]): A           = z sum xs.trav
   def product(implicit z: MultiplicativeMonoid[A]): A = z prod xs.trav
-  def reducel(f: BinOp[A]): A                         = tail.foldl(head)(f)
-  def reducer(f: BinOp[A]): A                         = init.foldr(last)(f)
+
+  def reducel(f: BinOp[A]): A                        = tail.foldl(head)(f)
+  def reducer(f: BinOp[A]): A                        = init.foldr(last)(f)
+  def zreducel(f: BinOp[A])(implicit z: Empty[A]): A = if (isEmpty) z.empty else reducel(f)
+  def zreducer(f: BinOp[A])(implicit z: Empty[A]): A = if (isEmpty) z.empty else reducer(f)
 
   /** This is kind of horrific but has the advantage of not being as busted.
    *  We need to not be using scala's map because it will always compare keys based
