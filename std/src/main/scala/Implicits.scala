@@ -119,27 +119,14 @@ trait StdUniversal extends StdUniversal0 {
 
 /*** The builder/unbuilder/view hierarchy.
  */
-trait JavaBuilds0 {
-  implicit def buildJavaSet[A]: Builds[A, jSet[A]]            = Builds.jSet[A]
-  implicit def buildJavaList[A]: Builds[A, jList[A]]          = Builds.jList[A]
-  implicit def buildJavaMap[K, V]: Builds[K -> V, jMap[K, V]] = Builds.jMap[K, V]
-  implicit def buildJavaStream[A]: Builds[A, jStream[A]]      = Builds.jStream[A]
-
+trait JavaBuilds {
   implicit def viewJavaIterable[A, CC[X] <: jIterable[X]](xs: CC[A]): AtomicView[A, CC[A]]           = new LinearView(Each java xs)
   implicit def viewJavaMap[K, V, CC[K, V] <: jMap[K, V]](xs: CC[K, V]): AtomicView[K -> V, CC[K, V]] = new LinearView(Each javaMap xs)
-
-  implicit def unbuildJavaIterable[A, CC[X] <: jIterable[X]] : UnbuildsAs[A, CC[A]]        = Unbuilds[A, CC[A]](Each java _)
-  implicit def unbuildJavaMap[K, V, CC[K, V] <: jMap[K, V]] : UnbuildsAs[K -> V, CC[K, V]] = Unbuilds[K -> V, CC[K, V]](Each javaMap _)
-  implicit def unbuiltPspView0[A] : UnbuildsAs[A, View[A]]                                 = Unbuilds[A, View[A]](xs => xs)
-}
-trait JavaBuilds extends JavaBuilds0 {
-  implicit def buildJavaSortedSet[A: Order]: Builds[A, jSortedSet[A]]            = Builds.jSortedSet[A]
-  implicit def buildJavaSortedMap[K: Order, V]: Builds[K -> V, jSortedMap[K, V]] = Builds.jSortedMap[K, V]
-
-  implicit def unbuiltPspView1[A, R] : UnbuildsAs[A, BaseView[A, R]] = Unbuilds[A, BaseView[A, R]](xs => xs)
+  implicit def unbuildJavaIterable[A, CC[X] <: jIterable[X]] : UnbuildsAs[A, CC[A]]                  = Unbuilds[A, CC[A]](Each java _)
+  implicit def unbuildJavaMap[K, V, CC[K, V] <: jMap[K, V]] : UnbuildsAs[K -> V, CC[K, V]]           = Unbuilds[K -> V, CC[K, V]](Each javaMap _)
 }
 
-trait ScalaBuilds extends JavaBuilds {
+trait ScalaBuilds {
   implicit def unbuildScalaCollection[A, CC[X] <: GTOnce[X]] : UnbuildsAs[A, CC[A]]             = Unbuilds(Each scala _)
   implicit def buildScalaCollection[A, That](implicit z: CanBuild[A, That]): Builds[A, That]    = Builds.sCollection[A, That]
   implicit def viewScalaCollection[A, CC[X] <: sCollection[X]](xs: CC[A]): AtomicView[A, CC[A]] = new LinearView(Each scala xs)
@@ -147,11 +134,17 @@ trait ScalaBuilds extends JavaBuilds {
   implicit def unbuildScalaMap[K, V, CC[X, Y] <: scMap[X, Y]] : UnbuildsAs[K -> V, CC[K, V]]                   = Unbuilds[K -> V, CC[K, V]](Each scalaMap _)
   implicit def buildScalaMap[K, V, That](implicit z: CanBuild[scala.Tuple2[K, V], That]): Builds[K -> V, That] = Builds.sMap[K, V, That]
   implicit def viewScalaIndexedSeq[A, CC[X] <: sciIndexedSeq[X]](xs: CC[A]): DirectView[A, CC[A]]              = new DirectView(Direct scala xs)
-
-  implicit def buildPspSet[A: Eq]: Builds[A, ExSet[A]]            = Builds.exSet[A]
-  implicit def buildPspMap[K: Eq, V]: Builds[K -> V, ExMap[K, V]] = Builds.exMap[K, V]
 }
-trait StdBuilds0 extends ScalaBuilds {
+trait PspBuilds0 {
+  implicit def unbuiltPspView0[A] : UnbuildsAs[A, View[A]]           = Unbuilds[A, View[A]](xs => xs)
+}
+trait PspBuilds extends PspBuilds0 {
+  implicit def unbuiltPspView1[A, R] : UnbuildsAs[A, BaseView[A, R]] = Unbuilds[A, BaseView[A, R]](xs => xs)
+  implicit def buildPspSet[A: Eq]: Builds[A, ExSet[A]]               = Builds.exSet[A]
+  implicit def buildPspMap[K: Eq, V]: Builds[K -> V, ExMap[K, V]]    = Builds.exMap[K, V]
+}
+
+trait StdBuilds0 extends PspBuilds with ScalaBuilds with JavaBuilds {
   implicit def buildPspLinear[A] : Builds[A, Plist[A]]                           = Plist.newBuilder[A]
   implicit def viewPspEach[A, CC[X] <: Each[X]](xs: CC[A]): AtomicView[A, CC[A]] = new LinearView(xs)
   implicit def unbuildPspEach[A, CC[X] <: Each[X]] : UnbuildsAs[A, CC[A]]        = Unbuilds[A, CC[A]](xs => xs)

@@ -263,7 +263,7 @@ class ViewSplitZip extends ScalacheckBundle {
     showsAs("[ 5 -> 6 ]", zipped dropWhileSnd (_ < 4) map swap),
     showsAs("-", zipped findLeft (_ == 8)),
     seqShows("10 -> 2, 30 -> 4", zipView(1 -> 2, 3 -> 4) mapLeft (_ * 10) force)
-    )
+  )
 }
 
 class CollectionsSpec extends ScalacheckBundle {
@@ -339,29 +339,33 @@ class CollectionsSpec extends ScalacheckBundle {
       svec.m.build,
       svec.m map identity build,
       svec.m.map(fst).map(paired).force[sciVector[_]]
-      )
     )
+  )
 
-  def javaProps = vec[NamedProp](
-    expectTypes[jList[_]](
-      jseq map identity build,
-      jseq.m.build,
-      jseq.m map identity build,
-      jseq.m.map(fst).map(paired).force[jList[_]]
-      ),
-    expectTypes[jSet[_]](
-      jset map identity build,
-      jset.m build,
-      jset.m map identity build,
-      jset.m.map(fst) map paired build
-      ),
-    expectTypes[jMap[_, _]](
-      (jmap map identity).force[jMap[_, _]],
-      jmap.m build,
-      jmap.m map identity build,
-      jmap.m map fst map identity map paired build
+  def javaProps = {
+    import Java._
+
+    vec[NamedProp](
+      expectTypes[jList[_]](
+        jseq map identity build,
+        jseq.m.build,
+        jseq.m map identity build,
+        jseq.m.map(fst).map(paired).force[jList[_]]
+        ),
+      expectTypes[jSet[_]](
+        jset map identity build,
+        jset.m build,
+        jset.m map identity build,
+        jset.m.map(fst) map paired build
+        ),
+      expectTypes[jMap[_, _]](
+        (jmap map identity).force[jMap[_, _]],
+        jmap.m build,
+        jmap.m map identity build,
+        jmap.m map fst map identity map paired build
       )
     )
+  }
 
   def pspProps: Vec[NamedProp] = {
     import StdEq._
@@ -383,7 +387,7 @@ class CollectionsSpec extends ScalacheckBundle {
         pvec.m.build,
         pvec.m map identity build,
         pvec.m.map(fst).map(paired).force[Vec[_]]
-        )
       )
+    )
   }
 }

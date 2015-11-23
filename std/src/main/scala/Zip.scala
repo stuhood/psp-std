@@ -67,7 +67,7 @@ object Zip {
     def takeWhileSnd(p: ToBool[A2]): This                           = pairs takeWhile (xy => p(snd(xy))) zipped
     def withFilter(p: Predicate2): This                             = inView[Both](mf => foreach((x, y) => if (p(x, y)) mf(x -> y))).zipped
 
-    def toJavaMap: jMap[A1, A2]                           = to[jMap[A1, A2]]
+    def toJavaMap: jMap[A1, A2]                           = Java.Map[A1, A2](pairs.seq: _*)
     def toMap(implicit z: Eq[A1]): ExMap[A1, A2]          = to[ExMap[A1, A2]]
     def toScalaMap: sciMap[A1, A2]                        = to[sciMap[A1, A2]]
     def toSortedMap(implicit z: Order[A1]): ExMap[A1, A2] = toMap // TODO
