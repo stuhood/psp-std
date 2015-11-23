@@ -20,9 +20,10 @@ object Vec {
   type Array5D[A] = Array[Array[Array[Array[Array[A]]]]]
   type Array6D[A] = Array[Array[Array[Array[Array[Array[A]]]]]]
 
-  final val WIDTH = 5
-  final val MASK5  = (1 << WIDTH) - 1 // reduces to the lower five bits
-  final val MASK27 = ~MASK5
+  final val WIDTH  = 5
+  final val BLOCK  = 1 << WIDTH
+  final val LOBITS = BLOCK - 1 // masks all but WIDTH bits
+  final val HIBITS = ~LOBITS
 
   def empty[@fspec A] : Vec[A]                        = NIL.castTo[Vec[A]]
   def apply[@fspec A](xs: A*): Vec[A]                 = newBuilder[A] build (Direct scala xs)
@@ -34,20 +35,22 @@ object Vec {
   private[std] final val Log2ConcatFaster = 5
   private[std] final val TinyAppendFaster = 2
 
-  def levelOf(index: Int): Int = (
-    if (index < (1 << 5)) 0
-    else if (index < (1 << 10)) 1
-    else if (index < (1 << 15)) 2
-    else if (index < (1 << 20)) 3
-    else if (index < (1 << 25)) 4
-    else if (index < (1 << 30)) 5
-    else 6
-  )
+  @inline final def arr(xs: AnyRef): Array[AnyRef] = xs.asInstanceOf[Array[AnyRef]]
+
+  @inline final def levelBits(index: Int, level: Int): Int =
+    index >>> (level * WIDTH) & LOBITS
+
+  def levelOf(index: Int): Int = {
+    @tailrec def loop(level: Int, bits: Int): Int =
+      if (bits == 0) level else loop(level + 1, bits >>> WIDTH)
+
+    loop(0, index >>> WIDTH)
+  }
 
   final class Builder[@fspec A]() extends Builds[A, Vec[A]] with VectorPointer[A @uV] {
-    // possible alternative: start with display0 = null, blockIndex = -32, lo = 32
+    // possible alternative: start with display0 = null, blockIndex = -BLOCK, lo = BLOCK
     // to avoid allocating initial array if the result will be empty anyways
-    this.display0 = new Array[AnyRef](32)
+    this.display0 = new Array[AnyRef](BLOCK)
     this.depth    = 1
 
     private[this] var blockIndex = 0
@@ -59,7 +62,7 @@ object Vec {
     }
     def add(elem: A): Unit = {
       if (lo >= display0.length) {
-        val newBlockIndex = blockIndex+32
+        val newBlockIndex = blockIndex+BLOCK
         gotoNextBlockStartWritable(newBlockIndex, blockIndex ^ newBlockIndex)
         blockIndex = newBlockIndex
         lo = 0
@@ -202,7 +205,7 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
     val idx = checkRangeConvert(index)
     val s = updateDirty(newVec(startIndex, endIndex, idx))
     s.gotoPosWritable(focus, idx)  // if dirty commit changes; go to new pos and prepare for writing
-    s.display0(idx & MASK5) = elem.asInstanceOf[AnyRef]
+    s.display0(idx & LOBITS) = elem.asInstanceOf[AnyRef]
     s
   }
 
@@ -210,10 +213,10 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
     if (endIndex == startIndex)
       return makeSingletonAtBack(value)
 
-    val blockIndex = preStartIndex & MASK27
-    val lo         = preStartIndex & MASK5
+    val blockIndex = preStartIndex & HIBITS
+    val lo         = preStartIndex & LOBITS
 
-    if (startIndex != blockIndex + 32) {
+    if (startIndex != blockIndex + BLOCK) {
       val s = newVecInFront(0, blockIndex)
       s.gotoPosWritable(focus, blockIndex)
       s.display0(lo) = value.asInstanceOf[AnyRef]
@@ -238,7 +241,7 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
           //assert(depth == s.depth)
           s
         } else {
-          val newBlockIndex = blockIndex + 32
+          val newBlockIndex = blockIndex + BLOCK
           val newFocus = focus
 
           //assert(newBlockIndex == 0)
@@ -277,7 +280,7 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
   }
 
   private def newSingleArray(startIndex: Int, endIndex: Int, elem: A): Vec[A] = {
-    val elems = allocateArray(32)
+    val elems = allocateArray(BLOCK)
     elems(startIndex) = elem.asInstanceOf[AnyRef]
     val s = nextVec(startIndex, endIndex, 0)
     s.depth = 1
@@ -285,15 +288,15 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
     s
   }
 
-  private def makeSingletonAtBack(value: A): Vec[A]  = newSingleArray(31, 32, value)
+  private def makeSingletonAtBack(value: A): Vec[A]  = newSingleArray(BLOCK - 1, BLOCK, value)
   private def makeSingletonAtFront(value: A): Vec[A] = newSingleArray(0, 1, value)
 
   private[std] def appendBack(value: A): Vec[A] = {
     if (endIndex == startIndex)
       return makeSingletonAtFront(value)
 
-    val blockIndex = endIndex & MASK27
-    val lo         = endIndex & MASK5
+    val blockIndex = endIndex & HIBITS
+    val lo         = endIndex & LOBITS
 
     if (endIndex != blockIndex) {
       val s = newVecInBack(0, blockIndex)
@@ -316,7 +319,7 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
           //assert(depth == s.depth)
           s
         } else {
-          val newBlockIndex = blockIndex - 32
+          val newBlockIndex = blockIndex - BLOCK
           val newFocus = focus
 
           //assert(newBlockIndex == 0)
@@ -325,7 +328,7 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
           val s = newVecInBack(shift, newBlockIndex)
           s.shiftTopLevel(shiftBlocks, 0) // shift right by n elements
           s.gotoPosWritable(newFocus, newBlockIndex)
-          s.display0(32 - shift) = value.asInstanceOf[AnyRef]
+          s.display0(BLOCK - shift) = value.asInstanceOf[AnyRef]
           s
         }
       } else {
@@ -392,30 +395,30 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
     case 0 =>
       zeroLeft(display0, cutIndex)
     case 1 =>
-      zeroLeft(display0, cutIndex & MASK5)
+      zeroLeft(display0, cutIndex & LOBITS)
       display1 = copyRight(display1, cutIndex >>>  5)
     case 2 =>
-      zeroLeft(display0, cutIndex & MASK5)
-      display1 = copyRight(display1, cutIndex >>>  5 & MASK5)
-      display2 = copyRight(display2, cutIndex >>> 10)
+      zeroLeft(display0, cutIndex & LOBITS)
+      display1 = copyRight(display1, cutIndex >>>  5 & LOBITS)
+      display2 = copyRight(display2, cutIndex >>> 10 & LOBITS)
     case 3 =>
-      zeroLeft(display0, cutIndex & MASK5)
-      display1 = copyRight(display1, cutIndex >>>  5 & MASK5)
-      display2 = copyRight(display2, cutIndex >>> 10 & MASK5)
-      display3 = copyRight(display3, cutIndex >>> 15)
+      zeroLeft(display0, cutIndex & LOBITS)
+      display1 = copyRight(display1, cutIndex >>>  5 & LOBITS)
+      display2 = copyRight(display2, cutIndex >>> 10 & LOBITS)
+      display3 = copyRight(display3, cutIndex >>> 15 & LOBITS)
     case 4 =>
-      zeroLeft(display0, cutIndex & MASK5)
-      display1 = copyRight(display1, cutIndex >>>  5 & MASK5)
-      display2 = copyRight(display2, cutIndex >>> 10 & MASK5)
-      display3 = copyRight(display3, cutIndex >>> 15 & MASK5)
-      display4 = copyRight(display4, cutIndex >>> 20)
+      zeroLeft(display0, cutIndex & LOBITS)
+      display1 = copyRight(display1, cutIndex >>>  5 & LOBITS)
+      display2 = copyRight(display2, cutIndex >>> 10 & LOBITS)
+      display3 = copyRight(display3, cutIndex >>> 15 & LOBITS)
+      display4 = copyRight(display4, cutIndex >>> 20 & LOBITS)
     case 5 =>
-      zeroLeft(display0, cutIndex & MASK5)
-      display1 = copyRight(display1, cutIndex >>>  5 & MASK5)
-      display2 = copyRight(display2, cutIndex >>> 10 & MASK5)
-      display3 = copyRight(display3, cutIndex >>> 15 & MASK5)
-      display4 = copyRight(display4, cutIndex >>> 20 & MASK5)
-      display5 = copyRight(display5, cutIndex >>> 25)
+      zeroLeft(display0, cutIndex & LOBITS)
+      display1 = copyRight(display1, cutIndex >>>  5 & LOBITS)
+      display2 = copyRight(display2, cutIndex >>> 10 & LOBITS)
+      display3 = copyRight(display3, cutIndex >>> 15 & LOBITS)
+      display4 = copyRight(display4, cutIndex >>> 20 & LOBITS)
+      display5 = copyRight(display5, cutIndex >>> 25 & LOBITS)
     case _ =>
       illegalArgumentException(cutIndex)
   }
@@ -436,29 +439,29 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
       case 0 =>
         zeroRight(display0, cutIndex)
       case 1 =>
-        zeroRight(display0, (preCut & MASK5) + 1)
+        zeroRight(display0, (preCut & LOBITS) + 1)
         display1 = copyLeft(display1, cutIndex >>>  5)
       case 2 =>
-        zeroRight(display0, (preCut & MASK5) + 1)
-        display1 = copyLeft(display1, (preCut >>>  5 & MASK5) + 1)
+        zeroRight(display0, (preCut & LOBITS) + 1)
+        display1 = copyLeft(display1, (preCut >>>  5 & LOBITS) + 1)
         display2 = copyLeft(display2, cutIndex >>> 10)
       case 3 =>
-        zeroRight(display0, (preCut & MASK5) + 1)
-        display1 = copyLeft(display1, (preCut >>>  5 & MASK5) + 1)
-        display2 = copyLeft(display2, (preCut >>> 10 & MASK5) + 1)
+        zeroRight(display0, (preCut & LOBITS) + 1)
+        display1 = copyLeft(display1, (preCut >>>  5 & LOBITS) + 1)
+        display2 = copyLeft(display2, (preCut >>> 10 & LOBITS) + 1)
         display3 = copyLeft(display3, cutIndex >>> 15)
       case 4 =>
-        zeroRight(display0, (preCut & MASK5) + 1)
-        display1 = copyLeft(display1, (preCut >>>  5 & MASK5) + 1)
-        display2 = copyLeft(display2, (preCut >>> 10 & MASK5) + 1)
-        display3 = copyLeft(display3, (preCut >>> 15 & MASK5) + 1)
+        zeroRight(display0, (preCut & LOBITS) + 1)
+        display1 = copyLeft(display1, (preCut >>>  5 & LOBITS) + 1)
+        display2 = copyLeft(display2, (preCut >>> 10 & LOBITS) + 1)
+        display3 = copyLeft(display3, (preCut >>> 15 & LOBITS) + 1)
         display4 = copyLeft(display4, cutIndex >>> 20)
       case 5 =>
-        zeroRight(display0, (preCut & MASK5) + 1)
-        display1 = copyLeft(display1, (preCut >>>  5 & MASK5) + 1)
-        display2 = copyLeft(display2, (preCut >>> 10 & MASK5) + 1)
-        display3 = copyLeft(display3, (preCut >>> 15 & MASK5) + 1)
-        display4 = copyLeft(display4, (preCut >>> 20 & MASK5) + 1)
+        zeroRight(display0, (preCut & LOBITS) + 1)
+        display1 = copyLeft(display1, (preCut >>>  5 & LOBITS) + 1)
+        display2 = copyLeft(display2, (preCut >>> 10 & LOBITS) + 1)
+        display3 = copyLeft(display3, (preCut >>> 15 & LOBITS) + 1)
+        display4 = copyLeft(display4, (preCut >>> 20 & LOBITS) + 1)
         display5 = copyLeft(display5, cutIndex >>> 25)
       case x =>
         illegalArgumentException(x)
@@ -468,7 +471,7 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
   private def requiredDepth(xor: Int): Int = levelOf(xor) + 1
 
   private[std] def dropFront0(cutIndex: Int): Vec[A] = {
-    val blockIndex = cutIndex & MASK27
+    val blockIndex = cutIndex & HIBITS
     val xor        = cutIndex ^ (endIndex - 1)
     val d          = requiredDepth(xor)
     val shift      = cutIndex & ~((1 << (5*d))-1)
@@ -483,7 +486,7 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
   }
 
   private[std] def dropBack0(cutIndex: Int): Vec[A] = {
-    val blockIndex = (cutIndex - 1) & MASK27
+    val blockIndex = (cutIndex - 1) & HIBITS
     val xor = startIndex ^ (cutIndex - 1)
     val d = requiredDepth(xor)
     val shift = startIndex & ~((1 << 5 * d) - 1)
@@ -498,9 +501,9 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
 
 
 final class VectorIterator[@fspec A](_startIndex: Int, endIndex: Int) extends scIterator[A] with VectorPointer[A @uV] {
-  private[std] var blockIndex: Int = _startIndex & MASK27
-  private[std] var lo: Int         = _startIndex & MASK5
-  private[std] var endLo           = math.min(endIndex - blockIndex, 32)
+  private[std] var blockIndex: Int = _startIndex & HIBITS
+  private[std] var lo: Int         = _startIndex & LOBITS
+  private[std] var endLo           = math.min(endIndex - blockIndex, BLOCK)
   private[std] var _hasNext        = blockIndex + lo < endIndex
 
   def hasNext = _hasNext
@@ -512,11 +515,11 @@ final class VectorIterator[@fspec A](_startIndex: Int, endIndex: Int) extends sc
 
     if (lo == endLo) {
       if (blockIndex + lo < endIndex) {
-        val newBlockIndex = blockIndex+32
+        val newBlockIndex = blockIndex+BLOCK
         gotoNextBlockStart(newBlockIndex, blockIndex ^ newBlockIndex)
 
         blockIndex = newBlockIndex
-        endLo = math.min(endIndex - blockIndex, 32)
+        endLo = math.min(endIndex - blockIndex, BLOCK)
         lo = 0
       } else {
         _hasNext = false
@@ -549,22 +552,22 @@ sealed trait VectorPointer[@fspec T] {
   def display4_=(xs: Array[AnyRef]): Unit = displays.setDisplay(4, xs)
   def display5_=(xs: Array[AnyRef]): Unit = displays.setDisplay(5, xs)
 
-  private def ensure0(): Unit = display0 = new Array(32)
+  private def ensure0(): Unit = display0 = new Array(BLOCK)
   private def ensure1(xs: AnyRef): Unit = xs match {
-    case null => display1 = new Array(32)
-    case _    => display1 = xs.asInstanceOf[Array[AnyRef]]
+    case null => display1 = new Array(BLOCK)
+    case _    => display1 = arr(xs)
   }
   private def ensure2(xs: AnyRef): Unit = xs match {
-    case null => display2 = new Array(32)
-    case _    => display2 = xs.asInstanceOf[Array[AnyRef]]
+    case null => display2 = new Array(BLOCK)
+    case _    => display2 = arr(xs)
   }
   private def ensure3(xs: AnyRef): Unit = xs match {
-    case null => display3 = new Array(32)
-    case _    => display3 = xs.asInstanceOf[Array[AnyRef]]
+    case null => display3 = new Array(BLOCK)
+    case _    => display3 = arr(xs)
   }
   private def ensure4(xs: AnyRef): Unit = xs match {
-    case null => display4 = new Array(32)
-    case _    => display4 = xs.asInstanceOf[Array[AnyRef]]
+    case null => display4 = new Array(BLOCK)
+    case _    => display4 = arr(xs)
   }
 
   private[std] final def initFrom(that: VectorPointer[T]): VectorPointer[T] = {
@@ -575,12 +578,12 @@ sealed trait VectorPointer[@fspec T] {
 
   // requires structure is at pos oldIndex = xor ^ index
   private[std] final def getElem(index: Int, xor: Int): T = (levelOf(xor): @switch) match {
-    case 0 => display0(index & MASK5).asInstanceOf[T]
-    case 1 => display1(index >> 5 & MASK5).asInstanceOf[Array[AnyRef]](index & MASK5).asInstanceOf[T]
-    case 2 => display2(index >> 10 & MASK5).asInstanceOf[Array[AnyRef]](index >> 5 & MASK5).asInstanceOf[Array[AnyRef]](index & MASK5).asInstanceOf[T]
-    case 3 => display3(index >> 15 & MASK5).asInstanceOf[Array[AnyRef]](index >> 10 & MASK5).asInstanceOf[Array[AnyRef]](index >> 5 & MASK5).asInstanceOf[Array[AnyRef]](index & MASK5).asInstanceOf[T]
-    case 4 => display4(index >> 20 & MASK5).asInstanceOf[Array[AnyRef]](index >> 15 & MASK5).asInstanceOf[Array[AnyRef]](index >> 10 & MASK5).asInstanceOf[Array[AnyRef]](index >> 5 & MASK5).asInstanceOf[Array[AnyRef]](index & MASK5).asInstanceOf[T]
-    case 5 => display5(index >> 25 & MASK5).asInstanceOf[Array[AnyRef]](index >> 20 & MASK5).asInstanceOf[Array[AnyRef]](index >> 15 & MASK5).asInstanceOf[Array[AnyRef]](index >> 10 & MASK5).asInstanceOf[Array[AnyRef]](index >> 5 & MASK5).asInstanceOf[Array[AnyRef]](index & MASK5).asInstanceOf[T]
+    case 0 => display0(index & LOBITS).asInstanceOf[T]
+    case 1 => display1(index >> 5 & LOBITS).asInstanceOf[Array[AnyRef]](index & LOBITS).asInstanceOf[T]
+    case 2 => display2(index >> 10 & LOBITS).asInstanceOf[Array[AnyRef]](index >> 5 & LOBITS).asInstanceOf[Array[AnyRef]](index & LOBITS).asInstanceOf[T]
+    case 3 => display3(index >> 15 & LOBITS).asInstanceOf[Array[AnyRef]](index >> 10 & LOBITS).asInstanceOf[Array[AnyRef]](index >> 5 & LOBITS).asInstanceOf[Array[AnyRef]](index & LOBITS).asInstanceOf[T]
+    case 4 => display4(index >> 20 & LOBITS).asInstanceOf[Array[AnyRef]](index >> 15 & LOBITS).asInstanceOf[Array[AnyRef]](index >> 10 & LOBITS).asInstanceOf[Array[AnyRef]](index >> 5 & LOBITS).asInstanceOf[Array[AnyRef]](index & LOBITS).asInstanceOf[T]
+    case 5 => display5(index >> 25 & LOBITS).asInstanceOf[Array[AnyRef]](index >> 20 & LOBITS).asInstanceOf[Array[AnyRef]](index >> 15 & LOBITS).asInstanceOf[Array[AnyRef]](index >> 10 & LOBITS).asInstanceOf[Array[AnyRef]](index >> 5 & LOBITS).asInstanceOf[Array[AnyRef]](index & LOBITS).asInstanceOf[T]
     case _ => illegalArgumentException(xor)
   }
 
@@ -590,25 +593,25 @@ sealed trait VectorPointer[@fspec T] {
   private[std] final def gotoPos(index: Int, xor: Int): Unit = (levelOf(xor): @switch) match {
     case 0 =>
     case 1 =>
-      display0 = display1(index >> 5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = arr(display1(index >> 5 & LOBITS))
     case 2 =>
-      display1 = display2(index >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = display1(index >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1 = arr(display2(index >> 10 & LOBITS))
+      display0 = arr(display1(index >>  5 & LOBITS))
     case 3 =>
-      display2 = display3(index >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
-      display1 = display2(index >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = display1(index >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display2 = arr(display3(index >> 15 & LOBITS))
+      display1 = arr(display2(index >> 10 & LOBITS))
+      display0 = arr(display1(index >>  5 & LOBITS))
     case 4 =>
-      display3 = display4(index >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
-      display2 = display3(index >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
-      display1 = display2(index >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = display1(index >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display3 = arr(display4(index >> 20 & LOBITS))
+      display2 = arr(display3(index >> 15 & LOBITS))
+      display1 = arr(display2(index >> 10 & LOBITS))
+      display0 = arr(display1(index >>  5 & LOBITS))
     case 5 =>
-      display4 = display5(index >> 25 & MASK5).asInstanceOf[Array[AnyRef]]
-      display3 = display4(index >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
-      display2 = display3(index >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
-      display1 = display2(index >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = display1(index >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display4 = arr(display5(index >> 25 & LOBITS))
+      display3 = arr(display4(index >> 20 & LOBITS))
+      display2 = arr(display3(index >> 15 & LOBITS))
+      display1 = arr(display2(index >> 10 & LOBITS))
+      display0 = arr(display1(index >>  5 & LOBITS))
     case _ =>
       illegalArgumentException(xor)
   }
@@ -619,25 +622,25 @@ sealed trait VectorPointer[@fspec T] {
   // goto block start pos
   private[std] final def gotoNextBlockStart(index: Int, xor: Int): Unit = (levelOf(xor): @switch) match {
     case 0 | 1 =>
-      display0 = display1(index >> 5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = arr(display1(index >> 5 & LOBITS))
     case 2 =>
-      display1 = display2(index >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = display1(0).asInstanceOf[Array[AnyRef]]
+      display1 = arr(display2(index >> 10 & LOBITS))
+      display0 = arr(display1(0))
     case 3 =>
-      display2 = display3(index >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
-      display1 = display2(0).asInstanceOf[Array[AnyRef]]
-      display0 = display1(0).asInstanceOf[Array[AnyRef]]
+      display2 = arr(display3(index >> 15 & LOBITS))
+      display1 = arr(display2(0))
+      display0 = arr(display1(0))
     case 4 =>
-      display3 = display4(index >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
-      display2 = display3(0).asInstanceOf[Array[AnyRef]]
-      display1 = display2(0).asInstanceOf[Array[AnyRef]]
-      display0 = display1(0).asInstanceOf[Array[AnyRef]]
+      display3 = arr(display4(index >> 20 & LOBITS))
+      display2 = arr(display3(0))
+      display1 = arr(display2(0))
+      display0 = arr(display1(0))
     case 5 =>
-      display4 = display5(index >> 25 & MASK5).asInstanceOf[Array[AnyRef]]
-      display3 = display4(0).asInstanceOf[Array[AnyRef]]
-      display2 = display3(0).asInstanceOf[Array[AnyRef]]
-      display1 = display2(0).asInstanceOf[Array[AnyRef]]
-      display0 = display1(0).asInstanceOf[Array[AnyRef]]
+      display4 = arr(display5(index >> 25 & LOBITS))
+      display3 = arr(display4(0))
+      display2 = arr(display3(0))
+      display1 = arr(display2(0))
+      display0 = arr(display1(0))
     case _ =>
       illegalArgumentException(xor)
   }
@@ -648,45 +651,45 @@ sealed trait VectorPointer[@fspec T] {
   // goto block start pos
   private[std] final def gotoNextBlockStartWritable(index: Int, xor: Int): Unit = (levelOf(xor): @switch) match {
     case 0 | 1 =>
-      if (depth == 1) { display1 = new Array(32); display1(0) = display0; depth+=1}
-      display0 = new Array(32)
-      display1(index >>  5 & MASK5) = display0
+      if (depth == 1) { display1 = new Array(BLOCK); display1(0) = display0; depth+=1}
+      display0 = new Array(BLOCK)
+      display1(index >>  5 & LOBITS) = display0
     case 2 =>
-      if (depth == 2) { display2 = new Array(32); display2(0) = display1; depth+=1}
-      display0 = new Array(32)
-      display1 = new Array(32)
-      display1(index >>  5 & MASK5) = display0
-      display2(index >> 10 & MASK5) = display1
+      if (depth == 2) { display2 = new Array(BLOCK); display2(0) = display1; depth+=1}
+      display0 = new Array(BLOCK)
+      display1 = new Array(BLOCK)
+      display1(index >>  5 & LOBITS) = display0
+      display2(index >> 10 & LOBITS) = display1
     case 3 =>
-      if (depth == 3) { display3 = new Array(32); display3(0) = display2; depth+=1}
-      display0 = new Array(32)
-      display1 = new Array(32)
-      display2 = new Array(32)
-      display1(index >>  5 & MASK5) = display0
-      display2(index >> 10 & MASK5) = display1
-      display3(index >> 15 & MASK5) = display2
+      if (depth == 3) { display3 = new Array(BLOCK); display3(0) = display2; depth+=1}
+      display0 = new Array(BLOCK)
+      display1 = new Array(BLOCK)
+      display2 = new Array(BLOCK)
+      display1(index >>  5 & LOBITS) = display0
+      display2(index >> 10 & LOBITS) = display1
+      display3(index >> 15 & LOBITS) = display2
     case 4 =>
-      if (depth == 4) { display4 = new Array(32); display4(0) = display3; depth+=1}
-      display0 = new Array(32)
-      display1 = new Array(32)
-      display2 = new Array(32)
-      display3 = new Array(32)
-      display1(index >>  5 & MASK5) = display0
-      display2(index >> 10 & MASK5) = display1
-      display3(index >> 15 & MASK5) = display2
-      display4(index >> 20 & MASK5) = display3
+      if (depth == 4) { display4 = new Array(BLOCK); display4(0) = display3; depth+=1}
+      display0 = new Array(BLOCK)
+      display1 = new Array(BLOCK)
+      display2 = new Array(BLOCK)
+      display3 = new Array(BLOCK)
+      display1(index >>  5 & LOBITS) = display0
+      display2(index >> 10 & LOBITS) = display1
+      display3(index >> 15 & LOBITS) = display2
+      display4(index >> 20 & LOBITS) = display3
     case 5 =>
-      if (depth == 5) { display5 = new Array(32); display5(0) = display4; depth+=1}
-      display0 = new Array(32)
-      display1 = new Array(32)
-      display2 = new Array(32)
-      display3 = new Array(32)
-      display4 = new Array(32)
-      display1(index >>  5 & MASK5) = display0
-      display2(index >> 10 & MASK5) = display1
-      display3(index >> 15 & MASK5) = display2
-      display4(index >> 20 & MASK5) = display3
-      display5(index >> 25 & MASK5) = display4
+      if (depth == 5) { display5 = new Array(BLOCK); display5(0) = display4; depth+=1}
+      display0 = new Array(BLOCK)
+      display1 = new Array(BLOCK)
+      display2 = new Array(BLOCK)
+      display3 = new Array(BLOCK)
+      display4 = new Array(BLOCK)
+      display1(index >>  5 & LOBITS) = display0
+      display2(index >> 10 & LOBITS) = display1
+      display3(index >> 15 & LOBITS) = display2
+      display4(index >> 20 & LOBITS) = display3
+      display5(index >> 25 & LOBITS) = display4
     case _ =>
       illegalArgumentException(xor)
   }
@@ -712,35 +715,35 @@ sealed trait VectorPointer[@fspec T] {
       display3 = copyOf(display3)
       display2 = copyOf(display2)
       display1 = copyOf(display1)
-      display5(index >> 25 & MASK5) = display4
-      display4(index >> 20 & MASK5) = display3
-      display3(index >> 15 & MASK5) = display2
-      display2(index >> 10 & MASK5) = display1
-      display1(index >>  5 & MASK5) = display0
+      display5(index >> 25 & LOBITS) = display4
+      display4(index >> 20 & LOBITS) = display3
+      display3(index >> 15 & LOBITS) = display2
+      display2(index >> 10 & LOBITS) = display1
+      display1(index >>  5 & LOBITS) = display0
     case 4 =>
       display4 = copyOf(display4)
       display3 = copyOf(display3)
       display2 = copyOf(display2)
       display1 = copyOf(display1)
-      display4(index >> 20 & MASK5) = display3
-      display3(index >> 15 & MASK5) = display2
-      display2(index >> 10 & MASK5) = display1
-      display1(index >>  5 & MASK5) = display0
+      display4(index >> 20 & LOBITS) = display3
+      display3(index >> 15 & LOBITS) = display2
+      display2(index >> 10 & LOBITS) = display1
+      display1(index >>  5 & LOBITS) = display0
     case 3 =>
       display3 = copyOf(display3)
       display2 = copyOf(display2)
       display1 = copyOf(display1)
-      display3(index >> 15 & MASK5) = display2
-      display2(index >> 10 & MASK5) = display1
-      display1(index >>  5 & MASK5) = display0
+      display3(index >> 15 & LOBITS) = display2
+      display2(index >> 10 & LOBITS) = display1
+      display1(index >>  5 & LOBITS) = display0
     case 2 =>
       display2 = copyOf(display2)
       display1 = copyOf(display1)
-      display2(index >> 10 & MASK5) = display1
-      display1(index >>  5 & MASK5) = display0
+      display2(index >> 10 & LOBITS) = display1
+      display1(index >>  5 & LOBITS) = display0
     case 1 =>
       display1 = copyOf(display1)
-      display1(index >>  5 & MASK5) = display0
+      display1(index >>  5 & LOBITS) = display0
     case 0 =>
   }
 
@@ -753,29 +756,29 @@ sealed trait VectorPointer[@fspec T] {
   private[std] final def gotoPosWritable0(newIndex: Int): Unit = (depth - 1) match {
     case 5 =>
       display5 = copyOf(display5)
-      display4 = nullSlotAndCopy(display5, newIndex >> 25 & MASK5).asInstanceOf[Array[AnyRef]]
-      display3 = nullSlotAndCopy(display4, newIndex >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
-      display2 = nullSlotAndCopy(display3, newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
-      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display4 = arr(nullSlotAndCopy(display5, newIndex >> 25 & LOBITS))
+      display3 = arr(nullSlotAndCopy(display4, newIndex >> 20 & LOBITS))
+      display2 = arr(nullSlotAndCopy(display3, newIndex >> 15 & LOBITS))
+      display1 = arr(nullSlotAndCopy(display2, newIndex >> 10 & LOBITS))
+      display0 = arr(nullSlotAndCopy(display1, newIndex >>  5 & LOBITS))
     case 4 =>
       display4 = copyOf(display4)
-      display3 = nullSlotAndCopy(display4, newIndex >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
-      display2 = nullSlotAndCopy(display3, newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
-      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display3 = arr(nullSlotAndCopy(display4, newIndex >> 20 & LOBITS))
+      display2 = arr(nullSlotAndCopy(display3, newIndex >> 15 & LOBITS))
+      display1 = arr(nullSlotAndCopy(display2, newIndex >> 10 & LOBITS))
+      display0 = arr(nullSlotAndCopy(display1, newIndex >>  5 & LOBITS))
     case 3 =>
       display3 = copyOf(display3)
-      display2 = nullSlotAndCopy(display3, newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
-      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display2 = arr(nullSlotAndCopy(display3, newIndex >> 15 & LOBITS))
+      display1 = arr(nullSlotAndCopy(display2, newIndex >> 10 & LOBITS))
+      display0 = arr(nullSlotAndCopy(display1, newIndex >>  5 & LOBITS))
     case 2 =>
       display2 = copyOf(display2)
-      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1 = arr(nullSlotAndCopy(display2, newIndex >> 10 & LOBITS))
+      display0 = arr(nullSlotAndCopy(display1, newIndex >>  5 & LOBITS))
     case 1 =>
       display1 = copyOf(display1)
-      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display0 = arr(nullSlotAndCopy(display1, newIndex >>  5 & LOBITS))
     case 0 =>
       display0 = copyOf(display0)
   }
@@ -788,54 +791,54 @@ sealed trait VectorPointer[@fspec T] {
       display0 = copyOf(display0)
     case 1 =>
       display1 = copyOf(display1)
-      display1(oldIndex >> 5 & MASK5) = display0
-      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5)
+      display1(oldIndex >> 5 & LOBITS) = display0
+      display0 = nullSlotAndCopy(display1, newIndex >>  5 & LOBITS)
     case 2 =>
       display1 = copyOf(display1)
       display2 = copyOf(display2)
-      display1(oldIndex >>  5 & MASK5) = display0
-      display2(oldIndex >> 10 & MASK5) = display1
-      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1(oldIndex >>  5 & LOBITS) = display0
+      display2(oldIndex >> 10 & LOBITS) = display1
+      display1 = arr(nullSlotAndCopy(display2, newIndex >> 10 & LOBITS))
+      display0 = arr(nullSlotAndCopy(display1, newIndex >>  5 & LOBITS))
     case 3 =>
       display1 = copyOf(display1)
       display2 = copyOf(display2)
       display3 = copyOf(display3)
-      display1(oldIndex >>  5 & MASK5) = display0
-      display2(oldIndex >> 10 & MASK5) = display1
-      display3(oldIndex >> 15 & MASK5) = display2
-      display2 = nullSlotAndCopy(display3, newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
-      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1(oldIndex >>  5 & LOBITS) = display0
+      display2(oldIndex >> 10 & LOBITS) = display1
+      display3(oldIndex >> 15 & LOBITS) = display2
+      display2 = arr(nullSlotAndCopy(display3, newIndex >> 15 & LOBITS))
+      display1 = arr(nullSlotAndCopy(display2, newIndex >> 10 & LOBITS))
+      display0 = arr(nullSlotAndCopy(display1, newIndex >>  5 & LOBITS))
     case 4 =>
       display1 = copyOf(display1)
       display2 = copyOf(display2)
       display3 = copyOf(display3)
       display4 = copyOf(display4)
-      display1(oldIndex >>  5 & MASK5) = display0
-      display2(oldIndex >> 10 & MASK5) = display1
-      display3(oldIndex >> 15 & MASK5) = display2
-      display4(oldIndex >> 20 & MASK5) = display3
-      display3 = nullSlotAndCopy(display4, newIndex >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
-      display2 = nullSlotAndCopy(display3, newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
-      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1(oldIndex >>  5 & LOBITS) = display0
+      display2(oldIndex >> 10 & LOBITS) = display1
+      display3(oldIndex >> 15 & LOBITS) = display2
+      display4(oldIndex >> 20 & LOBITS) = display3
+      display3 = arr(nullSlotAndCopy(display4, newIndex >> 20 & LOBITS))
+      display2 = arr(nullSlotAndCopy(display3, newIndex >> 15 & LOBITS))
+      display1 = arr(nullSlotAndCopy(display2, newIndex >> 10 & LOBITS))
+      display0 = arr(nullSlotAndCopy(display1, newIndex >>  5 & LOBITS))
     case 5 =>
       display1 = copyOf(display1)
       display2 = copyOf(display2)
       display3 = copyOf(display3)
       display4 = copyOf(display4)
       display5 = copyOf(display5)
-      display1(oldIndex >>  5 & MASK5) = display0
-      display2(oldIndex >> 10 & MASK5) = display1
-      display3(oldIndex >> 15 & MASK5) = display2
-      display4(oldIndex >> 20 & MASK5) = display3
-      display5(oldIndex >> 25 & MASK5) = display4
-      display4 = nullSlotAndCopy(display5, newIndex >> 25 & MASK5).asInstanceOf[Array[AnyRef]]
-      display3 = nullSlotAndCopy(display4, newIndex >> 20 & MASK5).asInstanceOf[Array[AnyRef]]
-      display2 = nullSlotAndCopy(display3, newIndex >> 15 & MASK5).asInstanceOf[Array[AnyRef]]
-      display1 = nullSlotAndCopy(display2, newIndex >> 10 & MASK5).asInstanceOf[Array[AnyRef]]
-      display0 = nullSlotAndCopy(display1, newIndex >>  5 & MASK5).asInstanceOf[Array[AnyRef]]
+      display1(oldIndex >>  5 & LOBITS) = display0
+      display2(oldIndex >> 10 & LOBITS) = display1
+      display3(oldIndex >> 15 & LOBITS) = display2
+      display4(oldIndex >> 20 & LOBITS) = display3
+      display5(oldIndex >> 25 & LOBITS) = display4
+      display4 = arr(nullSlotAndCopy(display5, newIndex >> 25 & LOBITS))
+      display3 = arr(nullSlotAndCopy(display4, newIndex >> 20 & LOBITS))
+      display2 = arr(nullSlotAndCopy(display3, newIndex >> 15 & LOBITS))
+      display1 = arr(nullSlotAndCopy(display2, newIndex >> 10 & LOBITS))
+      display0 = arr(nullSlotAndCopy(display1, newIndex >>  5 & LOBITS))
     case x =>
       illegalArgumentException(x)
   }
@@ -843,8 +846,8 @@ sealed trait VectorPointer[@fspec T] {
   // USED IN DROP
 
   private[std] final def copyRange(array: Array[AnyRef], oldLeft: Int, newLeft: Int) = {
-    val elems = allocateArray(32)
-    arraycopy(array, oldLeft, elems, newLeft, 32 - math.max(newLeft,oldLeft))
+    val elems = allocateArray(BLOCK)
+    arraycopy(array, oldLeft, elems, newLeft, BLOCK - math.max(newLeft,oldLeft))
     elems
   }
 
@@ -858,48 +861,48 @@ sealed trait VectorPointer[@fspec T] {
     case 0 => ()
     case 1 =>
       if (depth == 1) {
-        display1 = new Array(32)
-        display1(oldIndex >>  5 & MASK5) = display0
+        display1 = new Array(BLOCK)
+        display1(oldIndex >>  5 & LOBITS) = display0
         depth +=1
       }
       ensure0()
     case 2 =>
       if (depth == 2) {
-        display2 = new Array(32)
-        display2(oldIndex >> 10 & MASK5) = display1
+        display2 = new Array(BLOCK)
+        display2(oldIndex >> 10 & LOBITS) = display1
         depth +=1
       }
-      ensure1(display2(newIndex >> 10 & MASK5))
+      ensure1(display2(newIndex >> 10 & LOBITS))
       ensure0()
     case 3 =>
       if (depth == 3) {
-        display3 = new Array(32)
-        display3(oldIndex >> 15 & MASK5) = display2
+        display3 = new Array(BLOCK)
+        display3(oldIndex >> 15 & LOBITS) = display2
         depth +=1
       }
-      ensure2(display3(newIndex >> 15 & MASK5))
-      ensure1(display2(newIndex >> 10 & MASK5))
+      ensure2(display3(newIndex >> 15 & LOBITS))
+      ensure1(display2(newIndex >> 10 & LOBITS))
       ensure0()
     case 4 =>
       if (depth == 4) {
-        display4 = new Array(32)
-        display4(oldIndex >> 20 & MASK5) = display3
+        display4 = new Array(BLOCK)
+        display4(oldIndex >> 20 & LOBITS) = display3
         depth +=1
       }
-      ensure3(display4(newIndex >> 20 & MASK5))
-      ensure2(display3(newIndex >> 15 & MASK5))
-      ensure1(display2(newIndex >> 10 & MASK5))
+      ensure3(display4(newIndex >> 20 & LOBITS))
+      ensure2(display3(newIndex >> 15 & LOBITS))
+      ensure1(display2(newIndex >> 10 & LOBITS))
       ensure0()
     case 5 =>
       if (depth == 5) {
-        display5 = new Array(32)
-        display5(oldIndex >>  25 & MASK5) = display4
+        display5 = new Array(BLOCK)
+        display5(oldIndex >>  25 & LOBITS) = display4
         depth +=1
       }
-      ensure4(display5(newIndex >> 25 & MASK5))
-      ensure3(display4(newIndex >> 20 & MASK5))
-      ensure2(display3(newIndex >> 15 & MASK5))
-      ensure1(display2(newIndex >> 10 & MASK5))
+      ensure4(display5(newIndex >> 25 & LOBITS))
+      ensure3(display4(newIndex >> 20 & LOBITS))
+      ensure2(display3(newIndex >> 15 & LOBITS))
+      ensure1(display2(newIndex >> 10 & LOBITS))
       ensure0()
     case x =>
       illegalArgumentException(x)
