@@ -123,6 +123,7 @@ trait JavaBuilds0 {
   implicit def buildJavaSet[A]: Builds[A, jSet[A]]            = Builds.jSet[A]
   implicit def buildJavaList[A]: Builds[A, jList[A]]          = Builds.jList[A]
   implicit def buildJavaMap[K, V]: Builds[K -> V, jMap[K, V]] = Builds.jMap[K, V]
+  implicit def buildJavaStream[A]: Builds[A, jStream[A]]      = Builds.jStream[A]
 
   implicit def viewJavaIterable[A, CC[X] <: jIterable[X]](xs: CC[A]): AtomicView[A, CC[A]]           = new LinearView(Each java xs)
   implicit def viewJavaMap[K, V, CC[K, V] <: jMap[K, V]](xs: CC[K, V]): AtomicView[K -> V, CC[K, V]] = new LinearView(Each javaMap xs)
@@ -132,6 +133,9 @@ trait JavaBuilds0 {
   implicit def unbuiltPspView0[A] : UnbuildsAs[A, View[A]]                                 = Unbuilds[A, View[A]](xs => xs)
 }
 trait JavaBuilds extends JavaBuilds0 {
+  implicit def buildJavaSortedSet[A: Order]: Builds[A, jSortedSet[A]]            = Builds.jSortedSet[A]
+  implicit def buildJavaSortedMap[K: Order, V]: Builds[K -> V, jSortedMap[K, V]] = Builds.jSortedMap[K, V]
+
   implicit def unbuiltPspView1[A, R] : UnbuildsAs[A, BaseView[A, R]] = Unbuilds[A, BaseView[A, R]](xs => xs)
 }
 
@@ -210,6 +214,10 @@ trait EmptyInstances0 {
 }
 
 trait EmptyInstances extends EmptyInstances0 {
+  implicit def emptyJavaList[A] : Empty[jList[A]]     = Empty(new jArrayList[A])
+  implicit def emptyJavaSet[A] : Empty[jSet[A]]       = Empty(new jHashSet[A])
+  implicit def emptyJavaMap[K, V] : Empty[jMap[K, V]] = Empty(new jHashMap[K, V])
+
   implicit def emptyAtomicView[A, Repr] : Empty[AtomicView[A, Repr]] = Empty(new LinearView(Pnil))
   implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]    = Empty(z build vec())
   implicit def emptyOption[A] : Empty[Option[A]]                     = Empty(None)

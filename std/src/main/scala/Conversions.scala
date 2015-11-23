@@ -76,3 +76,16 @@ trait Constructions[M[X]] {
     case _                    => scala(xs.to[sciStream])
   }
 }
+
+trait JavaCollections {
+  private def map[M[K, V] <: jMap[K, V], K, V](empty: M[K, V])(xs: Foreach[K->V]): M[K, V] = doto(empty)(b => xs foreach (x => b.put(fst(x), snd(x))))
+
+  def ConcurrentMap[K: Eq, V](xs: (K -> V)*): jConcurrentMap[K, V] = map(new jConcurrentHashMap[K, V])(xs.m)
+  def SortedMap[K: Order, V](xs: (K -> V)*): jSortedMap[K, V]      = Built[jSortedMap[K, V]](xs.m)
+  def List[A](xs: A*): jList[A]                                    = Built[jList[A]](xs.m)
+  def Map[K, V](xs: (K -> V)*): jMap[K, V]                         = Built[jMap[K, V]](xs.m)
+  def Set[A](xs: A*): jSet[A]                                      = Built[jSet[A]](xs.m)
+  def SortedSet[A: Order](xs: A*): jSortedSet[A]                   = Built[jSortedSet[A]](xs.m)
+  def Stream[A](xs: A*): jStream[A]                                = Built[jStream[A]](xs.m)
+}
+object Java extends JavaCollections

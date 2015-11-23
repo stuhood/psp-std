@@ -1,6 +1,8 @@
 package psp
 package std
 
+import java.util.stream.Stream.{ builder => jStreamBuilder }
+
 /** The organization of the implicit builders is a black art.
  *  It might be better to generate StdBuilds[0-15] and put an implicit in
  *  each one so the prioritization is as unambiguous as scala allows.
@@ -13,31 +15,35 @@ package std
  */
 import api._
 
+object Built {
+  class Helper[To] {
+    def apply[A](xs: Foreach[A])(implicit z: Builds[A, To]): To = z build xs
+  }
+  def apply[To] : Helper[To] = new Helper[To]
+}
+
 object Builds {
   def apply[Elem, To](f: Foreach[Elem] => To): Builds[Elem, To] = new Impl(f)
 
-  def array[A: CTag]: Builds[A, Array[A]]                                                    = array(Array.newBuilder[A])
-  def direct[A](): Builds[A, Vec[A]]                                                         = Vec.newBuilder[A]
-  def list[A](): Builds[A, Plist[A]]                                                         = Plist.newBuilder[A]
+  def array[A: CTag]: Builds[A, Array[A]]                                                    = apply(xs => doto(Array.newBuilder[A])(_ ++= xs.trav).result)
+  def direct[A](): Builds[A, Vec[A]]                                                         = new Vec.Builder[A]
   def exMap[K : Eq, V] : Builds[K -> V, ExMap[K, V]]                                         = jMap[K, V] map (ExMap fromJava _)
   def exSet[A : Eq]: Builds[A, ExSet[A]]                                                     = jSet[A] map (ExSet fromJava _)
-  def jList[A](): Builds[A, jList[A]]                                                        = jList(new jArrayList[A])
-  def jMap[K, V](): Builds[K -> V, jMap[K, V]]                                               = jMap(new jHashMap[K, V])
-  def jSet[A](): Builds[A, jSet[A]]                                                          = jSet(new jHashSet[A])
-  def jSortedSet[A: Order](): Builds[A, jSortedSet[A]]                                       = jSortedSet(new jTreeSet[A](Order.comparator[A]))
-  def jSortedMap[K: Order, V](): Builds[K -> V, jSortedMap[K, V]]                            = jSortedMap(new jTreeMap[K, V](Order.comparator[K]))
+  def list[A](): Builds[A, Plist[A]]                                                         = new Plist.Builder[A]
   def sCollection[A, That](implicit z: CanBuild[A, That]): Builds[A, That]                   = apply(xs => doto(z())(b => xs foreach (b += _)) result)
   def sMap[K, V, That](implicit z: CanBuild[scala.Tuple2[K, V], That]): Builds[K -> V, That] = apply(xs => doto(z())(b => xs foreach (x => b += (fst(x) -> snd(x)))) result)
   def string(): Builds[Char, String]                                                         = apply(xs => doto(new StringBuilder)(b => xs foreach (c => b append c)) toString)
 
-  private def array[A](b: scmBuilder[A, Array[A]]): Builds[A, Array[A]]  = apply(b ++= _.trav result)
-  private def jList[A](js: jArrayList[A]): Builds[A, jList[A]]           = apply(xs => doto(js)(js => xs foreach (js add _)))
-  private def jMap[K, V](js: jHashMap[K, V]): Builds[K -> V, jMap[K, V]] = apply(xs => doto(js)(js => xs foreach (kv => js.put(fst(kv), snd(kv)))))
-  private def jSet[A](js: jHashSet[A]): Builds[A, jSet[A]]               = apply(xs => doto(js)(js => xs foreach js.add))
-  private def jSortedSet[A](js: jTreeSet[A]): Builds[A, jSortedSet[A]]   = apply(xs => doto(js)(js => xs foreach js.add))
+  def jList[A](): Builds[A, jList[A]]                             = buildsJList(new jArrayList[A])
+  def jMap[K, V](): Builds[K -> V, jMap[K, V]]                    = buildsJMap(new jHashMap[K, V])
+  def jSet[A](): Builds[A, jSet[A]]                               = buildsJSet(new jHashSet[A])
+  def jSortedMap[K: Order, V](): Builds[K -> V, jSortedMap[K, V]] = buildsJMap(new jTreeMap[K, V](Order.comparator[K]))
+  def jSortedSet[A: Order](): Builds[A, jSortedSet[A]]            = buildsJSet(new jTreeSet[A](Order.comparator[A]))
+  def jStream[A](): Builds[A, jStream[A]]                         = apply(xs => doto(jStreamBuilder[A]())(xs foreach _.add).build)
 
-  private def jSortedMap[K, V](js: jTreeMap[K, V]): Builds[K -> V, jSortedMap[K, V]] =
-    apply(xs => doto(js)(js => xs foreach (kv => js.put(fst(kv), snd(kv)))))
+  private def buildsJList[A, M[A] <: jList[A]](z: M[A]): Builds[A, M[A]]                 = apply(xs => doto(z)(z => xs foreach (x => z add x)))
+  private def buildsJSet[A, M[A] <: jSet[A]](z: M[A]): Builds[A, M[A]]                   = apply(xs => doto(z)(z => xs foreach (x => z add x)))
+  private def buildsJMap[K, V, M[K, V] <: jMap[K, V]](z: M[K, V]): Builds[K->V, M[K, V]] = apply(xs => doto(z)(z => xs foreach (x => z.put(fst(x), snd(x)))))
 
   final class Impl[Elem, To](val f: Foreach[Elem] => To) extends AnyVal with Builds[Elem, To] {
     def build(xs: Foreach[Elem]): To   = f(xs)

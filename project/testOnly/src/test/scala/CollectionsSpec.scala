@@ -275,9 +275,9 @@ class CollectionsSpec extends ScalacheckBundle {
   val sseq = sciSeq("a" -> 1, "b" -> 2, "c" -> 3)
   val svec = sciVector("a" -> 1, "b" -> 2, "c" -> 3)
   val sset = sciSet("a" -> 1, "b" -> 2, "c" -> 3)
-  val jseq = jList("a" -> 1, "b" -> 2, "c" -> 3)
-  val jset = jSet("a" -> 1, "b" -> 2, "c" -> 3)
-  val jmap = jMap("a" -> 1, "b" -> 2, "c" -> 3)
+  val jseq = Java.List("a" -> 1, "b" -> 2, "c" -> 3)
+  val jset = Java.Set("a" -> 1, "b" -> 2, "c" -> 3)
+  val jmap = Java.Map("a" -> 1, "b" -> 2, "c" -> 3)
 
   def paired[A](x: A): (A, Int) = x -> ("" + x).length
 

@@ -127,9 +127,6 @@ abstract class StdPackageObject extends scala.AnyRef
   def randomPosInt(max: Int): Int                      = scala.util.Random.nextInt(max + 1)
   def leftFormatString[A](n: Int): FormatFun           = new FormatFun(cond(n == 0, "%s", "%%-%ds" format n))
 
-  def jConcurrentMap[K, V](xs: (K -> V)*): jConcurrentMap[K, V] = new jConcurrentHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
-  def jMap[K, V](xs: (K -> V)*): jMap[K, V]                     = new jHashMap[K, V] doto (b => for ((k, v) <- xs) b.put(k, v))
-
   def max(l: Int, r: Int): Int     = if (l >= r) l else r
   def max(l: Long, r: Long): Long  = if (l >= r) l else r
   def max[A: Order](l: A, r: A): A = if (l >= r) l else r
@@ -150,5 +147,5 @@ abstract class StdPackageObject extends scala.AnyRef
   def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V]       = xs.m.toExMap
   def list[A](xs: A*): Plist[A]                     = xs.toPlist
   def inView[A](mf: Suspended[A]): View[A]          = new LinearView(Each(mf))
-  def zipView[A, B](xs: (A, B)*): ZipView[A, B]     = Zip zip1 xs.m
+  def zipView[A, B](xs: (A->B)*): ZipView[A, B]     = Zip zip1 xs.m
 }

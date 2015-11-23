@@ -9,5 +9,6 @@ trait Spire {
   type MultiplicativeMonoid[A]    = spire.algebra.MultiplicativeMonoid[A]
   type MultiplicativeSemigroup[A] = spire.algebra.MultiplicativeSemigroup[A]
   type Natural                    = spire.math.Natural
+  type SafeLong                   = spire.math.SafeLong
   type UInt                       = spire.math.UInt
 }
