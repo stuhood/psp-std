@@ -182,6 +182,7 @@ class ViewBasic extends ScalacheckBundle {
 
     implicit val arbRange = Arb[IntRange](Gen const (0 until len))
     implicit val arbTriple: Arb[RTriple] = arbRange flatMap (r => pair(r) flatMap (x => r -> x))
+    implicit val emptyInt = Empty[Int](MinInt)
 
     vec[NamedProp](
       "take/drop vs. slice" -> sameOutcomes[Triple[IntRange, Int, Int], IntRange](
@@ -199,7 +200,9 @@ class ViewBasic extends ScalacheckBundle {
       "splitAt/drop" -> sameOutcomes[RTriple, View[Int]](
         { case xs -> (idx -> size) => xs.m splitAt idx onRight (_ drop size) },
         { case xs -> (idx -> size) => xs.m drop size splitAt idx onRight identity }
-      )
+      ),
+      expectValue(MinInt)(view[Int]().zhead),
+      expectValue(5)(view(5).zhead)
       // Just to observe the scalacheck arguments being generated
       // , "dump" -> sameOutcomes[RTriple, Unit](
       //   { case xs -> (idx -> size) => { println(s"$xs -> ($idx -> $size)") ; () } },

@@ -171,6 +171,7 @@ final class HasOrder[A](xs: View[A])(implicit z: Order[A]) extends HasEq[A](xs) 
 }
 final class HasEmpty[A](xs: View[A])(implicit z: Empty[A]) {
   def zfind(p: ToBool[A]): A = xs.findOr(p, emptyValue)
+  def zhead: A = xs take 1 zfoldl ((zero: A, head: A) => head)
 }
 final class HasInitialValue[+A, B](xs: View[A], initial: B) {
   def indexed(f: (B, A, Index) => B): B = lowlevel.ll.foldLeftIndexed(xs, initial, f)

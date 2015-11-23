@@ -54,6 +54,6 @@ object INREPL {
     def !>(implicit ord: Order[A], z: Show[A]): Unit = run(_.m.sorted map z.show)
   }
 
-  implicit def showToAmmonite[A](implicit z: Show[A]): pprint.PPrinter[A] =
-    pprint.PPrinter[A]((t, c) => BiIterator[String](vec(z show t)))
+  // implicit def showToAmmonite[A](implicit z: Show[A]): pprint.PPrinter[A] =
+  //   pprint.PPrinter[A]((t, c) => BiIterator[String](vec(z show t)))
 }
