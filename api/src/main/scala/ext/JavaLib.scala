@@ -9,12 +9,6 @@ import java.{ io => jio }
 import java.nio.{ file => jnf }
 import java.nio.charset.Charset
 
-private[ext] object Util {
-  def doto[A](x: A)(f: A => Unit): A           = sideEffect(x, f(x))
-  def sideEffect[A](result: A, exprs: Any*): A = result
-}
-import Util._
-
 trait JavaLib {
   // Exceptional factories.
   def assertionError(msg: String): Nothing                = throw new AssertionError(msg)
@@ -39,8 +33,6 @@ trait JavaLib {
   // A selection of creators for commonly required java types.
   def jFile(path: String): jFile = new jFile(path)
   def jPath(path: String): jPath = jnf.Paths get path
-  def jList[A](xs: A*): jList[A] = ju.Arrays.asList(xs: _*)
-  def jSet[A](xs: A*): jSet[A]   = doto(new jHashSet[A])(xs foreach _.add)
   def jUri(x: String): jUri      = java.net.URI create x
   def jUrl(x: String): jUrl      = jUri(x).toURL
 
@@ -104,6 +96,7 @@ trait JavaLib {
   type jSet[A]                  = ju.Set[A]
   type jSortedMap[K, V]         = ju.SortedMap[K, V]
   type jSortedSet[A]            = ju.SortedSet[A]
+  type jStream[A]               = ju.stream.Stream[A]
   type jTreeMap[K, V]           = ju.TreeMap[K, V]
   type jTreeSet[A]              = ju.TreeSet[A]
   type jUri                     = java.net.URI

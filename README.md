@@ -34,4 +34,4 @@ res1: api.ExMap[Int, Int] = 1 -> 10
 
 ### Requirements
 
-scala 2.11, java 7+, sbt 0.13.7+
+scala 2.11, java 8, sbt 0.13.7+

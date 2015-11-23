@@ -13,31 +13,25 @@ package std
  */
 import api._
 
+object Built {
+  def apply[A, R](xs: Foreach[A])(implicit z: Builds[A, R]): R = z build xs
+}
+
 object Builds {
   def apply[Elem, To](f: Foreach[Elem] => To): Builds[Elem, To] = new Impl(f)
 
-  def array[A: CTag]: Builds[A, Array[A]]                                                    = array(Array.newBuilder[A])
-  def direct[A](): Builds[A, Vec[A]]                                                         = Vec.newBuilder[A]
-  def list[A](): Builds[A, Plist[A]]                                                         = Plist.newBuilder[A]
-  def exMap[K : Eq, V] : Builds[K -> V, ExMap[K, V]]                                         = jMap[K, V] map (ExMap fromJava _)
-  def exSet[A : Eq]: Builds[A, ExSet[A]]                                                     = jSet[A] map (ExSet fromJava _)
-  def jList[A](): Builds[A, jList[A]]                                                        = jList(new jArrayList[A])
-  def jMap[K, V](): Builds[K -> V, jMap[K, V]]                                               = jMap(new jHashMap[K, V])
-  def jSet[A](): Builds[A, jSet[A]]                                                          = jSet(new jHashSet[A])
-  def jSortedSet[A: Order](): Builds[A, jSortedSet[A]]                                       = jSortedSet(new jTreeSet[A](Order.comparator[A]))
-  def jSortedMap[K: Order, V](): Builds[K -> V, jSortedMap[K, V]]                            = jSortedMap(new jTreeMap[K, V](Order.comparator[K]))
+  def ?[Elem, To](implicit z: Builds[Elem, To]) = z
+
+  import Java._
+
+  def array[A: CTag]: Builds[A, Array[A]]                                                    = apply(xs => doto(Array.newBuilder[A])(_ ++= xs.trav).result)
+  def direct[A](): Builds[A, Vec[A]]                                                         = new Vec.Builder[A]
+  def exMap[K : Eq, V] : Builds[K -> V, ExMap[K, V]]                                         = ?[K->V, jMap[K, V]] map (ExMap fromJava _)
+  def exSet[A : Eq]: Builds[A, ExSet[A]]                                                     = ?[A, jSet[A]] map (ExSet fromJava _)
+  def list[A](): Builds[A, Plist[A]]                                                         = new Plist.Builder[A]
   def sCollection[A, That](implicit z: CanBuild[A, That]): Builds[A, That]                   = apply(xs => doto(z())(b => xs foreach (b += _)) result)
   def sMap[K, V, That](implicit z: CanBuild[scala.Tuple2[K, V], That]): Builds[K -> V, That] = apply(xs => doto(z())(b => xs foreach (x => b += (fst(x) -> snd(x)))) result)
   def string(): Builds[Char, String]                                                         = apply(xs => doto(new StringBuilder)(b => xs foreach (c => b append c)) toString)
-
-  private def array[A](b: scmBuilder[A, Array[A]]): Builds[A, Array[A]]  = apply(b ++= _.trav result)
-  private def jList[A](js: jArrayList[A]): Builds[A, jList[A]]           = apply(xs => doto(js)(js => xs foreach (js add _)))
-  private def jMap[K, V](js: jHashMap[K, V]): Builds[K -> V, jMap[K, V]] = apply(xs => doto(js)(js => xs foreach (kv => js.put(fst(kv), snd(kv)))))
-  private def jSet[A](js: jHashSet[A]): Builds[A, jSet[A]]               = apply(xs => doto(js)(js => xs foreach js.add))
-  private def jSortedSet[A](js: jTreeSet[A]): Builds[A, jSortedSet[A]]   = apply(xs => doto(js)(js => xs foreach js.add))
-
-  private def jSortedMap[K, V](js: jTreeMap[K, V]): Builds[K -> V, jSortedMap[K, V]] =
-    apply(xs => doto(js)(js => xs foreach (kv => js.put(fst(kv), snd(kv)))))
 
   final class Impl[Elem, To](val f: Foreach[Elem] => To) extends AnyVal with Builds[Elem, To] {
     def build(xs: Foreach[Elem]): To   = f(xs)
