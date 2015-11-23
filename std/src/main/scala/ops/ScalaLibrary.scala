@@ -10,11 +10,11 @@ import api._
  */
 final class OptionOps[A](val x: Option[A]) extends AnyVal {
   def or(alt: => A): A                 = x getOrElse alt
-  def orEmpty(implicit z: Empty[A]): A = x getOrElse emptyValue[A]
   def orFail(msg: String): A           = x getOrElse abort(msg)
   def toVec: Vec[A]                    = this zfold (x => vec(x))
   def up[A1 >: A] : OptionOps[A1]      = new OptionOps(x)
   def zfold[B: Empty](f: A => B): B    = x.fold[B](emptyValue)(f)
+  def zget(implicit z: Empty[A]): A    = x getOrElse z.empty
   def | (alt: => A): A                 = x getOrElse alt
   def ||(alt: => A): Option[A]         = x orElse Some(alt)
 }

@@ -25,16 +25,6 @@ object Partial {
   def apply[A, B](p: ToBool[A], f: A => B): Partial[A, B]    = new Partial(p, f)
 }
 
-object Empty {
-  def empty[A] : Empty[A]            = new Throws[A]("empty")
-  def apply[A](empty: => A): Impl[A] = new Impl[A](empty)
-  def const[A](empty: A): Empty[A]   = new Const[A](empty)
-
-  final class Throws[A](msg: String) extends Empty[A] { def empty: A = abort(msg) }
-  final class Impl[A](expr: => A) extends Empty[A] { def empty: A = expr }
-  final class Const[A](val empty: A) extends AnyVal with Empty[A]
-}
-
 object StdEq extends EqInstances
 object StdShow extends ShowInstances {
   implicit def convertHasShowDocOps[A: Show](x: A): ops.DocOps      = new ops.DocOps(Doc(x))

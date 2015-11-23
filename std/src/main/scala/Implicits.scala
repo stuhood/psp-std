@@ -199,29 +199,6 @@ trait OrderInstances extends OrderInstancesLow {
   implicit def tuple3Order[A: Order, B: Order, C: Order] : Order[(A, B, C)] = orderBy[(A, B, C)](_._1) | (_._2) | (_._3)
 }
 
-trait EmptyInstances0 {
-  implicit def emptyCanBuild[R](implicit z: CanBuild[_, R]): Empty[R] = Empty(z().result)
-}
-
-trait EmptyInstances extends EmptyInstances0 {
-  implicit def emptyJavaList[A] : Empty[jList[A]]     = Empty(new jArrayList[A])
-  implicit def emptyJavaSet[A] : Empty[jSet[A]]       = Empty(new jHashSet[A])
-  implicit def emptyJavaMap[K, V] : Empty[jMap[K, V]] = Empty(new jHashMap[K, V])
-
-  implicit def emptyAtomicView[A, Repr] : Empty[AtomicView[A, Repr]] = Empty(new LinearView(Pnil))
-  implicit def emptyBuilds[R](implicit z: Builds[_, R]): Empty[R]    = Empty(z build vec())
-  implicit def emptyOption[A] : Empty[Option[A]]                     = Empty(None)
-  implicit def emptyTuple[A: Empty, B: Empty]: Empty[(A, B)]         = Empty(emptyValue[A] -> emptyValue[B])
-  implicit def emptyView[A] : Empty[View[A]]                         = Empty(view())
-
-  implicit def emptyFile: Empty[jFile]            = Empty(NoFile)
-  implicit def emptyIndex: Empty[Index]           = Empty(NoIndex)
-  implicit def emptyIndexRange: Empty[IndexRange] = Empty(indexRange(0, 0))
-  implicit def emptyPath: Empty[jPath]            = Empty(NoPath)
-  implicit def emptyDoc: Empty[Doc]               = Empty(Doc.empty)
-  implicit def emptyString: Empty[String]         = Empty("")
-}
-
 trait EqInstances extends OrderInstances {
   implicit def classWrapperEq: Hash[JavaClass] = inheritEq
   implicit def classEq: Hash[Class[_]]         = inheritEq
