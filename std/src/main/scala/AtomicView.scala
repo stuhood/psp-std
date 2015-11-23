@@ -7,8 +7,6 @@ import lowlevel.CircularBuffer
 sealed abstract class AtomicView[A, Repr] extends IBaseView[A, Repr] {
   type This <: AtomicView[A, Repr]
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange
-  def head: A
-  def reducel(f: BinOp[A]): A = tail.foldl(head)(f)
 }
 
 object FlattenSlice {
@@ -29,26 +27,19 @@ object FlattenSlice {
 
 final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr] {
   type This      = LinearView[A, Repr]
-  def viewOps    = vec("<list>".s)
   def size: Size = underlying.size
 
   @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, fullIndexRange, f)
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = linearlySlice(underlying, range, f)
-  def head: A = {
-    foreach(x => return x)
-    ???
-  }
 }
 
 final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Repr] {
   type This = DirectView[A, Repr]
 
-  def viewOps                                                   = vec("<vector>".s)
   def size: Precise                                             = underlying.size
   def elemAt(i: Index): A                                       = underlying(i)
   def foreach(f: A => Unit): Unit                               = directlySlice(underlying, size.indices, f)
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = directlySlice(underlying, range, f)
-  def head: A = elemAt(0)
 }
 
 sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[A] {
@@ -82,7 +73,7 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
       if (dropping > 0)
         dropping = dropping - 1
       else if (remaining > 0)
-        try f(x) finally remaining -= 1
+        sideEffect(f(x), remaining -= 1)
 
       if (remaining == 0)
         return nextRange
@@ -104,7 +95,6 @@ sealed trait IBaseView[A, Repr] extends BaseView[A, Repr] with IView[A] {
 sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEffect: ToSelf[Size]) extends IBaseView[B, Repr] {
   def prev: View[A]
   def size    = sizeEffect(prev.size)
-  def viewOps = prev.viewOps.castTo[Vec[Doc]] :+ description
 
   final def foreach(f: B => Unit): Unit = {
     def loop[C](xs: View[C])(f: C => Unit): Unit = {
@@ -159,7 +149,7 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
     if (n.isZero)
       xs foreach f
     else
-      xs.foldl(CircularBuffer[A](n))((buf, x) => if (buf.isFull) try buf finally f(buf push x) else buf += x)
+      xs.foldl(CircularBuffer[A](n))((buf, x) => if (buf.isFull) sideEffect(buf, f(buf push x)) else buf += x)
   )
 
   private def foreachSlice[A](xs: View[A], range: IndexRange, f: A => Unit): Unit = xs match {

@@ -90,14 +90,14 @@ class OperationCounts extends ScalacheckBundle {
     )
     lazy val passed = Try(!failed).fold(
       t => sideEffect(false, t.printStackTrace),
-      x => try x finally maybeShow(x)
+      x => sideEffect(x, maybeShow(x))
     )
 
     private def maybeShow(passed: Boolean): Unit = {
       if (!passed)
         println(failString)
       else if (isTestDebug || (displaysRemaining > 0 && distinctCounts.size >= 3))
-        try println(passString) finally displaysRemaining -= 1
+        sideEffect(println(passString), displaysRemaining -= 1)
     }
 
     def compare(lhs: Int, rhs: Int): String = "%3s %-2s %-3s".format(lhs, if (lhs <= rhs) "<=" else ">", rhs)

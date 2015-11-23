@@ -18,11 +18,7 @@ final class AnyOps[A](val x: A) extends AnyVal {
   def shortClass: String                    = decodeName(x.getClass.getName splitChar '.' last)
   def toRef: Ref[A]                         = castTo[Ref[A]]
 
-  @inline def doto(f: A => Unit): A  = sideEffect[A](x, f(x))
   @inline def |>[B](f: A => B): B    = f(x)  // The famed forward pipe.
-}
-final class AnyRefOps[A <: AnyRef](val x: A) extends AnyVal {
-  @inline def doto(f: A => Unit): x.type = sideEffect[x.type](x, f(x))
 }
 
 final class CharOps(val ch: Char) extends AnyVal {

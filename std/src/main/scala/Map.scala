@@ -12,7 +12,6 @@ object Fun {
   def partial[A, B](pf: A ?=> B): FilterIn[A, B]  = FilterIn(pf.isDefinedAt, Opaque(pf))
   def const[B](value: B): Opaque[Any, B]          = Opaque(_ => value)
   def finite[A, B](kvs: (A->B)*): FiniteDom[A, B] = FiniteDom((kvs map fst).byEquals.toSet, partial(kvs map tuple toMap))
-  def orElse[A, B](fs: Fun[A, B]*): Fun[A, B]     = if (fs.isEmpty) empty else fs reduceLeft (OrElse(_, _))
 }
 
 object ExMap {

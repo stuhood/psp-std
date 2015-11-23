@@ -123,7 +123,7 @@ final class ByteBufferInputStream(b: ByteBuffer) extends InputStream {
   private def empty = !b.hasRemaining
 
   override def read()                                       = if (empty) -1 else b.get & 0xFF
-  override def read(bytes: Array[Byte], off: Int, len: Int) = if (empty) -1 else min(len, b.remaining) doto (b.get(bytes, off, _))
+  override def read(bytes: Array[Byte], off: Int, len: Int) = if (empty) -1 else doto(min(len, b.remaining))(b.get(bytes, off, _))
 }
 
 final class ByteBufferOutputStream(b: ByteBuffer) extends OutputStream {
