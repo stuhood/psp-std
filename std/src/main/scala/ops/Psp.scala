@@ -15,7 +15,7 @@ final class DocOps(val lhs: Doc) extends AnyVal {
 
   def ~(rhs: Doc): Doc   = Doc.Cat(lhs, rhs)
   def <>(rhs: Doc): Doc  = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ rhs
-  def <+>(rhs: Doc): Doc = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ " ".s ~ rhs
+  def <+>(rhs: Doc): Doc = if (lhs.isEmpty) rhs else if (rhs.isEmpty) lhs else lhs ~ " " ~ rhs
 }
 final class ExMapOps[K, V](xs: ExMap[K, V]) {
   type Entry = K -> V

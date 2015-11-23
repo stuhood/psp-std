@@ -10,13 +10,15 @@ class SpireSpec extends ScalacheckBundle {
   import spire._, implicits._
   import spire.syntax.literals.si._
 
+  val x = j"89 234 614 123 234 772"          // Long
   val y = big"123 456 789 987 654 321"       // BigInt
   val z = dec"1 234 456 789.123456789098765" // BigDecimal
 
   def props = vec(
     expectValue(y * 3)(Array(y, y, y).inPlace.shuffle.m.sum),
-    expectValue(y * y * y)(Array(y, y, y).inPlace.shuffle.m.product)
-    )
+    expectValue(y * y * y)(Array(y, y, y).inPlace.shuffle.m.product),
+    expectValue("89 234 614 123 234 772".toSafeLong)(x)
+  )
 }
 
 class ADTSpec extends ScalacheckBundle {
@@ -63,7 +65,8 @@ class ADTSpec extends ScalacheckBundle {
 class StringExtensions extends ScalacheckBundle {
   def bundle = "String Extensions"
 
-  def s                   = "123 monkey dog ^^.* hello mother 456"
+  def s = "123 monkey dog ^^.* hello mother 456"
+
   def scalaOps(s: String) = new StringOps(s)
 
   def newProp[A: Eq](f: StringOps => A, g: String => A): Prop = forAll((s: String) => sameBehavior(f(scalaOps(s)), g(s)))
@@ -89,8 +92,13 @@ class StringExtensions extends ScalacheckBundle {
     "tail"        -> newProp[String](_.tail, _.tail.force),
     "head"        -> newProp(_.head, _.head),
     "drop"        -> newProp[Char](_.head, _.head),
-    "reverse"     -> newProp[String](_.reverse, _.reverse.force)
-    )
+    "reverse"     -> newProp[String](_.reverse, _.reverseChars.force),
+    expectValue("")("".capitalize),
+    expectValue("Bob")("bob".capitalize),
+    expectValue("Bob johnson")("bob johnson".capitalize),
+    expectValue("Bob Johnson")("bob\njohnson".mapLines(_.capitalize).lines mk_s ' '),
+    expectValue("\u0001\u0002b\u0020b\u0003".sanitize)("??b b?")
+  )
 }
 
 class GridSpec extends ScalacheckBundle {

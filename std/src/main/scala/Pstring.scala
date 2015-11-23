@@ -24,17 +24,10 @@ final class SplitCharView(val xs: Vec[String], sep: Char) extends Direct[String]
 }
 
 final class Pstring(val self: String) extends AnyVal with ForceShowDirect {
-  private def chars: Array[Char] = self.toCharArray
-  // import self.{ toCharArray => chars }
-  // Let this hang out here - uncommenting it reveals which string
-  // implicits are being depended upon.
+  import self.{ toCharArray => chars }
 
-  def r: Regex     = Regex(self)
-  def u: jUrl      = jUrl(self)
-  def s: Doc       = Doc.Literal(self)
-  def to_s: String = self
-
-  def * (n: Int): String     = this * Size(n)
+  def r: Regex               = Regex(self)
+  def to_s: String           = self
   def * (n: Precise): String = n.times const self join_s
 
   def lines: SplitCharView               = splitView('\n')
@@ -52,13 +45,14 @@ final class Pstring(val self: String) extends AnyVal with ForceShowDirect {
   def mapChars(pf: Char ?=> Char): String           = chars.m mapPartial pf force
   def mapSplit(ch: Char)(f: ToSelf[String]): String = splitChar(ch) map f mk_s ch
   def processEscapes: String                        = StringContext processEscapes self
-  def remove(regex: Regex): String                  = regex matcher self replaceFirst ""
+  def removeFirst(regex: Regex): String             = regex matcher self replaceFirst ""
+  def removeAll(regex: Regex): String               = regex matcher self replaceAll ""
   def replaceChar(pair: Char -> Char): String       = self.replace(pair._1, pair._2)
-  def reverse: String                               = new String(chars.inPlace.reverse)
+  def reverseChars: String                          = new String(chars.inPlace.reverse)
   def sanitize: String                              = mapChars { case x if x.isControl => '?' }
   def splitChar(ch: Char): Vec[String]              = splitRegex(Regex quote ch.any_s)
   def splitRegex(r: Regex): Vec[String]             = r.pattern split self toVec
-  def stripMargin(ch: Char): String                 = mapLines(_ remove s"""^${bs}s*[$ch]""".r)
+  def stripMargin(ch: Char): String                 = mapLines(_ removeFirst s"""^${bs}s*[$ch]""".r)
   def stripMargin: String                           = stripMargin('|')
   def stripPrefix(prefix: String): String           = foldPrefix(prefix)(self)(identity)
   def stripSuffix(suffix: String): String           = foldSuffix(suffix)(self)(identity)
@@ -66,17 +60,17 @@ final class Pstring(val self: String) extends AnyVal with ForceShowDirect {
 
   def toBigInt: BigInt      = scala.math.BigInt(self)
   def toDecimal: BigDecimal = scala.math.BigDecimal(self)
-  def toDouble: Double      = parseDouble(dropSuffix(self, "dD"))
-  def toFloat: Float        = parseFloat(dropSuffix(self, "fF"))
+  def toSafeLong: SafeLong  = SafeLong(self removeAll """\s+""".r) // spire allows spaces in their literal syntax
+  def toDouble: Double      = parseDouble(self removeFirst "[dD]$".r)
+  def toFloat: Float        = parseFloat(self removeFirst "[fF]$".r)
   def toInt: Int            = foldPrefix("0x")(parseInt(self))(parseInt(_, 16))
-  def toLong: Long          = foldPrefix("0x")(parseLong(dropSuffix(self, "lL")))(s => parseLong(dropSuffix(s, "lL"), 16))
+  def toLong: Long          = (self removeFirst "[lL]$".r) |> (s => foldPrefix("0x")(parseLong(s))(parseLong(_, 16)))
 
   private def bs = '\\'
   private def unwrapArg(arg: Any): AnyRef                                     = arg.matchOr(arg.toRef) { case x: ScalaNumber => x.underlying }
+  private def foldRemove[A](r: Regex)(none: => A)(some: String => A): A       = removeFirst(r) match { case `self` => none ; case s => some(s) }
   private def foldPrefix[A](prefix: String)(none: => A)(some: String => A): A = foldRemove(prefix.r.literal.starts)(none)(some)
-  private def foldRemove[A](r: Regex)(none: => A)(some: String => A): A       = remove(r) match { case `self` => none ; case s => some(s) }
   private def foldSuffix[A](suffix: String)(none: => A)(some: String => A): A = foldRemove(suffix.r.literal.ends)(none)(some)
-  private def dropSuffix(s: String, drop: String): String                     = s remove drop.r.characterClass.ends
 }
 
 final class Regex(val pattern: Pattern) extends AnyVal with ForceShowDirect {
