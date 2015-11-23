@@ -62,6 +62,7 @@ object Build extends sbt.Build {
                             organization :=  pspOrg,
                            scalacOptions ++= scalacOptionsFor(scalaBinaryVersion.value) ++ stdArgs,
                         triggeredMessage :=  Watched.clearWhenTriggered,
+                              incOptions ~=  (_ withNameHashing false),
    javaVersionPrefix in javaVersionCheck :=  Some("1.8")
   ) ++ ( if (p.id == "root") Nil else Seq(target <<= javaCrossTarget(p.id)) )
 
