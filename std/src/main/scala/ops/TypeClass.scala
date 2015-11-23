@@ -20,6 +20,9 @@ final class OrderOps[A](val lhs: A) extends AnyVal {
   def <=(rhs: A)(implicit ord: Order[A]): Boolean  = compare(rhs) ne GT
   def > (rhs: A)(implicit ord: Order[A]): Boolean  = compare(rhs) eq GT
   def >=(rhs: A)(implicit ord: Order[A]): Boolean  = compare(rhs) ne LT
+
+  def min(rhs: A)(implicit ord: Order[A]): A = if (this < rhs) lhs else rhs
+  def max(rhs: A)(implicit ord: Order[A]): A = if (this > rhs) lhs else rhs
 }
 final class AlgebraOps[A](val lhs: A) extends AnyVal {
   def ^(rhs: A)(implicit z: BooleanAlgebra[A]): A       = (lhs || rhs) && !(lhs && rhs) // xor

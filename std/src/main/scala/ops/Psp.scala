@@ -50,6 +50,9 @@ final class PreciseOps(val size: Precise) {
   def - (n: Precise): Precise              = size - n.get
   def containsIndex(index: Index): Boolean = indices containsInt index.getInt
 
+  def min(rhs: Precise): Precise = if (size <= rhs) size else rhs
+  def max(rhs: Precise): Precise = if (size >= rhs) size else rhs
+
   @inline def foreachIndex(f: Index => Unit): Unit  = if (size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, i => f(Index(i)))
   @inline def foreachIntIndex(f: Int => Unit): Unit = if (size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, f)
 }

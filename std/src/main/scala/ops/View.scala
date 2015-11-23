@@ -118,6 +118,9 @@ final class IViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
     })
   )
 
+  def maxOf[B: Order](f: A => B): B = xs map f max
+  def minOf[B: Order](f: A => B): B = xs map f min
+
   def distinctBy[B: Eq](f: A => B): View[A] = inView { mf =>
     zfoldl[ExSet[B]] { (seen, x) =>
       val y = f(x)
@@ -162,8 +165,8 @@ class HasHash[A](xs: View[A])(implicit z: Hash[A]) extends HasEq[A](xs)(z) {
   override def toSet: ExSet[A] = xs.toHashSet
 }
 final class HasOrder[A](xs: View[A])(implicit z: Order[A]) extends HasEq[A](xs) {
-  def max: A          = xs reducel (psp.std.max(_, _))
-  def min: A          = xs reducel (psp.std.min(_, _))
+  def max: A          = xs reducel (_ max _)
+  def min: A          = xs reducel (_ min _)
   def sorted: View[A] = xs.toRefArray.inPlace.sort
 }
 final class HasEmpty[A](xs: View[A])(implicit z: Empty[A]) {

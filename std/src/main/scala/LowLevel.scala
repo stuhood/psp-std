@@ -114,7 +114,7 @@ final class CircularBuffer[@fspec A](capacity: Precise) extends Direct[A] {
 
   def isFull                         = seen >= cap
   def elemAt(index: Index): A        = buffer((readPointer + index.getInt) % cap).castTo[A]
-  def size: Precise                  = min(capacity, Size(seen))
+  def size: Precise                  = capacity min Size(seen)
   def ++=(xs: Foreach[A]): this.type = sideEffect(this, xs foreach setHead)
   def += (x: A): this.type           = sideEffect(this, setHead(x))
   def push(x: A): A                  = if (isFull) sideEffect(this.head, setHead(x)) else abort("push on non-full buffer")
@@ -123,7 +123,7 @@ final class ByteBufferInputStream(b: ByteBuffer) extends InputStream {
   private def empty = !b.hasRemaining
 
   override def read()                                       = if (empty) -1 else b.get & 0xFF
-  override def read(bytes: Array[Byte], off: Int, len: Int) = if (empty) -1 else doto(min(len, b.remaining))(b.get(bytes, off, _))
+  override def read(bytes: Array[Byte], off: Int, len: Int) = if (empty) -1 else doto(len min b.remaining)(b.get(bytes, off, _))
 }
 
 final class ByteBufferOutputStream(b: ByteBuffer) extends OutputStream {
