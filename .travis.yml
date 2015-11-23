@@ -10,7 +10,6 @@ cache:
 language: scala
 script: project/bin/run-travis
 jdk:
-  - oraclejdk7
   - oraclejdk8
 
 scala: 2.11.7
