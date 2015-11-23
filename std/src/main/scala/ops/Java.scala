@@ -2,14 +2,17 @@ package psp
 package std
 
 import api._
+import java.util.stream.Stream.{ builder => jStreamBuilder }
+
+object Java extends JavaCollections with JavaBuilders
 
 trait StdJava {
   // implicit def viewJavaStream[A, CC[X] <: jStream[X]](xs: CC[A]): AtomicView[A, CC[A]] = new StreamView(xs)
   implicit def viewJavaIterable[A, CC[X] <: jIterable[X]](xs: CC[A]): AtomicView[A, CC[A]]           = new LinearView(Each java xs)
   implicit def viewJavaMap[K, V, CC[K, V] <: jMap[K, V]](xs: CC[K, V]): AtomicView[K -> V, CC[K, V]] = new LinearView(Each javaMap xs)
 
-  implicit def unbuildJavaIterable[A, CC[X] <: jIterable[X]] : UnbuildsAs[A, CC[A]]                  = Unbuilds[A, CC[A]](Each java _)
-  implicit def unbuildJavaMap[K, V, CC[K, V] <: jMap[K, V]] : UnbuildsAs[K -> V, CC[K, V]]           = Unbuilds[K -> V, CC[K, V]](Each javaMap _)
+  implicit def unbuildJavaIterable[A, CC[X] <: jIterable[X]] : UnbuildsAs[A, CC[A]]        = Unbuilds[A, CC[A]](Each java _)
+  implicit def unbuildJavaMap[K, V, CC[K, V] <: jMap[K, V]] : UnbuildsAs[K -> V, CC[K, V]] = Unbuilds[K -> V, CC[K, V]](Each javaMap _)
 
   implicit def opsJavaIterator[A](x: jIterator[A]): ops.JavaIteratorOps[A] = new ops.JavaIteratorOps(x)
   implicit def opsJavaStream[A](x: jStream[A]): ops.JavaStreamOps[A]       = new ops.JavaStreamOps(x)
@@ -18,6 +21,30 @@ trait StdJava {
   implicit def convertToJavaPredicate[A](p: ToBool[A]): jPredicate[A]      = new jPredicate[A] { def test(x: A) = p(x) }
   implicit def convertToJavaFunction[A, B](f: A => B): jFunction[A, B]     = new jFunction[A, B] { def apply(x: A): B = f(x) }
   implicit def convertToJavaConsumer[A](f: A => Unit): jConsumer[A]        = new jConsumer[A] { def accept(x: A): Unit = f(x) }
+}
+
+trait JavaBuilders0 {
+  def genericJavaListBuilder[A, M[A] <: jList[A]](z: M[A]): Builds[A, M[A]]                 = Builds(xs => doto(z)(z => xs foreach (x => z add x)))
+  def genericJavaSetBuilder[A, M[A] <: jSet[A]](z: M[A]): Builds[A, M[A]]                   = Builds(xs => doto(z)(z => xs foreach (x => z add x)))
+  def genericJavaMapBuilder[K, V, M[K, V] <: jMap[K, V]](z: M[K, V]): Builds[K->V, M[K, V]] = Builds(xs => doto(z)(z => xs foreach (x => z.put(fst(x), snd(x)))))
+
+  implicit def javaSetBuilder[A]: Builds[A, jSet[A]]            = genericJavaSetBuilder(new jHashSet[A])
+  implicit def javaListBuilder[A]: Builds[A, jList[A]]          = genericJavaListBuilder(new jArrayList[A])
+  implicit def javaMapBuilder[K, V]: Builds[K -> V, jMap[K, V]] = genericJavaMapBuilder(new jHashMap[K, V])
+  implicit def javaStreamBuilder[A]: Builds[A, jStream[A]]      = Builds(xs => doto(jStreamBuilder[A]())(xs foreach _.add).build)
+}
+trait JavaBuilders extends JavaBuilders0 {
+  implicit def javaSortedSetBuilder[A: Order]: Builds[A, jSortedSet[A]]            = genericJavaSetBuilder(new jTreeSet[A](Order.comparator[A]))
+  implicit def javaSortedMapBuilder[K: Order, V]: Builds[K -> V, jSortedMap[K, V]] = genericJavaMapBuilder(new jTreeMap[K, V](Order.comparator[K]))
+}
+trait JavaCollections extends JavaBuilders {
+  def ConcurrentMap[K: Eq, V](xs: (K -> V)*): jConcurrentMap[K, V] = Built(xs)(genericJavaMapBuilder(new jConcurrentHashMap[K, V]))
+  def SortedMap[K: Order, V](xs: (K -> V)*): jSortedMap[K, V]      = Built(xs)
+  def List[A](xs: A*): jList[A]                                    = Built(xs)
+  def Map[K, V](xs: (K -> V)*): jMap[K, V]                         = Built(xs)
+  def Set[A](xs: A*): jSet[A]                                      = Built(xs)
+  def SortedSet[A: Order](xs: A*): jSortedSet[A]                   = Built(xs)
+  def Stream[A](xs: A*): jStream[A]                                = Built(xs)
 }
 
 package ops {
