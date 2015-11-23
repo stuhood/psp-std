@@ -17,27 +17,27 @@ sealed trait ArrayN[@spec A] extends AnyRef {
 }
 final case class Array0[@spec A](xs: Array[A]) extends ArrayN[A] {
   type Elem = A
-  def apply(n: Int): A = xs(n & MASK5)
+  def apply(n: Int): A = xs(n & LOBITS)
 }
 final case class Array1[@spec A](xs: Array2D[A]) extends ArrayN[A] {
   type Elem = Array[A]
-  def apply(n: Int): A = xs(n >>> 5 & MASK5)(n & MASK5)
+  def apply(n: Int): A = xs(levelBits(n, 1))(n & LOBITS)
 }
 final case class Array2[@spec A](xs: Array3D[A]) extends ArrayN[A] {
   type Elem = Array2D[A]
-  def apply(n: Int): A = xs(n >>> 10 & MASK5)(n >>> 5 & MASK5)(n & MASK5)
+  def apply(n: Int): A = xs(levelBits(n, 2))(levelBits(n, 1))(n & LOBITS)
 }
 final case class Array3[@spec A](xs: Array4D[A]) extends ArrayN[A] {
   type Elem = Array3D[A]
-  def apply(n: Int): A = xs(n >>> 15 & MASK5)(n >>> 10 & MASK5)(n >>> 5 & MASK5)(n & MASK5)
+  def apply(n: Int): A = xs(levelBits(n, 3))(levelBits(n, 2))(levelBits(n, 1))(n & LOBITS)
 }
 final case class Array4[@spec A](xs: Array5D[A]) extends ArrayN[A] {
   type Elem = Array4D[A]
-  def apply(n: Int): A = xs(n >>> 20 & MASK5)(n >>> 15 & MASK5)(n >>> 10 & MASK5)(n >>> 5 & MASK5)(n & MASK5)
+  def apply(n: Int): A = xs(levelBits(n, 4))(levelBits(n, 3))(levelBits(n, 2))(levelBits(n, 1))(n & LOBITS)
 }
 final case class Array5[@spec A](xs: Array6D[A]) extends ArrayN[A] {
   type Elem = Array5D[A]
-  def apply(n: Int): A = xs(n >>> 25 & MASK5)(n >>> 20 & MASK5)(n >>> 15 & MASK5)(n >>> 10 & MASK5)(n >>> 5 & MASK5)(n & MASK5)
+  def apply(n: Int): A = xs(levelBits(n, 5))(levelBits(n, 4))(levelBits(n, 3))(levelBits(n, 2))(levelBits(n, 1))(n & LOBITS)
 }
 
 object ArrayN {
@@ -48,8 +48,7 @@ object ArrayN {
 class ArrayLevels[@spec A: CTag] {
   var depth: Int = _
 
-  final val Width   = 6
-  final val displays = new Array[ArrayN[A]](Width)
+  final val displays = new Array[ArrayN[A]](WIDTH + 1)
 
   def getDisplay(n: Int): ArrayN[A]           = displays(n)
   def setDisplay(n: Int, xs: ArrayN[A]): Unit = displays(n) = xs
@@ -71,8 +70,8 @@ class ArrayLevels[@spec A: CTag] {
   }
 
   private[std] final def copyRange[E: CTag](array: ArrayN.Typed[A, E], oldLeft: Int, newLeft: Int): Array[E] = {
-    val elems = new Array[E](32)
-    arraycopy[E](array.xs, oldLeft, elems, newLeft, 32 - (newLeft max oldLeft))
+    val elems = new Array[E](BLOCK)
+    arraycopy[E](array.xs, oldLeft, elems, newLeft, BLOCK - (newLeft max oldLeft))
     elems
   }
 
@@ -106,20 +105,18 @@ class ArrayLevels[@spec A: CTag] {
  */
 final class Base32(val index: Int) extends AnyVal {
   def digitAt(place: Int): Int = apply(place)
-
-  def apply(place: Int): Int = index >>> place * 5 & 31
+  def apply(place: Int): Int = levelBits(index, place)
 
   def level  = levelOf(index)
   def places = 0 to level
   def digits = (places map digitAt).toVec.reverseIterator.toVec
 
   private def digit32(n: Int): String = (if (n < 10) '0' + n else 'A' + n - 10).toChar.toString
-  override def toString = "[B32:%s]".format(digits map digit32 join_s)
+  override def toString = "[B%s:%s]".format(BLOCK, digits map digit32 join_s)
 }
 
 final class Displays {
-  final val Width    = 6
-  final val displays = new Array[Array[AnyRef]](Width)
+  final val displays = new Array[Array[AnyRef]](WIDTH + 1)
   var depth: Int = _
 
   @inline private implicit def fixArray(x: AnyRef): Array[AnyRef] = x.asInstanceOf[Array[AnyRef]]
