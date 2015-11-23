@@ -6,6 +6,7 @@ import scala.annotation.unchecked.{ uncheckedVariance => uV }
 import java.{ lang => jl }
 import java.{ util => ju }
 import java.{ io => jio }
+import java.util.{ function => juf }
 import java.nio.{ file => jnf }
 import java.nio.charset.Charset
 
@@ -78,11 +79,13 @@ trait JavaLib {
   type jCollection[A]           = ju.Collection[A]
   type jConcurrentHashMap[K, V] = ju.concurrent.ConcurrentHashMap[K, V]
   type jConcurrentMap[K, V]     = ju.concurrent.ConcurrentMap[K, V]
+  type jConsumer[-A]            = juf.Consumer[A @uV]
   type jDate                    = ju.Date
   type jEnum[E <: jEnum[E]]     = jl.Enum[E]
   type jEnumeration[A]          = ju.Enumeration[A]
   type jField                   = jl.reflect.Field
   type jFile                    = jio.File
+  type jFunction[-A, +B]        = juf.Function[A @uV, B @uV]
   type jFuture[A]               = ju.concurrent.Future[A]
   type jHashMap[K, V]           = ju.HashMap[K, V]
   type jHashSet[A]              = ju.HashSet[A]
@@ -92,7 +95,9 @@ trait JavaLib {
   type jMapEntry[K, V]          = ju.Map.Entry[K, V]
   type jMap[K, V]               = ju.Map[K, V]
   type jMethod                  = jl.reflect.Method
+  type jOptional[+A]            = ju.Optional[A @uV]
   type jPath                    = jnf.Path
+  type jPredicate[-A]           = juf.Predicate[A @uV]
   type jSet[A]                  = ju.Set[A]
   type jSortedMap[K, V]         = ju.SortedMap[K, V]
   type jSortedSet[A]            = ju.SortedSet[A]

@@ -25,6 +25,14 @@ object FlattenSlice {
   }
 }
 
+final class StreamView[A, Repr](underlying: jStream[A]) extends AtomicView[A, Repr] {
+  type This = StreamView[A, Repr]
+  def size: Precise = Size(underlying.count)
+
+  @inline def foreach(f: A => Unit): Unit                       = underlying.iterator foreach f
+  def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = streamSlice(underlying, range, f)
+}
+
 final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr] {
   type This      = LinearView[A, Repr]
   def size: Size = underlying.size
@@ -83,6 +91,10 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
   def directlySlice[A](xs: Direct[A], range: IndexRange, f: A => Unit): IndexRange = {
     xs.size.indices slice range foreach (i => f(xs(i)))
     range << xs.size.getInt
+  }
+  def streamSlice[A](xs: jStream[A], range: IndexRange, f: A => Unit): IndexRange = {
+    xs drop range.startInt take range.size foreach f
+    range << xs.count.toInt
   }
 }
 
