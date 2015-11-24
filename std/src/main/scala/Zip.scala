@@ -9,15 +9,16 @@ final case class Split[A](left: View[A], right: View[A]) extends api.SplitView[A
   def mapLeft(f: View[A] => View[A]): Split[A]  = copy(left = f(left))
   def mapRight(f: View[A] => View[A]): Split[A] = copy(right = f(right))
   def rejoin: View[A]                           = left ++ right
-  def zipped: ZipView[A, A]                     = Zip.zip2(left, right)
+  def zipped: Zip.Impl[A, A]                    = Zip.zip2(left, right)
   def intersperse: View[A]                      = zipped flatMap (vec(_, _))
 }
 
 object Zip {
-  def impl[A, B](xs: ZipView[A, B]): Impl[A, B]                                          = new Impl[A, B](xs)
-  def zip0[AB, A, B](xs: View[AB])(implicit z: Pair.Split[AB, A, B]): ZipView0[AB, A, B] = new ZipView0(xs)
-  def zip1[A, B](xs: View[A -> B]): ZipView1[A, B]                                       = new ZipView1(xs)
-  def zip2[A, B](l: View[A], r: View[B]): ZipView2[A, B]                                 = new ZipView2(l, r)
+  def impl[A, B](xs: ZipView[A, B]): Impl[A, B]                                  = new Impl[A, B](xs)
+  def zip0[AB, A, B](xs: View[AB])(implicit z: Pair.Split[AB, A, B]): Impl[A, B] = impl(new ZipView0(xs))
+  def zip1[A, B](xs: View[A -> B]): Impl[A, B]                                   = impl(new ZipView1(xs))
+  def zip2[A, B](l: View[A], r: View[B]): Impl[A, B]                             = impl(new ZipView2(l, r))
+  def zip2[A, B](lr: (View[A], View[B])): Impl[A, B]                             = zip2(lr._1, lr._2)
 
   /** A ZipView has similar operations to a View, but with the benefit of
    *  being aware each element has a left and a right.

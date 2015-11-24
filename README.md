@@ -25,11 +25,23 @@ Then `sbt console` and you can look around.
 Using libsbt 0.5.7
 psp-std repl (ammonite 0.5.0, scala 2.11.7, jvm 1.8.0_66)
 
-psp> (1 to 20).m splitAt 10
+psp> 1 to 20 splitAt 10
 res0: Split[Int] = Split([ 1, 2, 3, ... ], [ 11, 12, 13, ... ])
 
-psp> (1 to 20).m splitAt 10 mapLeft (_.reverse) rejoin
+psp> 1 to 20 splitAt 10 mapLeft (_.reverse) rejoin
 res1: View[Int] = [ 10, 9, 8, ... ]
+
+psp> val xs = 1 to 3 cross vec("a", "bb", "ccc") zipped
+xs: ZipView[Int, String] = [ 1 -> a, 1 -> bb, 1 -> ccc, 2 -> a, 2 -> bb, 2 -> ccc, 3 -> a, 3 -> bb, 3 -> ccc ]
+
+psp> val same = xs filter (_ == _.length)
+same: ZipView[Int, String] = [ 1 -> a, 2 -> bb, 3 -> ccc ]
+
+psp> println(same.rights mk_s '/')
+a/bb/ccc
+
+val modulus = 0 to 9 mapBy (_ % 3, _ mk_s '/') entries
+modulus: ZipView[Int, String] = [ 0 -> 0/3/6/9, 1 -> 1/4/7, 2 -> 2/5/8 ]
 ```
 
 ### Requirements
