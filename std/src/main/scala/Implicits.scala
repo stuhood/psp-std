@@ -58,12 +58,13 @@ trait StdOps1 extends StdOps0 {
 }
 trait StdOps2 extends StdOps1 {
   // We buried Predef's {un,}augmentString in favor of these.
-  implicit def opsWrapString(x: String): Pstring                 = new Pstring(x)
-  implicit def opsAtomicView[A](x: View[A]): ops.IViewOps[A]     = new ops.IViewOps(x)
-  implicit def opsHasOrderInfix[A: Order](x: A): ops.OrderOps[A] = new ops.OrderOps[A](x)
-  implicit def opsHasHash[A: Hash](x: View[A]): ops.HasHash[A]   = new ops.HasHash(x)
-  implicit def opsView2D[A](x: View2D[A]): ops.View2DOps[A]      = new ops.View2DOps(x)
-  implicit def opsSize(x: Size): ops.SizeOps                     = new ops.SizeOps(x)
+  implicit def opsWrapString(x: String): Pstring                                       = new Pstring(x)
+  implicit def opsAlreadyView[A](x: View[A]): ops.IViewOps[A]                          = new ops.IViewOps(x)
+  implicit def opsReprView[R, A](xs: R)(implicit ev: R <:< Direct[A]): ops.IViewOps[A] = new ops.IViewOps(new DirectView(ev(xs)))
+  implicit def opsHasOrderInfix[A: Order](x: A): ops.OrderOps[A]                       = new ops.OrderOps[A](x)
+  implicit def opsHasHash[A: Hash](x: View[A]): ops.HasHash[A]                         = new ops.HasHash(x)
+  implicit def opsView2D[A](x: View2D[A]): ops.View2DOps[A]                            = new ops.View2DOps(x)
+  implicit def opsSize(x: Size): ops.SizeOps                                           = new ops.SizeOps(x)
 }
 
 trait StdOps3 extends StdOps2 {
@@ -149,9 +150,9 @@ trait StdBuilds2 extends StdBuilds1 {
   implicit def viewPspDirect[A, CC[X] <: Direct[X]](xs: CC[A]): DirectView[A, CC[A]] = new DirectView(xs)
 }
 trait StdBuilds extends StdBuilds2 {
-  implicit def unbuildPspString: UnbuildsAs[Char, String]          = Unbuilds(Direct string _)
-  implicit def buildPspString: Builds[Char, String]                = Builds.string
-  implicit def viewPspString(xs: String): DirectView[Char, String] = new DirectView(Direct string xs)
+  implicit def unbuildPspString: UnbuildsAs[Char, String]              = Unbuilds(Direct string _)
+  implicit def buildPspString: Builds[Char, String]                    = Builds.string
+  implicit def viewPspString(xs: String): DirectView[Char, String]     = new DirectView(Direct string xs)
 }
 
 trait PrimitiveInstances {
