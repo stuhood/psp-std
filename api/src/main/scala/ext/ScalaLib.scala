@@ -86,9 +86,10 @@ trait ScalaLib {
   // You can't use string interpolation without a StringContext term in scope.
   def StringContext = scala.StringContext
 
-  // Companions for which I have found a need.
+  // Companions etc for which I have found a need.
   final val Array     = scala.Array
   final val Failure   = scala.util.Failure
+  final val Nil       = scala.collection.immutable.Nil
   final val None      = scala.None
   final val Option    = scala.Option
   final val Some      = scala.Some

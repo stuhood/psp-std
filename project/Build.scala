@@ -8,11 +8,12 @@ import com.typesafe.sbt.JavaVersionCheckPlugin.autoImport._
 import scoverage.ScoverageKeys._
 
 object Build extends sbt.Build {
-  def ammoniteVersion     = if (sys.env contains "AMMONITE_DEBUG") "0.5.1-SNAPSHOT" else "0.5.0"
+  def isAmmoniteDebug     = sys.env contains "AMMONITE_DEBUG"
+  def ammoniteVersion     = if (isAmmoniteDebug) "0.5.1-SNAPSHOT" else "0.5.0"
   def ammoniteDep         = "com.lihaoyi" % "ammonite-repl_2.11.7" % ammoniteVersion
   def consoleDependencies = List(jsr305, ammoniteDep)
   def optimizeArgs        = wordSeq("-optimise -Yinline-warnings")
-  def stdArgs             = wordSeq("-Yno-predef -Yno-adapted-args -Yno-imports -unchecked") // -Ymacro-debug-verbose
+  def stdArgs             = wordSeq("-language:_ -Yno-predef -Yno-adapted-args -Yno-imports -unchecked") // -Ymacro-debug-verbose
   def testDependencies    = Def setting Seq(Deps.scalaReflect.value, scalacheck.copy(configurations = None))
 
   lazy val api = project setup "psp's non-standard api" also spire
@@ -26,16 +27,17 @@ object Build extends sbt.Build {
   def projectRefs   = convertSeq(subprojects): List[ProjectReference]
   def classpathDeps = convertSeq(subprojects): List[ClasspathDep[ProjectReference]]
 
-  object ammoniteSupport {
-    def consoleClasspathFiles        = fullClasspath in Compile in "consoleOnly" map (_.files)
-    def consoleClasspathString       = consoleClasspathFiles map (_ mkString ":")
-    def forkConfig                   = ForkConfig("psp.ReplMain", ImmutableProperties.empty, sciSeq("-usejavacp"), stdForkOptions)
-    def forkRepl: TaskOf[ForkConfig] = Def task (forkConfig addJvmOptions ("-cp", consoleClasspathString.value))
-    def setting                      = console in Compile := asTask(forkRepl).value
-    def stdForkOptions               = ForkOptions(outputStrategy = Some(StdoutOutput), connectInput = true)
+  val ammoniteTask = Def task {
+    val forker    = new Fork("java", Some("psp.ReplMain"))
+    val files     = (fullClasspath in Compile in "consoleOnly").value.files filterNot (_.toString contains "scoverage")
+    val classpath = files mkString ":"
+    val jvmArgs   = sciSeq(s"-Xbootclasspath/a:$classpath") // boot classpath way faster
+    val forkOpts  = ForkOptions(outputStrategy = Some(StdoutOutput), connectInput = true, runJVMOptions = jvmArgs)
 
-    def asInputTask(task: TaskOf[ForkConfig]): InputTaskOf[Int] = Def inputTask task.value(spaceDelimited("<arg>").parsed: _*)
-    def asTask(task: TaskOf[ForkConfig]): TaskOf[Int]           = asInputTask(task).toTask("")
+    if (isAmmoniteDebug)
+      println(files mkString ("", "\n", "\n"))
+
+    forker(forkOpts, "-usejavacp" +: stdArgs)
   }
 
   implicit class ProjectOps(val p: Project) {
@@ -45,7 +47,6 @@ object Build extends sbt.Build {
     def allSources    = Def task (sources in Test in p).value ++ (sources in Compile in p).value
     def usesCompiler  = p settings (libraryDependencies += Deps.scalaCompiler.value)
     def usesReflect   = p settings (libraryDependencies += Deps.scalaReflect.value)
-    def usesAmmonite  = p settings ammoniteSupport.setting
     def crossSettings = if (id == "root") Nil else Seq(target <<= javaCrossTarget(id))
 
     def setup(): Project             = p.alsoToolsJar also commonSettings(p) also (name := s"psp-$id")
@@ -56,7 +57,6 @@ object Build extends sbt.Build {
 
   private def jVersionKey   = javaVersionPrefix in javaVersionCheck
 
-  // resolvers +=  "Jcenter" at "http://jcenter.bintray.com"
   // updateOptions ~=  (_ withCachedResolution true)
   private def commonSettings(p: Project) = standardSettings ++ Seq(
        externalResolvers :=  Seq(Resolver.defaultLocal, "google" at "http://maven-central.storage.googleapis.com", Resolver.jcenterRepo),
@@ -79,10 +79,10 @@ object Build extends sbt.Build {
                   test <<=  test in testOnly
   ) also addCommandAlias("cover", "; clean ; coverage ; test ; coverageReport")
 
-  lazy val consoleOnly = (
-    project.helper.usesCompiler.usesAmmonite.dependsOnAll
-      dependsOn (testOnly % "test->test")
-           deps (consoleDependencies: _*)
+  lazy val consoleOnly = ( project.helper.dependsOnAll
+    dependsOn (testOnly % "test->test")
+         deps (consoleDependencies: _*)
+     settings (console in Compile := ammoniteTask.value)
   )
   lazy val testOnly = project.helper.dependsOnAll.aggregatesAll settings (
      testOptions in Test  +=  Tests.Argument(TestFrameworks.ScalaCheck, "-verbosity", "1"),

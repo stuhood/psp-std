@@ -6,33 +6,44 @@ import ammonite.repl.frontend.FrontEnd
 import java.lang.System
 
 object ReplMain {
-  def main(args: Array[String]): Unit = REPL.start()
+  def storage = Ref(Storage(Repl.defaultAmmoniteHome, None))
+  def initImports = sm"""
+    |import psp._, psp.std._, psp.api._
+    |import StdShow._, StdEq._, INREPL._
+    |import spire.math._, spire.algebra._, spire.implicits._
+  """
+  // Working around ammonite bugs.
+  // https://github.com/lihaoyi/Ammonite/issues/213
+  def workarounds = {
+    def mkNames(name: String, variance: String): String = s"type $name[${variance}A] = psp.api.$name[A] ; val $name = psp.std.$name"
+    def cov         = vec("Order", "Eq", "Show") map (mkNames(_, "-"))
+    def inv         = vec("Empty") map (mkNames(_, ""))
+    cov ++ inv joinLines
+  }
+
+  def main(args: Array[String]): Unit = REPL.start(args: _*)
 }
+
+trait ReplOverrides extends Repl {
+  private def banner = s"\npsp-std repl (ammonite $ammoniteVersion, scala $scalaVersion, jvm $javaVersion)"
+  override val frontEnd = Ref[FrontEnd](FrontEnd.JLineUnix)
+  override val prompt   = Ref("psp> ")
+
+  override def printBanner(): Unit = printer println banner
+}
+
+import ReplMain._
 
 /** This sets up the ammonite repl with the correct compiler settings
  *  and desired namespace elements and aesthetics.
  */
-object REPL extends Repl(System.in, System.out, Ref(Storage(Repl.defaultAmmoniteHome, None)), "", sciSeq()) {
+object REPL extends Repl(System.in, System.out, storage, "", Nil) with ReplOverrides {
   import interp.replApi._
 
-  private def options     = "-language:_ -Yno-adapted-args -Yno-imports -Yno-predef -encoding UTF-8"
-  private def initImports = "import psp._, std._, api._, StdShow._, StdEq._, INREPL._"
-
-  // Working around ammonite bugs.
-  // https://github.com/lihaoyi/Ammonite/issues/213
-  private def mkNames(name: String, variance: String): String =
-    s"""type $name[${variance}A] = psp.api.$name[A] ; val $name = psp.std.$name"""
-
-  private def cov         = vec("Order", "Eq", "Show") map (mkNames(_, "-"))
-  private def inv         = vec("Empty") map (mkNames(_, ""))
-  private def workarounds = cov ++ inv joinLines
-
-  def start(): Unit = {
-    compiler.settings processArgumentString options
+  def start(args: String*): Unit = {
+    compiler.settings.processArguments(args.toList, processAll = true)
     load(initImports)
     load(workarounds)
-    frontEnd bind FrontEnd.JLineUnix
-    prompt bind "psp> "
     run()
   }
   override def action() = {
@@ -57,6 +68,6 @@ object INREPL {
     def !>(implicit ord: Order[A], z: Show[A]): Unit = run(_.m.sorted map z.show)
   }
 
-  // implicit def showToAmmonite[A](implicit z: Show[A]): pprint.PPrinter[A] =
-  //   pprint.PPrinter[A]((t, c) => BiIterator[String](vec(z show t)))
+  implicit def showToAmmonite[A](implicit z: Show[A]): pprint.PPrinter[A] =
+    pprint.PPrinter[A]((t, c) => BiIterator[String](vec(z show t)))
 }

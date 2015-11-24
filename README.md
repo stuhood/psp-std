@@ -21,15 +21,15 @@ initialCommands in console :=  "import psp._, std._, api._, StdEq._"
 
 Then `sbt console` and you can look around.
 ```scala
-Welcome to the Ammonite Repl 0.4.8
-(Scala 2.11.7 Java 1.8.0_66)
-@ vec(1, 2, 3)
-res0: Vec[Int] = [ 1, 2, 3 ]
+% sbt console
+Using libsbt 0.5.7
+psp-std repl (ammonite 0.5.0, scala 2.11.7, jvm 1.8.0_66)
 
-@ vec(1, 2, 3).m mapOnto (_ * 10)
-res1: api.ExMap[Int, Int] = 1 -> 10
-2 -> 20
-3 -> 30
+psp> (1 to 20).m splitAt 10
+res0: Split[Int] = Split([ 1, 2, 3, ... ], [ 11, 12, 13, ... ])
+
+psp> (1 to 20).m splitAt 10 mapLeft (_.reverse) rejoin
+res1: View[Int] = [ 10, 9, 8, ... ]
 ```
 
 ### Requirements
