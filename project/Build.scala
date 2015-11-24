@@ -4,7 +4,6 @@ package build
 import scala.Predef.{ conforms => _ }
 import sbt._, Keys._, psp.libsbt._, Deps._
 import psp.std._
-import com.typesafe.sbt.JavaVersionCheckPlugin.autoImport._
 import scoverage.ScoverageKeys._
 
 object Build extends sbt.Build {
@@ -55,8 +54,6 @@ object Build extends sbt.Build {
     def helper(): Project            = p.hidden.noArtifacts setup s"helper project $id" dependsOn (classpathDeps: _*)
   }
 
-  private def jVersionKey   = javaVersionPrefix in javaVersionCheck
-
   // updateOptions ~=  (_ withCachedResolution true)
   private def commonSettings(p: Project) = standardSettings ++ Seq(
        externalResolvers :=  Seq(Resolver.defaultLocal, "google" at "http://maven-central.storage.googleapis.com", Resolver.jcenterRepo),
@@ -67,8 +64,7 @@ object Build extends sbt.Build {
             organization :=  pspOrg,
            scalacOptions ++= scalacOptionsFor(scalaBinaryVersion.value) ++ stdArgs,
         triggeredMessage :=  Watched.clearWhenTriggered,
-              incOptions ~=  (_ withNameHashing false),
-             jVersionKey :=  Some("1.8")
+              incOptions ~=  (_ withNameHashing false)
   ) ++ p.crossSettings
 
   lazy val root = project.root.setup.aggregatesAll.dependsOnAll settings (
