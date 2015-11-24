@@ -8,7 +8,8 @@ import com.typesafe.sbt.JavaVersionCheckPlugin.autoImport._
 import scoverage.ScoverageKeys._
 
 object Build extends sbt.Build {
-  def ammoniteDep         = "com.lihaoyi" % "ammonite-repl_2.11.7" % "0.4.8"
+  def ammoniteVersion     = if (sys.env contains "AMMONITE_DEBUG") "0.5.1-SNAPSHOT" else "0.5.0"
+  def ammoniteDep         = "com.lihaoyi" % "ammonite-repl_2.11.7" % ammoniteVersion
   def consoleDependencies = List(jsr305, ammoniteDep)
   def optimizeArgs        = wordSeq("-optimise -Yinline-warnings")
   def stdArgs             = wordSeq("-Yno-predef -Yno-adapted-args -Yno-imports -unchecked") // -Ymacro-debug-verbose
@@ -38,34 +39,37 @@ object Build extends sbt.Build {
   }
 
   implicit class ProjectOps(val p: Project) {
+    import p.id
     def aggregatesAll = p aggregate (projectRefs: _*)
     def dependsOnAll  = p dependsOn (classpathDeps: _*)
     def allSources    = Def task (sources in Test in p).value ++ (sources in Compile in p).value
     def usesCompiler  = p settings (libraryDependencies += Deps.scalaCompiler.value)
     def usesReflect   = p settings (libraryDependencies += Deps.scalaReflect.value)
     def usesAmmonite  = p settings ammoniteSupport.setting
+    def crossSettings = if (id == "root") Nil else Seq(target <<= javaCrossTarget(id))
 
-    def setup(): Project             = p.alsoToolsJar also commonSettings(p) also (name := "psp-" + p.id)
+    def setup(): Project             = p.alsoToolsJar also commonSettings(p) also (name := s"psp-$id")
     def setup(text: String): Project = setup() also (description := text)
-    def hidden(): Project            = p in file(s"./project/${p.id}")
-    def helper(): Project            = p.hidden.noArtifacts setup s"helper project ${p.id}" dependsOn (classpathDeps: _*)
+    def hidden(): Project            = p in file(s"./project/$id")
+    def helper(): Project            = p.hidden.noArtifacts setup s"helper project $id" dependsOn (classpathDeps: _*)
   }
+
+  private def jVersionKey   = javaVersionPrefix in javaVersionCheck
 
   // resolvers +=  "Jcenter" at "http://jcenter.bintray.com"
   // updateOptions ~=  (_ withCachedResolution true)
   private def commonSettings(p: Project) = standardSettings ++ Seq(
-                       externalResolvers :=  Seq("google" at "http://maven-central.storage.googleapis.com"),
-                                 version :=  sbtBuildProps.buildVersion,
-                            scalaVersion :=  scalaVersionLatest,
-                      crossScalaVersions :=  Seq(scalaVersion.value),
-                                licenses :=  pspLicenses,
-                            organization :=  pspOrg,
-                           scalacOptions ++= scalacOptionsFor(scalaBinaryVersion.value) ++ stdArgs,
-                        triggeredMessage :=  Watched.clearWhenTriggered,
-                              incOptions ~=  (_ withNameHashing false),
-   javaVersionPrefix in javaVersionCheck :=  Some("1.8")
-  ) ++ ( if (p.id == "root") Nil else Seq(target <<= javaCrossTarget(p.id)) )
-
+       externalResolvers :=  Seq(Resolver.defaultLocal, "google" at "http://maven-central.storage.googleapis.com", Resolver.jcenterRepo),
+                 version :=  sbtBuildProps.buildVersion,
+            scalaVersion :=  scalaVersionLatest,
+      crossScalaVersions :=  Seq(scalaVersion.value),
+                licenses :=  pspLicenses,
+            organization :=  pspOrg,
+           scalacOptions ++= scalacOptionsFor(scalaBinaryVersion.value) ++ stdArgs,
+        triggeredMessage :=  Watched.clearWhenTriggered,
+              incOptions ~=  (_ withNameHashing false),
+             jVersionKey :=  Some("1.8")
+  ) ++ p.crossSettings
 
   lazy val root = project.root.setup.aggregatesAll.dependsOnAll settings (
     console in Compile <<=  console in Compile in consoleOnly,

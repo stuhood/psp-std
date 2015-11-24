@@ -2,6 +2,7 @@ package psp
 
 import std._, api._, StdShow._
 import ammonite.repl.{ Ref, Repl, Storage }
+import ammonite.repl.frontend.FrontEnd
 import java.lang.System
 
 object ReplMain {
@@ -30,6 +31,8 @@ object REPL extends Repl(System.in, System.out, Ref(Storage(Repl.defaultAmmonite
     compiler.settings processArgumentString options
     load(initImports)
     load(workarounds)
+    frontEnd bind FrontEnd.JLineUnix
+    prompt bind "psp> "
     run()
   }
   override def action() = {
