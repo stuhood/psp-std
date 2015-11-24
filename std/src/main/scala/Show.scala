@@ -23,7 +23,7 @@ class FullRenderer extends Renderer {
 }
 
 final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
-  def escapedParts    = stringContext.parts map (_.processEscapes)
+  def escapedParts    = stringContext.parts.toList map (_.processEscapes)
   def escaped: String = escapedParts.join_s
 
   /** The type of args forces all the interpolation variables to
@@ -37,7 +37,7 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
    */
   def fshow(args: Doc*): String = escaped.format(args.map(_.render): _*)
 
-  final def sm(args: Any*): String = {
+  final def sm(args: Doc*): String = {
     def isLineBreak(c: Char) = c == '\n' || c == '\f' // compatible with StringLike#isLineBreak
     def stripTrailingPart(s: String): String = {
       val index        = s indexWhere isLineBreak
@@ -45,8 +45,7 @@ final class ShowInterpolator(val stringContext: StringContext) extends AnyVal {
       val post: String = s drop index.sizeExcluding force;
       pre append post.stripMargin
     }
-    val stripped = applyIfNonEmpty(stringContext.parts.toList)(xs => xs.head.stripMargin :: (xs.tail map stripTrailingPart))
-
+    val stripped = applyIfNonEmpty(escapedParts)(xs => xs.head.stripMargin :: (xs.tail map stripTrailingPart))
     (new StringContext(stripped: _*).raw(args: _*)).trim
   }
 }
