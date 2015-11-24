@@ -12,11 +12,9 @@ The scala standard library is deficient in many ways. This library is an attempt
 Suggested contents for `build.sbt`:
 
 ```scala
-                      name :=  "scratch"
-                 resolvers +=  "bintray/paulp" at "https://dl.bintray.com/paulp/maven"
               scalaVersion :=  "2.11.7"
-initialCommands in console :=  "import psp._, std._, api._, StdEq._"
        libraryDependencies +=  "org.improving" %% "psp-std" % "0.5.6"
+initialCommands in console :=  "import psp._, std._, api._, StdEq._, StdShow._"
 ```
 
 Then `sbt console` and you can look around.
