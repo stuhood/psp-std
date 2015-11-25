@@ -9,7 +9,7 @@ import scoverage.ScoverageKeys._
 object Build extends sbt.Build {
   def isAmmoniteDebug     = sys.env contains "AMMONITE_DEBUG"
   def ammoniteVersion     = if (isAmmoniteDebug) "0.5.1-SNAPSHOT" else "0.5.0"
-  def ammoniteDep         = "com.lihaoyi" % "ammonite-repl_2.11.7" % ammoniteVersion
+  def ammoniteDep         = "com.lihaoyi" % "ammonite-repl" % ammoniteVersion cross CrossVersion.full
   def consoleDependencies = List(jsr305, ammoniteDep)
   def optimizeArgs        = wordSeq("-optimise -Yinline-warnings")
   def stdArgs             = wordSeq("-language:_ -Yno-predef -Yno-adapted-args -Yno-imports -unchecked") // -Ymacro-debug-verbose
