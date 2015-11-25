@@ -60,7 +60,7 @@ final class Pstring(val self: String) extends AnyVal with ForceShowDirect {
 
   def toBigInt: BigInt      = scala.math.BigInt(self)
   def toDecimal: BigDecimal = scala.math.BigDecimal(self)
-  def toSafeLong: SafeLong  = SafeLong(self removeAll """\s+""".r) // spire allows spaces in their literal syntax
+  def toSafeLong: SafeLong  = SafeLong(self removeAll """\s+""".r toBigInt) // spire allows spaces in their literal syntax
   def toDouble: Double      = parseDouble(self removeFirst "[dD]$".r)
   def toFloat: Float        = parseFloat(self removeFirst "[fF]$".r)
   def toInt: Int            = foldPrefix("0x")(parseInt(self))(parseInt(_, 16))
