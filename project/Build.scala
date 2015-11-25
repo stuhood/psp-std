@@ -28,7 +28,7 @@ object Build extends sbt.Build {
 
   val ammoniteTask = Def task {
     val forker    = new Fork("java", Some("psp.ReplMain"))
-    val files     = (fullClasspath in Compile in "consoleOnly").value.files filterNot (_.toString contains "scoverage")
+    val files     = (fullClasspath in Compile in LocalProject("consoleOnly")).value.files filterNot (_.toString contains "scoverage")
     val classpath = files mkString ":"
     val jvmArgs   = sciSeq(s"-Xbootclasspath/a:$classpath") // boot classpath way faster
     val forkOpts  = ForkOptions(outputStrategy = Some(StdoutOutput), connectInput = true, runJVMOptions = jvmArgs)
