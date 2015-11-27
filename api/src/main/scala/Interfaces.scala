@@ -3,32 +3,32 @@ package api
 
 import Api._
 
-trait IndexOrNth extends Any with Opt[Long]
-trait Index extends Any with IndexOrNth
-trait Nth extends Any with IndexOrNth
-
 /** Name-based extractor methods. These interfaces aren't necessary
  *  for it (thus "name-based") but provide helpful structure when used.
  */
 trait IsEmpty extends Any              { def isEmpty: Boolean }
 trait Opt[+A] extends Any with IsEmpty { def get: A           }
 
-trait Each[@fspec +A]    extends Any with Foreach[A] with NotView        { def foreach(f: A => Unit): Unit   }
-trait Indexed[@fspec +A] extends Any with Each[A]                        { def elemAt(i: Index): A           }
-trait Direct[@fspec +A]  extends Any with Indexed[A]                     { def size: Precise                 }
-trait Linear[@fspec +A]  extends Any with Each[A]    with IsEmpty        { def head: A ; def tail: Linear[A] }
+sealed trait IndexOrNth extends Any with Opt[Long]
+trait Index             extends Any with IndexOrNth
+trait Nth               extends Any with IndexOrNth
 
-trait ExSet[A]      extends Any with Each[A] { def apply(x: A): Boolean    }
-trait ExMap[K, +V]  extends Any              { def lookup: FiniteDom[K, V] }
+sealed trait MaybeView extends Any                { def isView: Boolean      }
+trait IsView           extends Any with MaybeView { final def isView = true  }
+trait NotView          extends Any with MaybeView { final def isView = false }
 
 trait Foreach[+A] extends Any {
   def size: Size
   def foreach(f: A => Unit): Unit
 }
 
-sealed trait MaybeView extends Any                { def isView: Boolean      }
-trait IsView           extends Any with MaybeView { final def isView = true  }
-trait NotView          extends Any with MaybeView { final def isView = false }
+trait Each[@fspec +A]    extends Any with Foreach[A] with NotView
+trait Indexed[@fspec +A] extends Any with Each[A]                 { def elemAt(i: Index): A           }
+trait Direct[@fspec +A]  extends Any with Indexed[A]              { def size: Precise                 }
+trait Linear[@fspec +A]  extends Any with Each[A]    with IsEmpty { def head: A ; def tail: Linear[A] }
+
+trait ExSet[A]     extends Any with Each[A] { def apply(x: A): Boolean    }
+trait ExMap[K, +V] extends Any              { def lookup: FiniteDom[K, V] }
 
 trait View[@fspec +A] extends Any with Foreach[A] with IsView {
   def force[That](implicit z: Builds[A, That]): That

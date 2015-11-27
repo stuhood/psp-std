@@ -90,7 +90,7 @@ abstract class StdPackageObject extends scala.AnyRef
   def ??? : Nothing = throw new scala.NotImplementedError
 
   def classOf[A: CTag](): Class[_ <: A]      = classTag[A].runtimeClass.castTo[Class[_ <: A]]
-  def classTag[A: CTag] : CTag[A]            = implicitly[CTag[A]]
+  def classTag[A: CTag] : CTag[A]            = ?[CTag[A]]
   def classFilter[A: CTag] : Partial[Any, A] = Partial(_.isClass[A], _.castTo[A])
 
   def transitiveClosure[A: Eq](root: A)(expand: A => Foreach[A]): View[A] = inView { f =>

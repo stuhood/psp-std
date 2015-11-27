@@ -59,13 +59,13 @@ object Pair {
 
   object Cleave {
     def apply[R, A, B](f: (A, B) => R, l: R => A, r: R => B): Cleave[R, A, B] = new Cleave[R, A, B] {
-      def split(x: R): A -> B = ((l(x), r(x)))
+      def split(x: R): A -> B = (l(x), r(x))
       def join(x: A, y: B): R = f(x, y)
     }
   }
   object Split {
     def apply[R, A, B](l: R => A, r: R => B): Split[R, A, B] =
-      new Split[R, A, B] { def split(x: R): A -> B = ((l(x), r(x))) }
+      new Split[R, A, B] { def split(x: R): A -> B = (l(x), r(x)) }
   }
   object Join {
     def apply[R, A, B](f: (A, B) => R): Join[R, A, B] =
