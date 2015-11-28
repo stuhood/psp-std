@@ -19,6 +19,8 @@ object Zip {
   def zip1[A, B](xs: View[A -> B]): Impl[A, B]                                   = impl(new ZipView1(xs))
   def zip2[A, B](l: View[A], r: View[B]): Impl[A, B]                             = impl(new ZipView2(l, r))
   def zip2[A, B](lr: (View[A], View[B])): Impl[A, B]                             = zip2(lr._1, lr._2)
+  def zipf[A, B](l: View[A])(f: Index => A => B): Impl[A, B]                     = impl(new ZipViewF(l, f))
+  def zipc[A, B](l: View[A], r: View[B]): Impl[A, B]                             = impl(new CrossView(l, r))
 
   /** A ZipView has similar operations to a View, but with the benefit of
    *  being aware each element has a left and a right.
@@ -28,6 +30,7 @@ object Zip {
     type This       = ZipView[A1, A2]
     type Predicate2 = (A1, A2) => Bool
 
+    def relativeSize      = x.relativeSize
     def lefts: View[A1]   = x.lefts
     def rights: View[A2]  = x.rights
     def pairs: View[Both] = x.pairs
@@ -44,8 +47,8 @@ object Zip {
     }
     def foreach(f: (A1, A2) => Unit): Unit = (lefts, rights) match {
       case (xs: Direct[A1], ys: Direct[A2]) => (xs.size min ys.size).indices foreach (i => f(xs(i), ys(i)))
-      case (xs: Direct[A1], ys)             => ys take xs.size foreachWithIndex ((y, i) => f(xs(i), y))
-      case (xs, ys: Direct[A2])             => xs take ys.size foreachWithIndex ((x, i) => f(x, ys(i)))
+      case (xs: Direct[A1], ys)             => (ys take xs.size).indexed map (i => y => f(xs(i), y))
+      case (xs, ys: Direct[A2])             => (xs take ys.size).indexed map (i => x => f(x, ys(i)))
       case _                                => lefts.iterator |> (it => rights foreach (y => if (it.hasNext) f(it.next, y) else return))
     }
 
@@ -83,15 +86,33 @@ object Zip {
    *  This is plus or minus only a performance-related implementation detail.
    */
   final case class ZipView0[A, A1, A2](xs: View[A])(implicit z: Pair.Split[A, A1, A2]) extends ZipView[A1, A2] {
-    def lefts  = xs map (x => fst(z split x))
-    def rights = xs map (x => snd(z split x))
-    def pairs  = xs map z.split
+    def relativeSize = Some(0)
+    def lefts        = xs map (x => fst(z split x))
+    def rights       = xs map (x => snd(z split x))
+    def pairs        = xs map z.split
   }
   final case class ZipView1[A1, A2](pairs: View[A1 -> A2]) extends ZipView[A1, A2] {
+    def relativeSize = Some(0)
     def lefts  = pairs map fst
     def rights = pairs map snd
   }
   final case class ZipView2[A1, A2](lefts: View[A1], rights: View[A2]) extends ZipView[A1, A2] {
+    def relativeSize          = (lefts.size, rights.size) match {
+      case (Finite(l), Finite(r)) => Some(r - l)
+      case _                      => None
+    }
     def pairs: View[A1 -> A2] = inView(mf => this.foreach((x, y) => mf(x -> y)))
+  }
+  final case class ZipViewF[A1, A2](xs: View[A1], f: Index => A1 => A2) extends ZipView[A1, A2] {
+    def relativeSize = Some(0)
+    def lefts        = xs
+    def rights       = xs.indexed map f
+    def pairs        = lefts zip rights pairs
+  }
+  final class CrossView[A1, A2](xs: View[A1], ys: View[A2]) extends ZipView[A1, A2] {
+    def relativeSize = Some(0)
+    def lefts        = pairs map fst
+    def rights       = pairs map snd
+    def pairs        = for (x <- xs ; y <- ys) yield x -> y
   }
 }
