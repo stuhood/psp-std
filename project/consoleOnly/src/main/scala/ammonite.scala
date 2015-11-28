@@ -8,10 +8,11 @@ import java.lang.System
 object ReplMain {
   def storage = Ref(Storage(Repl.defaultAmmoniteHome, None))
   def initImports = sm"""
-    |import psp._, psp.std._, psp.api._
+    |import psp._, psp.std._
     |import StdShow._, StdEq._, INREPL._
-    |import spire.math._, spire.algebra._, spire.implicits._
   """
+
+    // |import spire.math._, spire.algebra._, spire.implicits._
   // Working around ammonite bugs.
   // https://github.com/lihaoyi/Ammonite/issues/213
   def workarounds = {

@@ -324,6 +324,10 @@ class CollectionsSpec extends ScalacheckBundle {
 
   def jvmProps = vec[NamedProp](
     expectTypes[String](
+      make("abc")(_ map identity),
+      make("abc")(_ map (_.toInt.toChar)),
+      make("abc")(_ map (_.toInt) map (_.toChar)),
+      make("abc")(_ flatMap (_.toString * 3)),
       "abc" map identity build,
       "abc" map (_.toInt.toChar) build,
       "abc" map (_.toInt) map (_.toChar) build,
@@ -332,6 +336,16 @@ class CollectionsSpec extends ScalacheckBundle {
       "abc" map identity flatMap ("" + _) build
     ),
     expectTypes[Array[Int]](
+      make(Array(1, 2, 3))(_ map identity),
+      make(Array(1, 2, 3))(_ flatMap (x => vec(x))),
+      make(Array(1, 2, 3))(_ map (_.toString) map (_.toInt)),
+      make(Array(1, 2, 3))(_ map (_.toString) flatMap (_.toString) map (_.toInt)),
+      make0[Array[Int]](1 to 10),
+      make0[Array[Int]](1 to 10 m),
+      make0[Array[Int]](1 to 10 toVec),
+      make1[Array](1 to 10),
+      make1[Array](1 to 10 m),
+      make1[Array](1 to 10 toVec),
       arr.inPlace map identity,
       arr.inPlace.reverse,
       arr ++ arr,

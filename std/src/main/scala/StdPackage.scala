@@ -134,12 +134,17 @@ abstract class StdPackageObject extends scala.AnyRef
   def swap[A, B](x: A -> B): B -> A    = x._2 -> x._1
   def swap[A, B](x: A, y: B): B -> A   = y -> x
 
+  def make[R](xs: R): RemakeHelper[R]  = new RemakeHelper[R](xs)
+  def make0[R] : MakeHelper[R]         = new MakeHelper[R]
+  def make1[CC[_]] : MakeHelper1[CC]   = new MakeHelper1[CC]
+  def make2[CC[_,_]] : MakeHelper2[CC] = new MakeHelper2[CC]
+
   def cond[A](p: Bool, thenp: => A, elsep: => A): A = if (p) thenp else elsep
-  def view[A](xs: A*): View[A]                      = xs.toVec.m
-  def vec[@fspec A](xs: A*): Vec[A]                 = xs.toVec
-  def set[A: Eq](xs: A*): ExSet[A]                  = xs.toExSet
-  def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V]       = xs.m.toExMap
-  def list[A](xs: A*): Plist[A]                     = xs.toPlist
   def inView[A](mf: Suspended[A]): View[A]          = new LinearView(Each(mf))
+  def list[A](xs: A*): Plist[A]                     = xs.toPlist
+  def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V]       = xs.m.toExMap
+  def set[A: Eq](xs: A*): ExSet[A]                  = xs.toExSet
+  def vec[@fspec A](xs: A*): Vec[A]                 = xs.toVec
+  def view[A](xs: A*): View[A]                      = xs.toVec.m
   def zipView[A, B](xs: (A->B)*): ZipView[A, B]     = Zip zip1 xs.m
 }
