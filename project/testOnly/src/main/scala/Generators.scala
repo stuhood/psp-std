@@ -49,8 +49,8 @@ package object gen {
   def zeroPlusInt: Gen[Int]         = 0 upTo MaxInt
   def zeroPlusLong: Gen[Long]       = 0L upTo MaxLong
 
-  def intRange(start: Gen[Int], end: Gen[Int]): Gen[IntRange]     = (start, end) >> psp.std.intRange
-  def longRange(start: Gen[Long], end: Gen[Long]): Gen[LongRange] = (start, end) >> psp.std.longRange
+  def intRange(start: Gen[Int], end: Gen[Int]): Gen[IntRange]     = (start, end) >> (_ to _)
+  def longRange(start: Gen[Long], end: Gen[Long]): Gen[LongRange] = (start, end) >> (_ to _)
   def letterFrom(s: String): Gen[Char]                            = oneOf(s.charSeq)
   def indexFrom[A](r: Consecutive[A]): Gen[Index]                 = frequency(1 -> NoIndex, 1 -> Index(0), 20 -> oneOf(r.indices.seq), 1 -> r.lastIndex.next)
   def indexRangeFrom(sMax: Int, eMax: Int): Gen[IndexRange]       = intRange(0 upTo sMax, 0 upTo eMax) ^^ (_ map (_.toLong) map Index)

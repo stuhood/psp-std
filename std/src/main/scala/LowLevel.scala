@@ -148,7 +148,7 @@ object Streams {
       case -1 => out.toByteArray
       case n  => out.write(buf, 0, n) ; loop()
     }
-    andClose(in)(_ => loop())
+    sideEffect(loop(), in.close())
   }
   def slurp(in: BufferedInputStream, size: Precise): Array[Byte] = {
     val len = size.toInt
@@ -160,6 +160,6 @@ object Streams {
         case n  => loop(remaining - n)
       }
     }
-    andClose(in)(_ => loop(len))
+    sideEffect(loop(len), in.close())
   }
 }

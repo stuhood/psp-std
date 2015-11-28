@@ -301,7 +301,7 @@ class ViewSplitZip extends ScalacheckBundle {
     showsAs("[ 2 -> 1 ]", zipped takeWhileFst (_ < 4)),
     showsAs("[ 5 -> 6 ]", zipped dropWhileSnd (_ < 4) map swap),
     showsAs("-", zipped findLeft (_ == 8)),
-    seqShows("10 -> 2, 30 -> 4", zipView(1 -> 2, 3 -> 4) mapLeft (_ * 10) force)
+    seqShows("10 -> 2, 30 -> 4", zip(1 -> 2, 3 -> 4) mapLeft (_ * 10) force)
   )
 }
 

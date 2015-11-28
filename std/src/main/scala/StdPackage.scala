@@ -28,12 +28,12 @@ abstract class StdPackageObject extends scala.AnyRef
   type View2D[+A]           = View[View[A]]
 
   // Ugh. XXX
-  implicit def promoteSize(x: Int): Precise                          = Size(x)
-  implicit def promoteIndex(x: Int): Index                           = Index(x)
-  implicit def wrapClass(x: jClass): JavaClass                       = new JavaClassImpl(x)
-  implicit def conforms[A] : (A <:< A)                               = new conformance[A]
-  implicit def defaultRenderer: FullRenderer                         = new FullRenderer
-  implicit def constantPredicate[A](value: Boolean): ToBool[A]       = if (value) ConstantTrue else ConstantFalse
+  implicit def promoteSize(x: Long): Precise                   = Size(x)
+  implicit def promoteIndex(x: Long): Index                    = Index(x)
+  implicit def wrapClass(x: jClass): JavaClass                 = new JavaClassImpl(x)
+  implicit def conforms[A] : (A <:< A)                         = new conformance[A]
+  implicit def defaultRenderer: FullRenderer                   = new FullRenderer
+  implicit def constantPredicate[A](value: Boolean): ToBool[A] = if (value) ConstantTrue else ConstantFalse
   implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = new (A ?=> B) {
     def isDefinedAt(x: A) = f isDefinedAt x
     def apply(x: A)       = f(x)
@@ -115,18 +115,14 @@ abstract class StdPackageObject extends scala.AnyRef
   def assert(assertion: => Boolean, msg: => Any): Unit =
     if (!assertion) runtimeException("" + msg)
 
-  def abortTrace(msg: String): Nothing                 = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
-  def andClose[A <: jCloseable, B](x: A)(f: A => B): B = try f(x) finally x.close()
-  def bufferMap[A, B: Empty](): scmMap[A, B]           = scmMap[A, B]() withDefaultValue emptyValue[B]
-  def fullIndexRange: IndexRange                       = indexRange(0, MaxInt)
-  def indexRange(start: Int, end: Int): IndexRange     = Consecutive.until(start, end, Index(_))
-  def intRange(start: Int, end: Int): IntRange         = Consecutive.until(start, end)
-  def longRange(start: Long, end: Long): LongRange     = intRange(start.safeInt, end.safeInt) map (_.toLong)
-  def noNull[A](value: A, orElse: => A): A             = if (value == null) orElse else value
-  def nullAs[A] : A                                    = null.asInstanceOf[A]
-  def option[A](p: Boolean, x: => A): Option[A]        = if (p) Some(x) else None
-  def randomPosInt(max: Int): Int                      = scala.util.Random.nextInt(max + 1)
-  def leftFormatString[A](n: Int): FormatFun           = new FormatFun(cond(n == 0, "%s", "%%-%ds" format n))
+  def abortTrace(msg: String): Nothing               = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
+  def bufferMap[A, B: Empty](): scmMap[A, B]         = scmMap[A, B]() withDefaultValue emptyValue[B]
+  def indexRange(start: Long, end: Long): IndexRange = Index(start) until end
+  def noNull[A](value: A, orElse: => A): A           = if (value == null) orElse else value
+  def nullAs[A] : A                                  = null.asInstanceOf[A]
+  def option[A](p: Boolean, x: => A): Option[A]      = if (p) Some(x) else None
+  def randomPosInt(max: Int): Int                    = scala.util.Random.nextInt(max + 1)
+  def leftFormatString[A](n: Int): FormatFun         = new FormatFun(cond(n == 0, "%s", "%%-%ds" format n))
 
   def fst[A, B](x: A -> B): A          = x._1
   def snd[A, B](x: A -> B): B          = x._2
@@ -146,5 +142,5 @@ abstract class StdPackageObject extends scala.AnyRef
   def set[A: Eq](xs: A*): ExSet[A]                  = xs.toExSet
   def vec[@fspec A](xs: A*): Vec[A]                 = xs.toVec
   def view[A](xs: A*): View[A]                      = xs.toVec.m
-  def zipView[A, B](xs: (A->B)*): ZipView[A, B]     = Zip zip1 xs.m
+  def zip[A, B](xs: (A->B)*): ZipView[A, B]         = Zip zip1 xs.m
 }

@@ -37,7 +37,7 @@ final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr]
   type This      = LinearView[A, Repr]
   def size: Size = underlying.size
 
-  @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, fullIndexRange, f)
+  @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, indexRange(0, MaxLong), f)
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = linearlySlice(underlying, range, f)
 }
 

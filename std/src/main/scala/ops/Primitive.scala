@@ -50,4 +50,7 @@ final class LongOps(val self: Long) extends AnyVal {
     case MinLong => MinInt
     case _       => assert(self.toInt <= MaxInt, s"$self > $MaxInt") ; self.toInt
   }
+
+  def to(end: Long): LongRange    = self.safeInt to end.safeInt map (_.toLong)
+  def until(end: Long): LongRange = self.safeInt until end.safeInt map (_.toLong)
 }

@@ -31,8 +31,6 @@ trait ExSet[A]     extends Any with Each[A] { def apply(x: A): Boolean    }
 trait ExMap[K, +V] extends Any              { def lookup: FiniteDom[K, V] }
 
 trait View[@fspec +A] extends Any with Foreach[A] with IsView {
-  def force[That](implicit z: Builds[A, That]): That
-
   /** Contiguous operations share the property that the result is always
    *  a (possibly empty) uninterrupted subsequence of the elements of the
    *  target collection.
