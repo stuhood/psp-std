@@ -25,6 +25,11 @@ class JavaEnumeration[A](enum: jEnumeration[A]) {
   def iterator: BiIterator[A] = BiIterator enumeration enum
 }
 
+final case class JvmName(value: String) {
+  def segments: Vec[String] = value splitChar '.'
+  def short: String         = segments.last
+}
+
 trait JavaClass extends Any {
   def clazz: jClass
 
@@ -41,7 +46,10 @@ trait JavaClass extends Any {
   def isPrimitive      = clazz.isPrimitive
   def isSynthetic      = clazz.isSynthetic
 
-  def ancestorNames: Vec[String]         = ancestors mapNow (_.rawName)
+  def rawName: JvmName   = new JvmName(clazz.getName)
+  def scalaName: JvmName = new JvmName(clazz.getName.decodeScala)
+
+  def ancestorNames: Vec[JvmName]        = ancestors mapNow (_.rawName)
   def ancestors: Vec[JavaClass]          = transitiveClosure(this)(_.parents).toVec
   def exists: Boolean                    = clazz != null
   def fields: Vec[jField]                = clazz.getFields.toVec
@@ -54,16 +62,12 @@ trait JavaClass extends Any {
   def getEnclosingClass: JavaClass       = clazz.getEnclosingClass
   def getInterfaces: Vec[JavaClass]      = clazz.getInterfaces.toVec mapNow toPsp
   def getSuperclass: Option[JavaClass]   = Option(clazz.getSuperclass) map toPsp
-  def hasModuleName: Boolean             = rawName endsWith "$"
+  def hasModuleName: Boolean             = rawName.value endsWith "$"
   def methods: Vec[jMethod]              = clazz.getMethods.toVec
-  def nameSegments: Vec[String]          = rawName splitChar '.'
   def parentInterfaces: Vec[JavaClass]   = clazz.getInterfaces.toVec mapNow toPsp
   def parents: Vec[JavaClass]            = getSuperclass.toVec ++ parentInterfaces
-  def qualifiedName: String              = rawName.mapSplit('.')(decodeName)
-  def rawName: String                    = clazz.getName
-  def shortName: String                  = unqualifiedName
+  def shortName: String                  = scalaName.short
   def to_s: String                       = s"$clazz"
-  def unqualifiedName: String            = decodeName(nameSegments.last)
 }
 
 trait JavaClassLoader extends Any {

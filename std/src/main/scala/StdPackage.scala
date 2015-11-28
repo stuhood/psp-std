@@ -4,7 +4,6 @@ package std
 import java.nio.file.Paths
 import java.nio.file.{ attribute => jnfa }
 import psp.api._
-import scala.reflect.NameTransformer
 import psp.ext.ExternalLibs
 
 abstract class StdPackageObject extends scala.AnyRef
@@ -100,10 +99,6 @@ abstract class StdPackageObject extends scala.AnyRef
     }
     loop(view(root), view())
   }
-
-  // Operations involving encoding/decoding of string data.
-  def decodeName(s: String): String = s.mapSplit('.')(NameTransformer.decode)
-  def encodeName(s: String): String = s.mapSplit('.')(NameTransformer.encode)
 
   @inline def timed[A](elapsed: Long => Unit)(body: => A): A = {
     val start = nanoTime
