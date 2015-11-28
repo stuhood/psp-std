@@ -49,26 +49,40 @@ trait Order[@fspec -A] extends Any with Eq[A] {
  *  "to adhere firmly and closely as though evenly and securely glued" as well
  *  as "to divide into two parts by a cutting blow".
  */
-object Pair {
-  trait Join[+R, -A, -B]  extends Any { def join(x: A, y: B): R }
-  trait Split[-R, +A, +B] extends Any { def split(x: R): A -> B }
-  trait Cleave[R, A, B]   extends Any with Join[R, A, B] with Split[R, A, B]
 
-  def apply[R, A, B](x: A, y: B)(implicit z: Join[R, A, B]): R         = z.join(x, y)
-  def unapply[R, A, B](x: R)(implicit z: Split[R, A, B]): Some[A -> B] = some(z split x)
+trait Splitter[-R, +A, +B] extends Any {
+  def split(x: R): A -> B
+}
+trait Joiner[+R, -A, -B]  extends Any {
+  def join(x: A -> B): R
+  def join(x: A, y: B): R
+}
+trait Cleaver[R, A, B] extends Any with Joiner[R, A, B] with Splitter[R, A, B]
 
-  object Cleave {
-    def apply[R, A, B](f: (A, B) => R, l: R => A, r: R => B): Cleave[R, A, B] = new Cleave[R, A, B] {
-      def split(x: R): A -> B = (l(x), r(x))
+object Cleaver {
+  def apply[R, A, B](f: (A, B) => R, l: R => A, r: R => B): Cleaver[R, A, B] = new Cleaver[R, A, B] {
+    def split(x: R): A -> B = (l(x), r(x))
+    def join(x: A, y: B): R = f(x, y)
+    def join(x: A -> B): R  = f(x._1, x._2)
+  }
+}
+object Splitter {
+  def apply[R, A, B](f: R => (A -> B)): Splitter[R, A, B] =
+    new Splitter[R, A, B] { def split(x: R): A -> B = f(x) }
+
+  def apply[R, A, B](l: R => A, r: R => B): Splitter[R, A, B] =
+    new Splitter[R, A, B] { def split(x: R): A -> B = (l(x), r(x)) }
+}
+object Joiner {
+  def apply[R, A, B](f: (A, B) => R): Joiner[R, A, B] =
+    new Joiner[R, A, B] {
       def join(x: A, y: B): R = f(x, y)
+      def join(x: A -> B): R  = f(x._1, x._2)
     }
-  }
-  object Split {
-    def apply[R, A, B](l: R => A, r: R => B): Split[R, A, B] =
-      new Split[R, A, B] { def split(x: R): A -> B = (l(x), r(x)) }
-  }
-  object Join {
-    def apply[R, A, B](f: (A, B) => R): Join[R, A, B] =
-      new Join[R, A, B] { def join(x: A, y: B): R = f(x, y) }
-  }
+}
+
+object Pair {
+  def apply[R, A, B](x: A -> B)(implicit z: Joiner[R, A, B]): R           = z.join(x)
+  def apply[R, A, B](x: A, y: B)(implicit z: Joiner[R, A, B]): R          = z.join(x, y)
+  def unapply[R, A, B](x: R)(implicit z: Splitter[R, A, B]): Some[A -> B] = some(z split x)
 }

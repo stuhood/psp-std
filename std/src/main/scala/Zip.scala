@@ -15,7 +15,7 @@ final case class Split[A](left: View[A], right: View[A]) extends api.SplitView[A
 
 object Zip {
   def impl[A, B](xs: ZipView[A, B]): Impl[A, B]                                  = new Impl[A, B](xs)
-  def zip0[AB, A, B](xs: View[AB])(implicit z: Pair.Split[AB, A, B]): Impl[A, B] = impl(new ZipView0(xs))
+  def zip0[AB, A, B](xs: View[AB])(implicit z: Splitter[AB, A, B]): Impl[A, B] = impl(new ZipView0(xs))
   def zip1[A, B](xs: View[A -> B]): Impl[A, B]                                   = impl(new ZipView1(xs))
   def zip2[A, B](l: View[A], r: View[B]): Impl[A, B]                             = impl(new ZipView2(l, r))
   def zip2[A, B](lr: (View[A], View[B])): Impl[A, B]                             = zip2(lr._1, lr._2)
@@ -80,12 +80,12 @@ object Zip {
     def force[R](implicit z: Builds[Both, R]): R = z build pairs
   }
 
-  /** ZipView0 means we're using a Pair.Split to interpret a collection holding the joined type.
+  /** ZipView0 means we're using a Splitter to interpret a collection holding the joined type.
    *  ZipView1 means there's a single view containing pairs, a View[A1->A2].
    *  ZipView2 means there are two separate views, a View[A1] and a View[A2].
    *  This is plus or minus only a performance-related implementation detail.
    */
-  final case class ZipView0[A, A1, A2](xs: View[A])(implicit z: Pair.Split[A, A1, A2]) extends ZipView[A1, A2] {
+  final case class ZipView0[A, A1, A2](xs: View[A])(implicit z: Splitter[A, A1, A2]) extends ZipView[A1, A2] {
     def relativeSize = Some(0)
     def lefts        = xs map (x => fst(z split x))
     def rights       = xs map (x => snd(z split x))

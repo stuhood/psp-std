@@ -20,8 +20,8 @@ trait StdImplicits extends scala.AnyRef
     def apply(i: Nth): A  = xs elemAt i.toIndex
   }
 
-  implicit def typeclassTupleCleave[A, B] : Pair.Cleave[A -> B, A, B]        = Pair.Cleave[A -> B, A, B](_ -> _, fst, snd)
-  implicit def typeclassLinearSplit[A] : Pair.Split[Linear[A], A, Linear[A]] = Pair.Split(_.head, _.tail)
+  implicit def typeclassTupleCleave[A, B] : Cleaver[A -> B, A, B]          = Cleaver[A -> B, A, B](_ -> _, fst, snd)
+  implicit def typeclassLinearSplit[A] : Splitter[Linear[A], A, Linear[A]] = Splitter(_.head, _.tail)
 
   implicit def convertViewEach[A](xs: View[A]): Each[A]    = Each(xs foreach _)
   implicit def opsSplitView[A](xs: SplitView[A]): Split[A] = Split(xs.left, xs.right)
@@ -87,7 +87,7 @@ trait StdOps3 extends StdOps2 {
   implicit def opsPrecise(x: Precise): ops.PreciseOps                         = new ops.PreciseOps(x)
   implicit def opsTry[A](x: Try[A]): ops.TryOps[A]                            = new ops.TryOps[A](x)
 
-  implicit def opsPairSplit[R, A, B](xs: Foreach[R])(implicit splitter: Pair.Split[R, A, B]): Paired[R, A, B] =
+  implicit def opsPairSplit[R, A, B](xs: Foreach[R])(implicit splitter: Splitter[R, A, B]): Paired[R, A, B] =
     new Paired[R, A, B](Each(xs foreach _))
 }
 

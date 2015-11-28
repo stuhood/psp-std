@@ -23,7 +23,7 @@ object Unbuilds {
  *  up front simplifies everything else, because we don't have to mix and match
  *  between arity-1 and arity-2 type constructors.
  */
-final class Paired[R, A, B](xs: Each[R])(implicit splitter: Pair.Split[R, A, B]) {
+final class Paired[R, A, B](xs: Each[R])(implicit splitter: Splitter[R, A, B]) {
   def toEqualsMap: ExMap[A, B]                                       = toExMap(inheritEq)
   def toExMap(implicit z: Eq[A]): ExMap[A, B]                        = toMap[ExMap]
   def toHashMap(implicit z: Hash[A]): ExMap[A, B]                    = toMap[ExMap]

@@ -29,6 +29,7 @@ final class CharOps(val ch: Char) extends AnyVal {
   def isLower      = jl.Character isLowerCase ch
   def isUpper      = jl.Character isUpperCase ch
   def toLower      = jl.Character toLowerCase ch
+  def isSpace      = jl.Character isWhitespace ch
   def toUpper      = jl.Character toUpperCase ch
   def to_s         = ch.toString
 }
