@@ -6,9 +6,9 @@ package api
 import Api._
 
 /** The Size hierarchy is:
- *                   Size
+ *                     Size
  *                  /        \
- *               Atomic      Bounded
+ *               Atomic     Bounded
  *              /      \
  *          Infinite  Precise
  *
@@ -25,18 +25,17 @@ import Api._
 sealed trait Size extends Any
 sealed trait Atomic extends Any with Size
 final case object Infinite extends Atomic
-final case class Bounded private[api] (lo: Precise, hi: Atomic) extends Size
 final class Precise private[api] (val get: Long) extends AnyVal with Atomic {
   def +(n: Long): Precise = Size(get + n)
   def -(n: Long): Precise = Size(get - n)
   def getInt: Int         = get.toInt
   override def toString   = s"$get"
 }
+final case class Bounded private[api] (lo: Precise, hi: Atomic) extends Size
 
 final class SizeExtractor(val get: Long) extends AnyVal with Opt[Long] { def isEmpty = get < 0 }
 
 object Finite extends (Long => Precise) {
-
   def apply(n: Long): Precise            = new Precise( if (n < 0) 0 else n )
   def unapply(n: Precise): SizeExtractor = new SizeExtractor(n.get)
 

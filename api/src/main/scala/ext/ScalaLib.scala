@@ -23,8 +23,6 @@ import sc.{ mutable => scm, immutable => sci }
  *   - DelayedInit is very special but it's garbage so omitted
  */
 trait ScalaLib {
-  self: ExternalLibs =>
-
   // The top and bottom types.
   type Any     = scala.Any
   type AnyRef  = scala.AnyRef
@@ -73,6 +71,7 @@ trait ScalaLib {
   type scSeq[+A]              = sc.Seq[A]
   type scSet[A]               = sc.Set[A]
   type scTraversable[+A]      = sc.Traversable[A]
+
   type sciIndexedSeq[+A]      = sci.IndexedSeq[A]
   type sciList[+A]            = sci.List[A]
   type sciMap[K, +V]          = sci.Map[K, V]
@@ -80,6 +79,7 @@ trait ScalaLib {
   type sciSet[A]              = sci.Set[A]
   type sciStream[+A]          = sci.Stream[A]
   type sciVector[+A]          = sci.Vector[A]
+
   type scmBuilder[-Elem, +To] = scm.Builder[Elem, To]
   type scmMap[K, V]           = scm.Map[K, V]
 
