@@ -248,7 +248,7 @@ class ViewBasic extends ScalacheckBundle {
     showsAs("[ 1, 2, 3, ... ]", punfold),
     // showsAs("[ 1, 2, 3 ], [ 1, 2 ], [ 1 ], [  ], [ 2 ], [ 2, 3 ], [ 3 ]", closure mk_s ", "),
     // showsAs("1 -> 3, 2 -> 4, 3 -> 3", closureBag.entries mk_s ", "),
-    seqShows("1 -> 0, 2 -> 1, 3 -> 2", pvector.m.mapWithIndex(_ -> _)),
+    seqShows("1 -> 0, 2 -> 1, 3 -> 2", pvector.m.indexed map (i => x => x -> i)),
     seqShows("11, 22, 33, 44", indexRange(1, 50) grep """(.)\1""".r),
     seqShows("99, 1010, 1111", xxNumbers slice (8 takeNext 3).asIndices),
     expectValue[Size](4)(strs.byRef.distinct.force.size),
@@ -301,7 +301,7 @@ class ViewSplitZip extends ScalacheckBundle {
     showsAs("[ 2 -> 1 ]", zipped takeWhileFst (_ < 4)),
     showsAs("[ 5 -> 6 ]", zipped dropWhileSnd (_ < 4) map swap),
     showsAs("-", zipped findLeft (_ == 8)),
-    seqShows("10 -> 2, 30 -> 4", zipView(1 -> 2, 3 -> 4) mapLeft (_ * 10) force)
+    seqShows("10 -> 2, 30 -> 4", zip(1 -> 2, 3 -> 4) mapLeft (_ * 10) force)
   )
 }
 
@@ -324,6 +324,10 @@ class CollectionsSpec extends ScalacheckBundle {
 
   def jvmProps = vec[NamedProp](
     expectTypes[String](
+      make("abc")(_ map identity),
+      make("abc")(_ map (_.toInt.toChar)),
+      make("abc")(_ map (_.toInt) map (_.toChar)),
+      make("abc")(_ flatMap (_.toString * 3)),
       "abc" map identity build,
       "abc" map (_.toInt.toChar) build,
       "abc" map (_.toInt) map (_.toChar) build,
@@ -332,6 +336,16 @@ class CollectionsSpec extends ScalacheckBundle {
       "abc" map identity flatMap ("" + _) build
     ),
     expectTypes[Array[Int]](
+      make(Array(1, 2, 3))(_ map identity),
+      make(Array(1, 2, 3))(_ flatMap (x => vec(x))),
+      make(Array(1, 2, 3))(_ map (_.toString) map (_.toInt)),
+      make(Array(1, 2, 3))(_ map (_.toString) flatMap (_.toString) map (_.toInt)),
+      make0[Array[Int]](1 to 10),
+      make0[Array[Int]](1 to 10 m),
+      make0[Array[Int]](1 to 10 toVec),
+      make1[Array](1 to 10),
+      make1[Array](1 to 10 m),
+      make1[Array](1 to 10 toVec),
       arr.inPlace map identity,
       arr.inPlace.reverse,
       arr ++ arr,

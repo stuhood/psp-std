@@ -10,7 +10,6 @@ object ReplMain {
   def initImports = sm"""
     |import psp._, psp.std._, psp.api._
     |import StdShow._, StdEq._, INREPL._
-    |import spire.math._, spire.algebra._, spire.implicits._
   """
   // Working around ammonite bugs.
   // https://github.com/lihaoyi/Ammonite/issues/213

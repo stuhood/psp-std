@@ -33,7 +33,9 @@ object Index extends (Long => Index) {
     def toIndex: Index                = this
     def toNth: Nth                    = Nth(indexValue + 1)
     def to_s                          = if (isInvalid) "invalid" else s"$get"
-    def until(end: Index): IndexRange = indexRange(getInt, end.getInt)
+
+    def to(end: Index): IndexRange    = get to end.get map Index
+    def until(end: Index): IndexRange = get until end.get map Index
   }
 }
 

@@ -38,3 +38,20 @@ object Builds {
     def apply(mf: Suspended[Elem]): To = build(Each(mf))
   }
 }
+
+/** These classes all put the expected result type up front,
+ *  where it can either be inferred from an existing value or
+ *  supplied directly.
+ */
+class RemakeHelper[R](xs: R) {
+  def apply[A](f: R => View[A])(implicit z: Builds[A, R]): R = z build f(xs)
+}
+class MakeHelper[R] {
+  def apply[A](expr: => View[A])(implicit z: Builds[A, R]): R = z build expr
+}
+class MakeHelper1[CC[_]] {
+  def apply[A](expr: => View[A])(implicit z: Builds[A, CC[A]]): CC[A] = z build expr
+}
+class MakeHelper2[CC[_, _]] {
+  def apply[K, V](expr: => ZipView[K, V])(implicit z: Builds[K->V, CC[K, V]]): CC[K, V] = z build expr.pairs
+}

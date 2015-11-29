@@ -37,7 +37,7 @@ final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr]
   type This      = LinearView[A, Repr]
   def size: Size = underlying.size
 
-  @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, fullIndexRange, f)
+  @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, indexRange(0, MaxLong), f)
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = linearlySlice(underlying, range, f)
 }
 
@@ -80,8 +80,10 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
     xs foreach { x =>
       if (dropping > 0)
         dropping = dropping - 1
-      else if (remaining > 0)
-        sideEffect(f(x), remaining -= 1)
+      else if (remaining > 0) {
+        f(x)
+        remaining -= 1
+      }
 
       if (remaining == 0)
         return nextRange
