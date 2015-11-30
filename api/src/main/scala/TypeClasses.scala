@@ -20,7 +20,6 @@ trait Show[-A] extends Any { def show(x: A): String }
  */
 trait Empty[@fspec +A] extends Any {
   def empty: A
-  def isEmptyValue[A1 >: A](x: A1): Boolean = x == empty
 }
 
 /** Back and forth between a Repr and an Each[A].

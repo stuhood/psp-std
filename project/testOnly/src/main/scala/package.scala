@@ -51,7 +51,6 @@ package object tests {
   // When testing e.g. associativity and the sum overflows, we
   // need to do more than compare values for equality.
   def sameBehavior[T: Eq](p1: => T, p2: => T): Boolean = {
-    import StdEq._
     implicit def t: Eq[Throwable] = eqBy[Throwable](_.getClass)
     Try(p1) === Try(p2)
   }

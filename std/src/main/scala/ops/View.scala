@@ -110,8 +110,6 @@ final class IViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
         ys mpartition p foreach mf
     })
   )
-
-
   def distinctBy[B: Eq](f: A => B): View[A] = inView { mf =>
     zfoldl[ExSet[B]] { (seen, x) =>
       val y = f(x)
