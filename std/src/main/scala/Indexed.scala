@@ -4,21 +4,25 @@ package std
 import api._, StdEq._
 import java.util.concurrent.LinkedBlockingQueue
 
+object indices {
+  def all: Indexed[Index]                      = Indexed(i => i)
+  def from(start: SafeLong): Indexed[SafeLong] = Indexed(i => start + i.get)
+  def from(start: BigInt): Indexed[BigInt]     = Indexed(i => start + i.get)
+  def from(start: Long): Indexed[Long]         = Indexed(i => start + i.get)
+  def from(start: Int): Indexed[Int]           = Indexed(i => start + i.getInt)
+}
+
 /** Indexed is somewhere between Each and Direct.
  *  There's an apply(index) method, but its size may not be known and may be infinite.
  *  We can memoize an Each into an Indexed.
  */
 object Indexed {
-  def indices: Indexed[Index]                  = Pure(identity)
-  def from(start: SafeLong): Indexed[SafeLong] = Pure(i => start + i.get)
-  def from(start: BigInt): Indexed[BigInt]     = Pure(i => start + i.get)
-  def from(start: Int): Indexed[Int]           = Pure(i => start + i.getInt)
-  def from(start: Long): Indexed[Long]         = Pure(i => start + i.get)
+  def apply[A](f: Index => A): Pure[A] = Pure(f)
 
-  final case class Pure[A](f: Index => A) extends AnyVal with Indexed[A] {
-    def size                                = Size.Unknown
-    def isEmpty                             = false
-    def elemAt(i: Index): A                 = f(i)
+  final case class Pure[A](f: Index => A) extends Indexed[A] {
+    def size                = Infinite // ...sometimes infinite via overflow, but hey
+    def isEmpty             = false
+    def elemAt(i: Index): A = f(i)
     @inline def foreach(f: A => Unit): Unit = {
       var current: Long = 0L
       while (true) { f(elemAt(Index(current))) ; current += 1 }

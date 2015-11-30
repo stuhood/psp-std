@@ -72,7 +72,7 @@ object ll {
     res
   }
   final def foldRight[@fspec A, @fspec B](xs: Each[A], initial: B, f: (A, B) => B): B = {
-    val arr: Array[Ref[A]] = xs.toRefArray.inPlace.reverse.asInstanceOf[Array[Ref[A]]]
+    val arr: Array[Ref[A]] = doto(xs.toRefArray)(_.inPlace.reverse)
     var res: B = initial
     arr foreach (x => res = f(x, res))
     res

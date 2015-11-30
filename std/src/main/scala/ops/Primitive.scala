@@ -14,6 +14,7 @@ final class AnyOps[A](val x: A) extends AnyVal {
   def isClass[A: CTag]                      = classOf[A] isAssignableFrom x.getClass
   def matchOpt[B](pf: A ?=> B): Option[B]   = matchOr(none[B])(pf andThen some)
   def matchOr[B](alt: => B)(pf: A ?=> B): B = if (pf isDefinedAt x) pf(x) else alt
+  def zmatch[B: Empty](pf: A ?=> B): B      = matchOr[B](emptyValue[B])(pf)
   def reflect[B](m: jMethod)(args: Any*): B = m.invoke(x, args.m.toRefs.seq: _*).castTo[B]
   def shortClass: String                    = x.getClass.scalaName.short
   def toRef: Ref[A]                         = castTo[Ref[A]]

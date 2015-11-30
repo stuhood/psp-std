@@ -20,8 +20,9 @@ trait StdImplicits extends scala.AnyRef
     def apply(i: Nth): A  = xs elemAt i.toIndex
   }
 
-  implicit def typeclassTupleCleave[A, B] : Cleaver[A -> B, A, B]          = Cleaver[A -> B, A, B](_ -> _, fst, snd)
-  implicit def typeclassLinearSplit[A] : Splitter[Linear[A], A, Linear[A]] = Splitter(_.head, _.tail)
+  implicit def typeclassTupleCleave[A, B] : Cleaver[A -> B, A, B]       = Cleaver[A -> B, A, B](_ -> _, fst, snd)
+  implicit def typeclassPlistSplit[A] : Splitter[Plist[A], A, Plist[A]] = Splitter(_.head, _.tail)
+  implicit def scalaListSplit[A] : Splitter[sciList[A], A, sciList[A]]  = Splitter(_.head, _.tail)
 
   implicit def convertViewEach[A](xs: View[A]): Each[A]    = Each(xs foreach _)
   implicit def opsSplitView[A](xs: SplitView[A]): Split[A] = Split(xs.left, xs.right)

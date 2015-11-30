@@ -5,9 +5,9 @@ import api._
 
 object Direct extends Constructions[Direct] {
   def construct[A](size: Size, mf: Suspended[A]): Vec[A] = Vec.newBuilder[A] build Each(mf)
-  def array[A](xs: Array[A]): Direct[A]       = new WrapArray[A](xs)
-  def reversed[A](xs: Direct[A]): Reversed[A] = new Reversed(xs)
-  def string(s: String): Direct[Char]         = new WrapString(s)
+  def array[A](xs: Array[A]): Direct[A]                  = new WrapArray[A](xs)
+  def reversed[A](xs: Direct[A]): Reversed[A]            = new Reversed(xs)
+  def string(s: String): Direct[Char]                    = new WrapString(s)
 
   trait Common[+A] extends Any with Direct[A] {
     @inline final def foreach(f: A => Unit): Unit = size.indices foreach (i => f(elemAt(i)))
