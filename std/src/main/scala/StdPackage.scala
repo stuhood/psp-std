@@ -83,8 +83,8 @@ abstract class StdPackageObject extends scala.AnyRef
   def println[A: Show](x: A): Unit = echoOut(render(x))
   def anyprintln(x: Any): Unit     = echoOut(x.any_s)
 
-  def applyIfNonEmpty[A](x: A)(f: A => A)(implicit z: Empty[A]): A =
-    if (z isEmptyValue x) x else f(x)
+  def applyIfNonEmpty[A: Eq](x: A)(f: A => A)(implicit z: Empty[A]): A =
+    if (x === emptyValue[A]) x else f(x)
 
   def ??? : Nothing = throw new scala.NotImplementedError
 

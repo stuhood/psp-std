@@ -1,8 +1,7 @@
 package psp
 package std
 
-import api._
-import StdShow._
+import api._, StdShow._, StdEq._
 
 class FullRenderer extends Renderer {
   def minElements: Precise = 3

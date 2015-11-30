@@ -52,7 +52,6 @@ object Zip {
       case _                                => lefts.iterator |> (it => rights foreach (y => if (it.hasNext) f(it.next, y) else return))
     }
 
-    def corresponds(p: Predicate2): Bool                            = this map p forallTrue
     def drop(n: Precise): This                                      = zip2(lefts drop n, rights drop n)
     def dropWhileFst(p: ToBool[A1]): This                           = pairs dropWhile (xy => p(fst(xy))) zipped
     def dropWhileSnd(p: ToBool[A2]): This                           = pairs dropWhile (xy => p(snd(xy))) zipped
