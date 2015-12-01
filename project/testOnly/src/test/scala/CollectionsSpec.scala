@@ -217,7 +217,7 @@ class ViewBasic extends ScalacheckBundle {
       ),
       "drop/apply" -> sameOutcomes[RTriple, Int](
         { case xs -> (idx -> size) => (xs drop size)(idx) },
-        { case xs -> (idx -> size) => xs(idx + size.get) }
+        { case xs -> (idx -> size) => xs(idx + size.getLong) }
       ),
       "dropRight/apply" -> sameOutcomes[RTriple, Int](
         { case xs -> (idx -> size) => (xs dropRight size)(idx) },

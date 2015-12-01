@@ -44,7 +44,7 @@ final class PreciseOps(val size: Precise) {
   def toInt: Int          = size.getInt
   def times               = new TimesBuilder(size)
   def indices: IndexRange = indexRange(0, size.getInt)
-  def lastIndex: Index    = Index(size.get - 1)  // effectively maps both undefined and zero to no index.
+  def lastIndex: Index    = Index(size.getLong - 1)  // effectively maps both undefined and zero to no index.
 
   def + (n: Precise): Precise              = size + n.get
   def - (n: Precise): Precise              = size - n.get

@@ -46,7 +46,7 @@ abstract class StdPackageObject extends scala.AnyRef
     def reverse: Direct[A]  = Direct reversed xs
     def apply(i: Index): A  = xs elemAt i
     def indices: IndexRange = indexRange(0, xs.size.getInt)
-    def lastIndex: Index    = Index(xs.size.get - 1)  // effectively maps both undefined and zero to no index.
+    def lastIndex: Index    = Index(xs.size.getLong - 1)  // effectively maps both undefined and zero to no index.
 
     def containsIndex(index: Index): Boolean = indices containsInt index.getInt
 

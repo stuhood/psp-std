@@ -17,10 +17,10 @@ object Index extends (Long => Index) {
   def impl(x: Index): Impl                 = new Impl(x.get)
 
   final class Impl private[std] (val indexValue: Long) extends AnyVal with api.Index with ForceShowDirect {
-    def %(size: Precise): Index = if (isInvalid) this else Index(get % size.get)
-    def +(n: Long): Index    = if (isInvalid) this else Index(get + n)
-    def -(n: Long): Index    = if (isInvalid) this else Index(get - n)
-    def /(size: Precise): Index = if (isInvalid) this else Index(get / size.get)
+    def %(size: Precise): Index = if (isInvalid) this else Index(get % size.getLong)
+    def +(n: Long): Index       = if (isInvalid) this else Index(get + n)
+    def -(n: Long): Index       = if (isInvalid) this else Index(get - n)
+    def /(size: Precise): Index = if (isInvalid) this else Index(get / size.getLong)
 
     def get: Long                     = indexValue
     def getInt: Int                   = get.safeInt

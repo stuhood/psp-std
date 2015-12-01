@@ -124,7 +124,7 @@ package object tests {
   }
 
   implicit def chooseIndex: Choose[Index]  = Choose.xmap[Long, Index](Index, _.get)
-  implicit def chooseSize: Choose[Precise] = Choose.xmap[Long, Precise](Finite, _.get)
+  implicit def chooseSize: Choose[Precise] = Choose.xmap[Long, Precise](Finite, _.getLong)
   implicit def chooseNth: Choose[Nth]      = Choose.xmap[Long, Nth](Nth, _.get)
 
   def preNewline(s: String): String                               = if (s containsChar '\n') "\n" + s.mapLines("| " append _) else s
