@@ -41,7 +41,7 @@ trait PspApi extends ExternalLibs {
   def none[A](): Option[A]                     = scala.None
   def show[A](implicit z: Show[A]): Show[A]    = z
   def sideEffect[A](result: A, exprs: Any*): A = result
-  def some[A](x: A): Some[A]                   = scala.Some(x)
+  def some[A](x: A): Option[A]                 = scala.Some(x)
 
   def newArray[A: CTag](length: Int): Array[A] = new Array[A](length)
   def copyArray[A: CTag](src: Array[A]): Array[A] = {

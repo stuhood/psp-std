@@ -27,19 +27,15 @@ abstract class StdPackageObject extends scala.AnyRef
   type View2D[+A]           = View[View[A]]
 
   // Ugh. XXX
-  implicit def promoteSize(x: Long): Precise                   = Size(x)
-  implicit def promoteIndex(x: Long): Index                    = Index(x)
-  implicit def wrapClass(x: jClass): JavaClass                 = new JavaClassImpl(x)
-  implicit def conforms[A] : (A <:< A)                         = new conformance[A]
-  implicit def defaultRenderer: FullRenderer                   = new FullRenderer
-  implicit def constantPredicate[A](value: Boolean): ToBool[A] = if (value) ConstantTrue else ConstantFalse
-  implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = new (A ?=> B) {
-    def isDefinedAt(x: A) = f isDefinedAt x
-    def apply(x: A)       = f(x)
-  }
-
-  implicit def opsDirect[A](xs: Direct[A]): ops.DirectOps[A]    = new ops.DirectOps(xs)
-  implicit def opsForeach[A](xs: Foreach[A]): ops.ForeachOps[A] = new ops.ForeachOps(xs)
+  implicit def promoteSize(x: Long): Precise                     = Size(x)
+  implicit def promoteIndex(x: Long): Index                      = Index(x)
+  implicit def wrapClass(x: jClass): JavaClass                   = new JavaClassImpl(x)
+  implicit def conforms[A] : (A <:< A)                           = new conformance[A]
+  implicit def defaultRenderer: FullRenderer                     = new FullRenderer
+  implicit def constantPredicate[A](value: Boolean): ToBool[A]   = if (value) ConstantTrue else ConstantFalse
+  implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = f.toPartial
+  implicit def opsDirect[A](xs: Direct[A]): ops.DirectOps[A]     = new ops.DirectOps(xs)
+  implicit def opsForeach[A](xs: Foreach[A]): ops.ForeachOps[A]  = new ops.ForeachOps(xs)
 
   def lexicalOrder: Order[String] = Order.fromInt(_ compareTo _)
 

@@ -84,7 +84,7 @@ object Joiner {
 object Pair {
   def apply[R, A, B](x: A -> B)(implicit z: Joiner[R, A, B]): R           = z.join(x)
   def apply[R, A, B](x: A, y: B)(implicit z: Joiner[R, A, B]): R          = z.join(x, y)
-  def unapply[R, A, B](x: R)(implicit z: Splitter[R, A, B]): Some[A -> B] = some(z split x)
+  def unapply[R, A, B](x: R)(implicit z: Splitter[R, A, B]): Some[A -> B] = Some(z split x)
 }
 
 object :: {

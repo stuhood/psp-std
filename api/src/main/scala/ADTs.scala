@@ -86,8 +86,8 @@ object Size {
       case (Range(l1, h1), Range(l2, h2))        => apply(min(l1, l2), max(h1, h2))
     }
     def unapply(x: Size): Some[(Atomic, Atomic)] = x match {
-      case Bounded(lo, hi) => some((lo, hi))
-      case x: Atomic       => some((x, x))
+      case Bounded(lo, hi) => Some((lo, hi))
+      case x: Atomic       => Some((x, x))
     }
   }
 }
@@ -98,6 +98,8 @@ object Size {
  *  to be any hope of seeing these converted into scala.Functions.
  */
 sealed abstract class Fun[-A, +B] {
+  self =>
+
   final def apply(x: A): B = this match {
     case Opaque(g)       => g(x)
     case OrElse(u1, u2)  => if (u1 isDefinedAt x) u1(x) else u2(x)
@@ -113,6 +115,10 @@ sealed abstract class Fun[-A, +B] {
     case Defaulted(_, u) => u isDefinedAt x
     case AndThen(u1, u2) => (u1 isDefinedAt x) && (u2 isDefinedAt u1(x))
     case FiniteDom(p, _) => p(x)
+  }
+  def toPartial: A ?=> B = new (A ?=> B) {
+    def isDefinedAt(x: A) = self isDefinedAt x
+    def apply(x: A)       = self(x)
   }
 }
 final case class Opaque[-A, +B](f: A => B)                       extends Fun[A, B]
