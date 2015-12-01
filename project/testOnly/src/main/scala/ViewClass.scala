@@ -12,7 +12,7 @@ object ViewClass {
 
 /** Methods for comparing against scala views.
  */
-trait ViewClass extends ForceShowDirect {
+trait ViewClass extends ShowSelf {
   type This <: ViewClass
 
   def name: String
