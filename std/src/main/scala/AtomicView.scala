@@ -27,7 +27,7 @@ object FlattenSlice {
 
 final class StreamView[A, Repr](underlying: jStream[A]) extends AtomicView[A, Repr] {
   type This = StreamView[A, Repr]
-  def size: Precise = Size(underlying.count)
+  lazy val size: Precise = Size(underlying.count)
 
   @inline def foreach(f: A => Unit): Unit                       = underlying.iterator foreach f
   def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = streamSlice(underlying, range, f)

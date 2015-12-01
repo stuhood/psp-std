@@ -26,6 +26,7 @@ sealed trait Size extends Any
 sealed trait Atomic extends Any with Size
 final case object Infinite extends Atomic
 final class Precise private[api] (val get: SafeLong) extends AnyVal with Atomic {
+  def *(n: SafeLong): Precise = Size(get * n)
   def +(n: SafeLong): Precise = Size(get + n)
   def -(n: SafeLong): Precise = Size(get - n)
   def getLong: Long           = get.toLong

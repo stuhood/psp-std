@@ -40,10 +40,14 @@ class SpireSpec extends ScalacheckBundle {
   val y = big"123 456 789 987 654 321"       // BigInt
   val z = dec"1 234 456 789.123456789098765" // BigDecimal
 
+  val s1 = Size(MaxLong / 2) * 3
+  val s2 = SafeLong(MaxLong / 2) * 3
+
   def props = vec(
     expectValue(y * 3)(Array(y, y, y).inPlace.shuffle.m.sum),
     expectValue(y * y * y)(Array(y, y, y).inPlace.shuffle.m.product),
-    expectValue("89 234 614 123 234 772".toSafeLong)(x)
+    expectValue("89 234 614 123 234 772".toSafeLong)(x),
+    expectValue(s1.get)(s2)
   )
 }
 
