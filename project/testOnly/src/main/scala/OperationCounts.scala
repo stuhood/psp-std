@@ -37,8 +37,6 @@ class OperationCounts extends ScalacheckBundle {
   def maxDisplay: Precise    = 20
   def numComposite           = 2 upTo 4
   def collections            = vec[RecorderCounter => ViewClass](
-    c => PspViewClass("p/linear", Probe.Linear(1 to max, c).view),
-    c => ScalaViewClass("s/linear",  Probe.ScalaLinear(1 to max, c).view),
     c => PspViewClass("p/direct", Probe.Direct(1 to max, c).view),
     c => ScalaViewClass("s/direct",  Probe.ScalaDirect(1 to max, c).view)
   )
@@ -76,16 +74,15 @@ class OperationCounts extends ScalacheckBundle {
 
   // final, but this creates an (unsuppressable?) unchecked warning about the outer reference.
   case class CompositeOp(ops: Direct[ViewClass.Op]) {
-    lazy val Each(usLinear, themLinear, usDirect, themDirect) = outcomes
+    lazy val Each(usDirect, themDirect) = outcomes
 
     lazy val viewOp: ViewClass.Op            = xs => ops.foldl(xs)((res, f) => f(res))
     lazy val outcomes: Vec[CollectionResult] = collections map (f => new CollectionResult(viewOp, f))
-    lazy val counts: String                  = "%s  %s".format(compare(usLinear.calls, themLinear.calls), compare(usDirect.calls, themDirect.calls))
+    lazy val counts: String                  = compare(usDirect.calls, themDirect.calls)
     lazy val results: Vec[String]            = outcomes mapNow (_.result)
 
     lazy val failed = (
          results.m.distinct.size =!= 1
-      || usLinear.calls > themLinear.calls
       || usDirect.calls > themDirect.calls
     )
     lazy val passed = Try(!failed).fold(
@@ -96,7 +93,7 @@ class OperationCounts extends ScalacheckBundle {
     private def maybeShow(passed: Boolean): Unit = {
       if (!passed)
         println(failString)
-      else if (isTestDebug || (displaysRemaining > 0 && distinctCounts.size >= 3))
+      else if (isTestDebug || (displaysRemaining > 0 && distinctCounts.size > 1))
         sideEffect(println(passString), displaysRemaining -= 1)
     }
 
@@ -105,7 +102,7 @@ class OperationCounts extends ScalacheckBundle {
     def ops_s             = "%-63s" format (ops map ("%-15s" format _.any_s) mk_s ' ')
     def outcomes_s        = outcomes map (_.to_s)
     def description       = if (passed) passString else failString
-    def passString        = pp"| $ops_s  $counts  // ${results.head}"
+    def passString        = pp"|$ops_s $counts // ${results.head}"
     def failString        = vec("Inconsistent results for:", ops_s) ++ outcomes_s map (" " + _) joinLines
     def distinctCounts    = outcomes.map(_.calls).byEquals.distinct.toVec
     override def toString = description
@@ -113,7 +110,6 @@ class OperationCounts extends ScalacheckBundle {
 
   def props() = Vec[NamedProp](
     NamedProp(s"Generating $minSuccessful view combinations, displaying at most $maxDisplay", Prop(true)),
-    NamedProp("%-60s %-12s %s".format("", "Linear", "Direct"), Prop(true)),
     NamedProp("psp-std never performs more operations than scala", compositeProp)
   )
 }

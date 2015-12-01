@@ -17,15 +17,22 @@ sealed trait MaybeView extends Any                { def isView: Boolean      }
 trait IsView           extends Any with MaybeView { final def isView = true  }
 trait NotView          extends Any with MaybeView { final def isView = false }
 
+/** Foreach is the common parent of View and Each.
+ *
+ *  A View always wraps an indeterminate number of Views
+ *  and a single Each which provides the original basis.
+ *  An Each may be composed from smaller Eaches but is
+ *  otherwise atomic. The size of an Each is known, the
+ *  size of a View may not be.
+ */
 trait Foreach[+A] extends Any {
   def size: Size
   def foreach(f: A => Unit): Unit
 }
 
 trait Each[@fspec +A]    extends Any with Foreach[A] with NotView
-trait Indexed[@fspec +A] extends Any with Each[A]                 { def elemAt(i: Index): A           }
-trait Direct[@fspec +A]  extends Any with Indexed[A]              { def size: Precise                 }
-trait Linear[@fspec +A]  extends Any with Each[A]    with IsEmpty { def head: A ; def tail: Linear[A] }
+trait Indexed[@fspec +A] extends Any with Each[A]                 { def elemAt(i: Index): A }
+trait Direct[@fspec +A]  extends Any with Indexed[A]              { def size: Precise       }
 
 trait ExSet[A]     extends Any with Each[A] { def apply(x: A): Boolean    }
 trait ExMap[K, +V] extends Any              { def lookup: FiniteDom[K, V] }

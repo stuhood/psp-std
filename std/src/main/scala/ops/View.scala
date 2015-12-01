@@ -54,7 +54,7 @@ trait ApiViewOps[+A] extends Any {
   def toRefs: View[Ref[A]]                                           = xs map (_.toRef)
   def unzip[L, R](implicit z: Splitter[A, L, R]): View[L] -> View[R] = zipped[L, R] |> (x => x.lefts -> x.rights)
   def withSize(size: Size): View[A]                                  = new Each.Impl[A](size, xs foreach _)
-  def zipIndex: ZipView[A, Index]                                    = xs zip Indexed.indices
+  def zipIndex: ZipView[A, Index]                                    = xs zip indices.all
   def zip[B](ys: View[B]): ZipView[A, B]                             = Zip.zip2[A, B](xs, ys)
   def zipped[L, R](implicit z: Splitter[A, L, R]): ZipView[L, R]     = Zip.zip0[A, L, R](xs)(z)
 }
@@ -81,7 +81,7 @@ final class IViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
   def splitAround(index: Index): A -> Split[A]                 = splitAt(index) |> (lr => (lr onRight (_.head)) -> (lr mapRight (_ tail)))
   def splitAt(index: Index): Split[A]                          = Split(xs take index.sizeExcluding, xs drop index.sizeExcluding)
   def sum(implicit z: AdditiveMonoid[A]): A                    = z sum xs.trav
-  def transpose[B](implicit ev: A <:< View[B]): View2D[B]      = Indexed.indices map (n => xs flatMap (_ drop n.sizeExcluding take 1))
+  def transpose[B](implicit ev: A <:< View[B]): View2D[B]      = indices.all map (n => xs flatMap (_ drop n.sizeExcluding take 1))
   def zreducel(f: BinOp[A])(implicit z: Empty[A]): A           = if (isEmpty) z.empty else reducel(f)
   def zreducer(f: BinOp[A])(implicit z: Empty[A]): A           = if (isEmpty) z.empty else reducer(f)
 
@@ -174,5 +174,5 @@ final class WithIndex[+A](xs: View[A]) {
   def foreach(f: (A, Index) => Unit): Unit              = lowlevel.ll.foldLeftIndexed[A, Unit](xs, (), (acc, x, i) => f(x, i))
   def map[B](f: Index => A => B): View[B]               = zipped map ((x, i) => f(i)(x))
   def mapZip[B](f: Index => A => B): ZipView[A, B]      = Zip.zipf(xs)(f)
-  def zipped: ZipView[A, Index]                         = xs zip Indexed.indices
+  def zipped: ZipView[A, Index]                         = xs zip indices.all
 }

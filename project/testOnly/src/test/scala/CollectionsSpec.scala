@@ -130,7 +130,7 @@ class StringExtensions extends ScalacheckBundle {
 class GridSpec extends ScalacheckBundle {
   def bundle = "Grid Operations"
 
-  def primePartition = (Indexed from 2).m mpartition (xs => _ % xs.head == 0)
+  def primePartition                            = (indices from 2).m mpartition (xs => _ % xs.head == 0)
   def primePartitionGrid(n: Int): View2D[Int]   = primePartition take n map (_ take n)
   def primePartitionGrid_t(n: Int): View2D[Int] = primePartition.transpose take n map (_ take n)
 
@@ -172,7 +172,7 @@ class ViewBasic extends ScalacheckBundle {
   def pvector = vec(1, 2, 3)
   def parray  = Array(1, 2, 3)
   def pseq    = Each.elems(1, 2, 3)
-  def punfold = Indexed from 1
+  def punfold = indices from 1
 
   case class Bippy(s: String, i: Int) {
     override def toString = s
@@ -187,7 +187,7 @@ class ViewBasic extends ScalacheckBundle {
 
   def closure              = transitiveClosure(parray)(x => view(x.init.force, x.tail.force))
   def closureBag           = closure flatMap (x => x) toBag // That's my closure bag, baby
-  def xxNumbers: View[Int] = (Indexed from 0).m grep """^(.*)\1""".r
+  def xxNumbers: View[Int] = (indices from 0).m grep """^(.*)\1""".r
 
   def props = miscProps ++ vecProps ++ rangeProps
 

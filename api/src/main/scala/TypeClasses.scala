@@ -16,7 +16,8 @@ trait Show[-A] extends Any { def show(x: A): String }
 
 /** The original type class for providing the "empty" value of a particular type.
  *  Suitable only for types with a unique (useful) definition of empty - but that's
- *  a whole lot of types.
+ *  a lot of types. You could easily recover the behavior of methods like Option.get
+ *  or Seq.head by creating a default instance of Empty[A] which throws an exception.
  */
 trait Empty[@fspec +A] extends Any {
   def empty: A
@@ -84,4 +85,10 @@ object Pair {
   def apply[R, A, B](x: A -> B)(implicit z: Joiner[R, A, B]): R           = z.join(x)
   def apply[R, A, B](x: A, y: B)(implicit z: Joiner[R, A, B]): R          = z.join(x, y)
   def unapply[R, A, B](x: R)(implicit z: Splitter[R, A, B]): Some[A -> B] = some(z split x)
+}
+
+object :: {
+  def apply[R, A, B](x: A, y: B)(implicit z: Joiner[R, A, B]): R = z.join(x, y)
+  def unapply[R, A, B](x: R)(implicit z1: Splitter[R, A, B], z2: Empty[R], z3: Eq[R]): Option[A -> B] =
+    if (z3.eqv(x, z2.empty)) none() else some(z1 split x)
 }

@@ -3,11 +3,14 @@ package std
 
 import api._
 
-sealed abstract class Plist[A] extends Linear[A] {
-  def ::(hd: A): Plist[A] = Pcons(hd, this)
+sealed abstract class Plist[A] extends Each[A] {
+  def head: A
+  def tail: Plist[A]
 
+  def ::(hd: A): Plist[A] = Pcons(hd, this)
   def isEmpty = this eq Pnil
-  def size = if (isEmpty) Size(0) else Size(1).atLeast
+  def size    = if (isEmpty) Size(0) else Size(1).atLeast
+
   @inline final def foreach(f: A => Unit): Unit = {
     def loop(xs: Plist[A]): Unit = xs match {
       case Pcons(hd, tl) => f(hd) ; loop(tl)
