@@ -5,6 +5,29 @@ package ops
 import api._, StdEq._, StdShow._
 import java.io.BufferedInputStream
 
+final class DirectOps[A](val xs: Direct[A]) extends AnyVal {
+  def head: A = apply(0)
+  def last: A = apply(lastIndex)
+  def tail    = xs.drop(1)
+  def init    = xs.dropRight(1)
+
+  def reverse: Direct[A]  = Direct reversed xs
+  def apply(i: Index): A  = xs elemAt i
+  def indices: IndexRange = indexRange(0, xs.size.getInt)
+  def lastIndex: Index    = Index(xs.size.getLong - 1)  // effectively maps both undefined and zero to no index.
+
+  def containsIndex(index: Index): Boolean = indices containsInt index.getInt
+
+  @inline def foreachIndex(f: Index => Unit): Unit  = if (xs.size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, i => f(Index(i)))
+  @inline def foreachIntIndex(f: Int => Unit): Unit = if (xs.size.get > 0L) lowlevel.ll.foreachConsecutive(0, lastIndex.getInt, f)
+}
+
+final class ForeachOps[A](val xs: Foreach[A]) {
+  private[this] def to[CC[X]](implicit z: Builds[A, CC[A]]): CC[A] = z build Each(xs foreach _)
+  def trav: scTraversable[A] = to[scTraversable] // flatMap, usually
+  def seq: scSeq[A]          = to[scSeq]         // varargs or unapplySeq, usually
+}
+
 final class DocSeqOps(xs: Direct[Doc]) {
   def joinLines: String = xs mapNow (_.render) mk_s EOL
 }
