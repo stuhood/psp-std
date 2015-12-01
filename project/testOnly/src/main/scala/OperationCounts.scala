@@ -6,7 +6,7 @@ import org.scalacheck._, Prop.forAll, Gen._
 import scala.{ collection => sc }
 import sc.{ mutable => scm, immutable => sci }
 
-class CollectionResult(viewOp: ViewClass.Op, testedFn: RecorderCounter => ViewClass) extends ForceShowDirect {
+class CollectionResult(viewOp: ViewClass.Op, testedFn: RecorderCounter => ViewClass) extends ShowSelf {
   val counter = new RecorderCounter
   val xs      = testedFn(counter)
   val name    = xs.name
@@ -20,7 +20,7 @@ class CollectionResult(viewOp: ViewClass.Op, testedFn: RecorderCounter => ViewCl
   def to_s    = fshow"$name%12s  $result%s"
 }
 
-final class LabeledFunction[-T, +R](f: T => R, val to_s: String) extends (T ?=> R) with ForceShowDirect {
+final class LabeledFunction[-T, +R](f: T => R, val to_s: String) extends (T ?=> R) with ShowSelf {
   def isDefinedAt(x: T) = f match {
     case f: scala.PartialFunction[_,_] => f isDefinedAt x
     case _                             => true

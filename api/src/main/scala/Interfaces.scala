@@ -87,4 +87,4 @@ trait ZipView[@fspec +A1, @fspec +A2] extends Any {
  *  using a synthetic toString, e.g. of case classes.
  */
 trait ShowDirect extends Any { def to_s: String }
-trait ForceShowDirect extends Any with ShowDirect { override def toString = to_s }
+trait ShowSelf extends Any with ShowDirect { override def toString = to_s }

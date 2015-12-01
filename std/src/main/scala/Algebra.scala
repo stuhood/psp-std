@@ -4,7 +4,7 @@ package std
 import api._
 
 object Algebras {
-  final case class Not[A](f: ToBool[A]) extends ToBool[A] with ForceShowDirect {
+  final case class Not[A](f: ToBool[A]) extends ToBool[A] with ShowSelf {
     def apply(x: A): Boolean = !f(x)
     def to_s = "!" + f
   }

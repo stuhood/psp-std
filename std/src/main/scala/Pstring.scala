@@ -8,7 +8,7 @@ import jl.Integer.parseInt, jl.Long.parseLong, jl.Double.parseDouble, jl.Float.p
 import scala.math.ScalaNumber
 import scala.reflect.NameTransformer
 
-final class SplitCharView(val xs: Vec[String], sep: Char) extends Direct[String] with ForceShowDirect {
+final class SplitCharView(val xs: Vec[String], sep: Char) extends Direct[String] with ShowSelf {
   private def rebuild(xs: Vec[String]) = new SplitCharView(xs, sep)
 
   def build(): String                               = xs mk_s sep
@@ -24,7 +24,7 @@ final class SplitCharView(val xs: Vec[String], sep: Char) extends Direct[String]
   def to_s: String                                  = build
 }
 
-final class Pstring(val self: String) extends AnyVal with ForceShowDirect {
+final class Pstring(val self: String) extends AnyVal with ShowSelf {
   import self.{ toCharArray => chars }
 
   def r: Regex               = Regex(self)
@@ -77,7 +77,7 @@ final class Pstring(val self: String) extends AnyVal with ForceShowDirect {
   private def foldSuffix[A](suffix: String)(none: => A)(some: String => A): A = foldRemove(suffix.r.literal.ends)(none)(some)
 }
 
-final class Regex(val pattern: Pattern) extends AnyVal with ForceShowDirect {
+final class Regex(val pattern: Pattern) extends AnyVal with ShowSelf {
   def matcher(input: jCharSequence): Matcher = pattern matcher input
 
   def append(e: String): Regex               = mapRegex(_ + e)

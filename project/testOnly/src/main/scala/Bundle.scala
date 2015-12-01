@@ -4,7 +4,7 @@ package tests
 import psp._, std._, api._, StdShow._
 import scala.Console.{ println => _, _ }
 
-trait Bundle extends ForceShowDirect {
+trait Bundle extends ShowSelf {
   def bundle: String
   def run(): Boolean
 

@@ -7,7 +7,7 @@ import Prop.forAll
 
 class EmptySpec extends ScalacheckBundle {
   def bundle = "Empty"
-  class Bippy(val to_s: String) extends ForceShowDirect
+  class Bippy(val to_s: String) extends ShowSelf
   val eint = -123
   implicit def emptyBippy: Empty[Bippy] = Empty(new Bippy("-"))
   implicit def emptyInt: Empty[Int] = Empty(eint)

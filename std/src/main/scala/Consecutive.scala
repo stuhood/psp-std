@@ -4,7 +4,7 @@ package std
 import api._
 import Consecutive.empty
 
-final class Consecutive[+A] private (val startInt: Int, val lastInt: Int, f: Int => A) extends Direct[A] with ForceShowDirect {
+final class Consecutive[+A] private (val startInt: Int, val lastInt: Int, f: Int => A) extends Direct[A] with ShowSelf {
   private def create(startInt: Int, size: Precise): Consecutive[A] =
     if (isEmpty || size.isZero) empty
     else new Consecutive[A](startInt, startInt + size.getInt - 1, f)

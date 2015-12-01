@@ -83,7 +83,7 @@ object Vec {
   }
 }
 
-final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) extends VectorPointer[A @uV] with Direct[A] with ForceShowDirect {
+final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) extends VectorPointer[A @uV] with Direct[A] with ShowSelf {
   self =>
 
   @inline private def preStartIndex = startIndex - 1

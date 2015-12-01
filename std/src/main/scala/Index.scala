@@ -16,7 +16,7 @@ object Index extends (Long => Index) {
   def unapply(x: IndexOrNth): Option[Long] = if (x.isEmpty) none() else some(x.get)
   def impl(x: Index): Impl                 = new Impl(x.get)
 
-  final class Impl private[std] (val indexValue: Long) extends AnyVal with api.Index with ForceShowDirect {
+  final class Impl private[std] (val indexValue: Long) extends AnyVal with api.Index with ShowSelf {
     def %(size: Precise): Index = if (isInvalid) this else Index(get % size.getLong)
     def +(n: Long): Index       = if (isInvalid) this else Index(get + n)
     def -(n: Long): Index       = if (isInvalid) this else Index(get - n)
@@ -47,7 +47,7 @@ object Nth extends (Long => Nth) {
   def unapply(x: IndexOrNth): Option[Long] = if (x.isEmpty) none() else some(x.get + 1)
   def impl(x: Nth): Impl                   = new Impl(x.get)
 
-  final class Impl private[std] (val nthValue: Long) extends AnyVal with api.Nth with ForceShowDirect {
+  final class Impl private[std] (val nthValue: Long) extends AnyVal with api.Nth with ShowSelf {
     def +(n: Long): Nth = if (isInvalid) this else Nth(get + n)
     def -(n: Long): Nth = if (isInvalid) this else Nth(get - n)
 

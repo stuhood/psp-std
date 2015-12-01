@@ -11,8 +11,8 @@ import java.net.URLClassLoader
 object NullClassLoader extends jClassLoader
 object NullInputStream extends InputStream { def read(): Int = -1 }
 
-final class JavaClassImpl(val clazz: jClass) extends AnyVal with ForceShowDirect with JavaClass
-final class JavaClassLoaderImpl(val loader: jClassLoader) extends AnyVal with ForceShowDirect with JavaClassLoader
+final class JavaClassImpl(val clazz: jClass) extends AnyVal with ShowSelf with JavaClass
+final class JavaClassLoaderImpl(val loader: jClassLoader) extends AnyVal with ShowSelf with JavaClassLoader
 final case class JavaMapEntry[K, V](pair: K -> V) extends jMapEntry[K, V] with (K -> V) {
   def _1                = fst(pair)
   def _2                = snd(pair)
