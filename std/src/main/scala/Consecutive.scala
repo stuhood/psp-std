@@ -9,13 +9,15 @@ final class Consecutive[+A] private (val startInt: Int, val lastInt: Int, f: Int
     if (isEmpty || size.isZero) empty
     else new Consecutive[A](startInt, startInt + size.getInt - 1, f)
 
-  def isEmpty                           = lastInt < startInt
+  def hops: Int = lastInt - startInt
+  def isEmpty   = hops < 0
+  def isPoint   = hops == 0
+
   def size                              = Size(hops + 1)
   def exclusiveEnd: Int                 = lastInt + 1
-  def hops: Int                         = lastInt - startInt
   def elemAt(index: Index): A           = f(startInt + index.getInt)
   def foreach(g: A => Unit): Unit       = if (!isEmpty) lowlevel.ll.foreachConsecutive(startInt, lastInt, f andThen g)
-  def containsInt(n: Int): Bool         = startInt <= n && n < exclusiveEnd
+  def containsInt(n: Int): Bool         = startInt <= n && n <= lastInt
   def containsIndex(index: Index)       = size containsIndex index
   def map[B](g: A => B): Consecutive[B] = new Consecutive(startInt, lastInt, f andThen g)
   def asIndices: IndexRange             = startInt to lastInt map (i => Index(i))
@@ -26,12 +28,11 @@ final class Consecutive[+A] private (val startInt: Int, val lastInt: Int, f: Int
   def takeRight(n: Precise): Consecutive[A]   = (size min n) |> (s => create(exclusiveEnd - s.toInt, s))
   def slice(s: Long, e: Long): Consecutive[A] = if (s < 0) slice(0, e) else if (e <= 0 || e <= s) empty else this drop s take e - s
   def slice(r: IndexRange): Consecutive[A]    = slice(r.startInt, r.exclusiveEnd)
-  def tail: Consecutive[A]                    = this drop 1
-  def init: Consecutive[A]                    = this dropRight 1
 
+  /** Shift the whole range to the left. */
   def << (n: Int): Consecutive[A] = create(startInt - n, size)
 
-  def to_s = if (isEmpty) "[]" else s"[$startInt..$lastInt]"
+  def to_s = if (isEmpty) "[]" else if (isPoint) s"[$startInt]" else s"[$startInt..$lastInt]"
 }
 
 object Consecutive {
