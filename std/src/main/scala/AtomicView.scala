@@ -61,7 +61,7 @@ final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Rep
   def foreachSlice(range: IndexRange)(f: A => Unit): Unit = size.indices slice range foreach (i => f(elemAt(i)))
 }
 
-sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[A] {
+sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ViewOps[A] {
   def foreach(f: A => Unit): Unit
   def toEach: Each[A] = Each(foreach)
 
