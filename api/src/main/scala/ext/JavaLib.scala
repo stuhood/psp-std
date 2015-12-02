@@ -95,9 +95,11 @@ trait JavaLib {
   type jMapEntry[K, V]          = ju.Map.Entry[K, V]
   type jMap[K, V]               = ju.Map[K, V]
   type jMethod                  = jl.reflect.Method
+  type jObject                  = jl.Object
   type jOptional[+A]            = ju.Optional[A @uV]
   type jPath                    = jnf.Path
   type jPredicate[-A]           = juf.Predicate[A @uV]
+  type jRunnable                = jl.Runnable
   type jSet[A]                  = ju.Set[A]
   type jSortedMap[K, V]         = ju.SortedMap[K, V]
   type jSortedSet[A]            = ju.SortedSet[A]

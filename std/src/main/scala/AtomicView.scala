@@ -6,7 +6,7 @@ import lowlevel.CircularBuffer
 
 sealed abstract class AtomicView[A, Repr] extends IBaseView[A, Repr] {
   type This <: AtomicView[A, Repr]
-  def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange
+  def foreachSlice(range: IndexRange)(f: A => Unit): Unit
 }
 
 object FlattenSlice {
@@ -29,25 +29,36 @@ final class StreamView[A, Repr](underlying: jStream[A]) extends AtomicView[A, Re
   type This = StreamView[A, Repr]
   lazy val size: Precise = Size(underlying.count)
 
-  @inline def foreach(f: A => Unit): Unit                       = underlying.iterator foreach f
-  def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = streamSlice(underlying, range, f)
+  @inline def foreach(f: A => Unit): Unit                 = underlying.iterator foreach f
+  def foreachSlice(range: IndexRange)(f: A => Unit): Unit = underlying slice range foreach f
 }
 
 final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr] {
-  type This      = LinearView[A, Repr]
-  def size: Size = underlying.size
+  type This = LinearView[A, Repr]
 
-  @inline def foreach(f: A => Unit): Unit                       = linearlySlice(underlying, indexRange(0, MaxLong), f)
-  def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = linearlySlice(underlying, range, f)
+  def size: Size = underlying.size
+  @inline def foreach(f: A => Unit): Unit = underlying foreach f
+  def foreachSlice(range: IndexRange)(f: A => Unit): Unit = {
+    if (range.isEmpty) return
+    val start   = range.head.get
+    val last    = range.last.get
+    var current = 0L
+
+    underlying foreach { x =>
+      if (start <= current && current <= last) f(x)
+      current += 1
+      if (current > last) return
+    }
+  }
 }
 
 final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Repr] {
   type This = DirectView[A, Repr]
 
-  def size: Precise                                             = underlying.size
-  def elemAt(i: Index): A                                       = underlying(i)
-  def foreach(f: A => Unit): Unit                               = directlySlice(underlying, size.indices, f)
-  def foreachSlice(range: IndexRange)(f: A => Unit): IndexRange = directlySlice(underlying, range, f)
+  def size: Precise                                       = underlying.size
+  def elemAt(i: Index): A                                 = underlying(i)
+  def foreach(f: A => Unit): Unit                         = size.indices foreach (i => f(elemAt(i)))
+  def foreachSlice(range: IndexRange)(f: A => Unit): Unit = size.indices slice range foreach (i => f(elemAt(i)))
 }
 
 sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[A] {
@@ -72,32 +83,6 @@ sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ApiViewOps[
 
   final def force[That](implicit z: Builds[A, That]): That = z build this
   final def build(implicit z: Builds[A, Repr]): Repr       = force[Repr]
-
-  def linearlySlice[A](xs: Each[A], range: IndexRange, f: A => Unit): IndexRange = {
-    var dropping  = range.startInt
-    var remaining = range.size.getInt
-    def nextRange = indexRange(dropping, dropping + remaining)
-    xs foreach { x =>
-      if (dropping > 0)
-        dropping = dropping - 1
-      else if (remaining > 0) {
-        f(x)
-        remaining -= 1
-      }
-
-      if (remaining == 0)
-        return nextRange
-    }
-    nextRange
-  }
-  def directlySlice[A](xs: Direct[A], range: IndexRange, f: A => Unit): IndexRange = {
-    xs.size.indices slice range foreach (i => f(xs(i)))
-    range << xs.size.getInt
-  }
-  def streamSlice[A](xs: jStream[A], range: IndexRange, f: A => Unit): IndexRange = {
-    xs drop range.startInt take range.size foreach f
-    range << xs.count.toInt
-  }
 }
 
 sealed trait IBaseView[A, Repr] extends BaseView[A, Repr] with IView[A] {
@@ -108,7 +93,7 @@ sealed trait IBaseView[A, Repr] extends BaseView[A, Repr] with IView[A] {
 
 sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEffect: ToSelf[Size]) extends IBaseView[B, Repr] {
   def prev: View[A]
-  def size    = sizeEffect(prev.size)
+  def size = sizeEffect(prev.size)
 
   final def foreach(f: B => Unit): Unit = {
     def loop[C](xs: View[C])(f: C => Unit): Unit = {
@@ -167,9 +152,8 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
   )
 
   private def foreachSlice[A](xs: View[A], range: IndexRange, f: A => Unit): Unit = xs match {
-    case xs: AtomicView[_, _] => xs.foreachSlice(range)(f)
-    case Mapped(prev, g)      => foreachSlice(prev, range, g andThen f)
-    case _                    => linearlySlice(xs, range, f)
+    case Mapped(prev, g) => foreachSlice(prev, range, g andThen f)
+    case _               => xs.foreachSlice(range)(f)
   }
 }
 
