@@ -11,6 +11,7 @@ final case class Split[A](left: View[A], right: View[A]) extends api.SplitView[A
   def rejoin: View[A]                           = left ++ right
   def zipped: Zip.Impl[A, A]                    = Zip.zip2(left, right)
   def intersperse: View[A]                      = zipped flatMap (vec(_, _))
+  def pair: (View[A], View[A])                  = left -> right
 }
 
 object Zip {

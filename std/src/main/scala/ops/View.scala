@@ -4,7 +4,7 @@ package ops
 
 import api._, StdShow._, StdEq._
 
-trait ApiViewOps[+A] extends Any {
+trait ViewOps[+A] extends Any {
   def xs: View[A]
 
   private def directIsEmpty: Boolean = {
@@ -59,7 +59,7 @@ trait ApiViewOps[+A] extends Any {
   def zipped[L, R](implicit z: Splitter[A, L, R]): ZipView[L, R]     = Zip.zip0[A, L, R](xs)(z)
 }
 
-final class IViewOps[A](val xs: View[A]) extends ApiViewOps[A] {
+final class IViewOps[A](val xs: View[A]) extends ViewOps[A] {
   def +:(elem: A): View[A] = view(elem) ++ xs
   def :+(elem: A): View[A] = xs ++ view(elem)
 
