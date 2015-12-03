@@ -1,7 +1,8 @@
 package psp
 package std
 
-import api._
+
+import api._, all._
 
 /** A valid index is always non-negative. All negative indices are
  *  mapped to NoIndex, which has an underlying value of -1.

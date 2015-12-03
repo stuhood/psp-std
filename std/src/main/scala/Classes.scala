@@ -1,7 +1,8 @@
 package psp
 package std
 
-import api._, StdShow._
+
+import api._, all._, StdShow._
 
 /** Motley objects for which a file of residence is not obvious.
  */

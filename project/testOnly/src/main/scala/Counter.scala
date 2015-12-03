@@ -1,7 +1,7 @@
 package psp
 package tests
 
-import std._
+import std._, all._
 import java.util.concurrent.atomic.AtomicInteger
 
 trait Counter[+A] {

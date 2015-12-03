@@ -1,7 +1,8 @@
 package psp
 package std
 
-import api._
+
+import api._, all._
 import scala.math.Ordering
 import spire.{ algebra => sa }
 

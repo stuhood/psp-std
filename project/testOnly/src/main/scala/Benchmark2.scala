@@ -1,7 +1,7 @@
 package psp
 package tests
 
-import std._, StdShow._
+import std._, all._, StdShow._
 
 object Benchmark2 {
   var total = 0L

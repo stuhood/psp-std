@@ -3,7 +3,8 @@ package std
 package ops
 
 import java.{ lang => jl }
-import api._
+
+import api._, all._
 
 final class AnyOps[A](val x: A) extends AnyVal {
   def any_s: String                         = s"$x"

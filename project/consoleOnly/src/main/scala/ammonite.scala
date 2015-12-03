@@ -1,6 +1,6 @@
 package psp
 
-import std._, api._, StdShow._
+import std._, all._, api._, StdShow._
 import ammonite.repl.{ Ref, Repl, Storage }
 import ammonite.repl.frontend.FrontEnd
 import java.lang.System
@@ -8,7 +8,7 @@ import java.lang.System
 object ReplMain {
   def storage = Ref(Storage(Repl.defaultAmmoniteHome, None))
   def initImports = sm"""
-    |import psp._, psp.std._, psp.api._
+    |import psp._, std._, all._, api._
     |import StdShow._, StdEq._, INREPL._
   """
   // Working around ammonite bugs.

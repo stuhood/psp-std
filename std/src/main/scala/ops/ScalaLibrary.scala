@@ -2,7 +2,8 @@ package psp
 package std
 package ops
 
-import api._
+
+import api._, all._
 
 /** Extension methods for scala library classes.
  *  We'd like to get away from all such classes,

@@ -1,7 +1,7 @@
 package psp
 package tests
 
-import std._, Prop.forAll
+import std.all._, Prop.forAll
 
 object TestRunner_211 extends TestRunnerCommon {
   def scalaVersion = "2.11"

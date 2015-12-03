@@ -3,7 +3,7 @@ package tests
 
 import org.scalacheck._
 import org.scalacheck.Prop.forAll
-import psp.std._, api._
+import psp.std._, api._, all._
 
 class AlgebraSpec[A](name: String)(implicit algebra: BooleanAlgebra[A], arb: Arbitrary[A], equiv: Eq[A]) extends AlgebraLaws[A] with ScalacheckBundle {
   def bundle = s"Boolean Algebra laws for type $name"

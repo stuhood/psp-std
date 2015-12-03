@@ -1,7 +1,8 @@
 package psp
 package std
 
-import api._
+
+import api._, all._
 
 /** Having an Empty[A] instance in scope allows for using methods
  *  like zfold, zreduce, zhead, whereupon the implicit empty value

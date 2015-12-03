@@ -1,6 +1,6 @@
 package psp
 
-import std._, api._, StdShow._, StdEq._
+import api._, std._, all._, StdShow._, StdEq._
 import scala.Console.{ println => _, _ }
 
 package object tests {

@@ -1,7 +1,8 @@
 package psp
 package std
 
-import api._
+
+import api._, all._
 
 /** Classes which implement both the java and scala interfaces.
  */

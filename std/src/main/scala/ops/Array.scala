@@ -2,7 +2,8 @@ package psp
 package std
 package ops
 
-import api._
+
+import api._, all._
 import spire.math.Sorting
 
 final class ArrayClassTagOps[A: CTag](val xs: Array[A]) {

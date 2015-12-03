@@ -1,7 +1,7 @@
 package psp
 package tests
 
-import psp.std._, api._, StdShow._
+import psp.std._, all._, api._, StdShow._
 import scala.{ collection => sc }
 import sc.{ mutable => scm, immutable => sci }
 

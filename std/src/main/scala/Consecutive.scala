@@ -1,7 +1,8 @@
 package psp
 package std
 
-import api._
+
+import api._, all._
 import Consecutive.empty
 
 final class Consecutive[+A] private (val startInt: Int, val lastInt: Int, f: Int => A) extends Direct[A] with ShowSelf {

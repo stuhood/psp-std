@@ -1,7 +1,7 @@
 package psp
 package tests
 
-import psp._, std._, api._, StdShow._
+import psp._, std._, api._, all._, StdShow._
 
 abstract class TestRunnerCommon {
   def scalaVersion: String
