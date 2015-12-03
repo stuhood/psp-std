@@ -1,6 +1,7 @@
 package psp
 package std
 
+import all._
 import java.util.regex.Pattern
 import scala.reflect.macros.TypecheckException
 import scala.reflect.macros.blackbox.Context

@@ -1,7 +1,8 @@
 package psp
 package std
 
-import api._, Unsafe.inheritedShow
+
+import api._, all._, Unsafe.inheritedShow
 
 object ExSet {
   def apply[A: Eq](xs: Each[A]): ExSet[A]  = new Impl[A](xs, ?)

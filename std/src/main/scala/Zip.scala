@@ -1,7 +1,8 @@
 package psp
 package std
 
-import api._, StdEq._
+
+import api._, all._, StdEq._
 
 final case class Split[A](left: View[A], right: View[A]) extends api.SplitView[A] {
   def onRight[B](f: View[A] => B): B            = f(right)

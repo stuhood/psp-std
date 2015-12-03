@@ -2,7 +2,8 @@ package psp
 package std
 package ops
 
-import api._, StdEq._, StdShow._
+
+import api._, all._, StdEq._, StdShow._
 import java.io.BufferedInputStream
 
 final class DirectOps[A](val xs: Direct[A]) extends AnyVal {
@@ -26,10 +27,6 @@ final class ForeachOps[A](val xs: Foreach[A]) {
   private[this] def to[CC[X]](implicit z: Builds[A, CC[A]]): CC[A] = z build Each(xs foreach _)
   def trav: scTraversable[A] = to[scTraversable] // flatMap, usually
   def seq: scSeq[A]          = to[scSeq]         // varargs or unapplySeq, usually
-}
-
-final class DocSeqOps(xs: Direct[Doc]) {
-  def joinLines: String = xs mapNow (_.render) mk_s EOL
 }
 final class DocOps(val lhs: Doc) extends AnyVal {
   def doc: Doc                             = lhs

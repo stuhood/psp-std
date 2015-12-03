@@ -1,10 +1,10 @@
 package psp
 package std
 
-import api._
+import api._, all._
 import java.util.stream.Stream.{ builder => jStreamBuilder }
 
-object Java extends JavaCollections with JavaBuilders
+object Java extends JavaCollections
 
 trait StdJava0 {
   implicit def viewJavaStream[A, CC[X] <: jStream[X]](xs: CC[A]): AtomicView[A, CC[A]]               = new StreamView(xs)

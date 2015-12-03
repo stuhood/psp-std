@@ -1,7 +1,8 @@
 package psp
 package std
 
-import api._
+
+import api._, all._
 
 object Direct extends Constructions[Direct] {
   def construct[A](size: Size, mf: Suspended[A]): Vec[A] = Vec.newBuilder[A] build Each(mf)

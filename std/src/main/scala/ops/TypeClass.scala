@@ -2,7 +2,8 @@ package psp
 package std
 package ops
 
-import api._
+
+import api._, all._
 
 /** There are two kinds of extension methods associated with
  *  type classes.

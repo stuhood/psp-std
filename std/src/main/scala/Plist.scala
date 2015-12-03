@@ -1,7 +1,8 @@
 package psp
 package std
 
-import api._
+
+import api._, all._
 
 sealed abstract class Plist[A] extends Each[A] {
   def head: A

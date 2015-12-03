@@ -11,7 +11,8 @@ package std
  *  are written out as Tuple2[K, V] and not (K, V) to emphasize I'm using Tuple on purpose.
  *  The rest of the time one should write it K -> V.
  */
-import api._
+
+import api._, all._
 
 object Built {
   def apply[A, R](xs: Foreach[A])(implicit z: Builds[A, R]): R = z build xs

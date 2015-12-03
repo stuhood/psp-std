@@ -14,7 +14,7 @@ Suggested contents for `build.sbt`:
 ```scala
               scalaVersion :=  "2.11.7"
        libraryDependencies +=  "org.improving" %% "psp-std" % "0.5.6"
-initialCommands in console :=  "import psp._, std._, api._, StdEq._, StdShow._"
+initialCommands in console :=  "import psp._, std._, all._, api._, StdEq._, StdShow._"
 ```
 
 Then `sbt console` and you can look around.

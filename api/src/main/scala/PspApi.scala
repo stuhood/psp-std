@@ -6,7 +6,7 @@ import psp.ext.ExternalLibs
 
 // Importing from this is necessary to use these aliases within the api package,
 // where they aren't otherwise visible because there's no api package object.
-private[api] object Api extends PspApi
+private[api] final object Api extends PspApi
 
 trait PspApi extends ExternalLibs {
   // Caveat: ?=> associates to the left instead of the right.

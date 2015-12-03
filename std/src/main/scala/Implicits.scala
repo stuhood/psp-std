@@ -5,8 +5,12 @@ import api._
 import scala.{ collection => sc }
 import scala.math.Numeric
 import psp.std.{ lowlevel => ll }
+import StdAllParent._
 
-/** Implicits handling the way in and the way out of psp collections.
+/** This file needs to not import `object all` because that's cycle city,
+ *  as we start relying on importing the implicits that we ourselves are
+ *  supplying. We carved off some of that object for use here and import
+ *  that specially.
  */
 trait StdImplicits extends scala.AnyRef
       with StdBuilds
@@ -20,7 +24,7 @@ trait StdImplicits extends scala.AnyRef
     def apply(i: Nth): A  = xs elemAt i.toIndex
   }
 
-  implicit def typeclassTupleCleave[A, B] : Cleaver[A -> B, A, B]       = Cleaver[A -> B, A, B](_ -> _, fst, snd)
+  implicit def typeclassTupleCleave[A, B] : Cleaver[A -> B, A, B]       = Cleaver[A -> B, A, B](((_, _)), fst, snd)
   implicit def typeclassPlistSplit[A] : Splitter[Plist[A], A, Plist[A]] = Splitter(_.head, _.tail)
   implicit def scalaListSplit[A] : Splitter[sciList[A], A, sciList[A]]  = Splitter(_.head, _.tail)
 
@@ -51,7 +55,7 @@ trait SetAndMapOps {
 }
 
 trait StdOps0 {
-  implicit def opsPspUnbuilt[A, R](xs: R)(implicit z: UnbuildsAs[A, R]): Unbuilder[A, R] = new Unbuilder(xs)
+  implicit def opsPspUnbuilt[A, R](xs: R)(implicit z: UnbuildsAs[A, R]): Unbuilder[A, R] = new Unbuilder[A, R](xs)
 }
 trait StdOps1 extends StdOps0 {
   implicit def convertViewBuilds[A, CC[A]](xs: View[A])(implicit z: Builds[A, CC[A]]): CC[A] = z build xs
@@ -80,7 +84,6 @@ trait StdOps3 extends StdOps2 {
   implicit def opsHasEmpty[A: Empty](x: View[A]): ops.HasEmpty[A]             = new ops.HasEmpty[A](x)
   implicit def opsHasEqInfix[A: Eq](x: A): ops.EqOps[A]                       = new ops.EqOps[A](x)
   implicit def opsHasOrder[A: Order](x: View[A]): ops.HasOrder[A]             = new ops.HasOrder(x)
-  implicit def opsForeachHasShow[A: Show](x: Foreach[A]): ops.DocSeqOps       = new ops.DocSeqOps(Each[A](x foreach _) map (x => Doc(x)) toVec)
   implicit def opsInputStream(x: InputStream): ops.InputStreamOps             = new ops.InputStreamOps(x)
   implicit def opsInt(x: Int): ops.IntOps                                     = new ops.IntOps(x)
   implicit def opsLong(x: Long): ops.LongOps                                  = new ops.LongOps(x)
@@ -95,8 +98,8 @@ trait StdOps3 extends StdOps2 {
 trait StdOps extends StdOps3 {
   implicit def opsStringContext(sc: StringContext): ShowInterpolator                      = new ShowInterpolator(sc)
   implicit def convertPredicateStreamFilter[A](p: ToBool[A]): DirectoryStreamFilter[A]    = new DirectoryStreamFilter[A] { def accept(entry: A) = p(entry) }
-  implicit def opsViewConversions[A](xs: View[A]): Conversions[A]                         = new Conversions(Each[A](xs foreach _))
-  implicit def unbuildableConv[A, R](xs: R)(implicit z: UnbuildsAs[A, R]): Conversions[A] = new Conversions[A](Each each (z unbuild xs))
+  implicit def opsViewConversions[A](xs: View[A]): Conversions[A]                         = new Conversions(xs)
+  implicit def unbuildableConv[A, R](xs: R)(implicit z: UnbuildsAs[A, R]): Conversions[A] = new Conversions[A](inView[A](z unbuild xs foreach _))
 
   implicit def opsArrayNoTag[A](xs: Array[A]): ops.ArraySpecificOps[A]         = new ops.ArraySpecificOps[A](xs)
   implicit def opsArrayWithTag[A: CTag](xs: Array[A]): ops.ArrayClassTagOps[A] = new ops.ArrayClassTagOps[A](xs)
@@ -119,7 +122,7 @@ trait StdUniversal extends StdUniversal0 {
  */
 
 trait ScalaBuilds {
-  implicit def unbuildScalaCollection[A, CC[X] <: GTOnce[X]] : UnbuildsAs[A, CC[A]]             = Unbuilds(Each scala _)
+  implicit def unbuildScalaCollection[A, CC[X] <: GTOnce[X]] : UnbuildsAs[A, CC[A]]             = Unbuilds[A, CC[A]](Each scala _)
   implicit def buildScalaCollection[A, That](implicit z: CanBuild[A, That]): Builds[A, That]    = Builds.sCollection[A, That]
   implicit def viewScalaCollection[A, CC[X] <: sCollection[X]](xs: CC[A]): AtomicView[A, CC[A]] = new LinearView(Each scala xs)
 
@@ -142,7 +145,7 @@ trait StdBuilds0 extends PspBuilds with ScalaBuilds {
   implicit def unbuildPspEach[A, CC[X] <: Each[X]] : UnbuildsAs[A, CC[A]]        = Unbuilds[A, CC[A]](xs => xs)
 }
 trait StdBuilds1 extends StdBuilds0 {
-  implicit def unbuiltPspArray[A] : UnbuildsAs[A, Array[A]]           = Unbuilds(Direct array _)
+  implicit def unbuiltPspArray[A] : UnbuildsAs[A, Array[A]]           = Unbuilds[A, Array[A]](Direct array _)
   implicit def buildPspArray[A: CTag]: Builds[A, Array[A]]            = Builds.array[A]
   implicit def viewPspArray[A](xs: Array[A]): DirectView[A, Array[A]] = new DirectView(Direct array xs)
 }
@@ -156,68 +159,6 @@ trait StdBuilds extends StdBuilds2 {
   implicit def viewPspString(xs: String): DirectView[Char, String]     = new DirectView(Direct string xs)
 }
 
-trait PrimitiveInstances {
-  implicit def boolOrder: Order[Bool]   = orderBy[Bool](x => if (x) 1 else 0)
-  implicit def byteOrder: Order[Byte]   = Order.fromInt(_ - _)
-  implicit def charOrder: Order[Char]   = Order.fromInt[Char](_ - _)
-  implicit def shortOrder: Order[Short] = Order.fromInt[Short](_ - _)
-  implicit def intOrder: Order[Int]     = Order.fromInt[Int](_ - _)
-  implicit def longOrder: Order[Long]   = Order.fromLong[Long](_ - _)
-  implicit def unitOrder: Order[Unit]   = Order.fromInt[Unit]((x, y) => 0)
-}
-
 trait AlgebraInstances {
   implicit def predicateAlgebra[A] : BooleanAlgebra[ToBool[A]] = new Algebras.PredicateAlgebra[A]
-}
-
-trait EqOrderInstances0 {
-  // If this is written in the obvious way, i.e.
-  //
-  //   implicit def comparableOrder[A <: Comparable[A]] : Order[A]
-  //
-  // Then it isn't found for infix operations on Comparables. We also can't call
-  // Order.natural[A]() because it has that bound, despite the implicit witness.
-  implicit def comparableOrder[A](implicit ev: A <:< Comparable[A]): Order[A] = Order.fromInt[A](_ compareTo _)
-}
-
-trait EqOrderInstances1 extends EqOrderInstances0 {
-  private def corresponds[A](xs: Foreach[A], ys: Foreach[A])(implicit z: Eq[A]): Boolean = {
-    val it1 = BiIterator(xs)
-    val it2 = BiIterator(ys)
-    while (it1.hasNext && it2.hasNext) {
-      if (!z.eqv(it1.next, it2.next))
-        return false
-    }
-    !(it1.hasNext || it2.hasNext)
-  }
-
-  implicit def unbuildsEq[R, A](implicit b: UnbuildsAs[A, R], e: Eq[A]): Eq[R] =
-    Eq[R]((xs, ys) => corresponds(b unbuild xs, b unbuild ys))
-}
-
-trait EqOrderInstances extends EqOrderInstances1 {
-  // Some unfortunate rocket dentistry necessary here.
-  // This doesn't work because scala comes up with "Any" due to the fbound.
-  // implicit def enumOrder[A <: jEnum[A]]: Order[A] = Order.fromInt[A](_.ordinal - _.ordinal)
-  //
-  // This one doesn't work if it's A <:< jEnum[A], but jEnum[_] is just enough to get what we need.
-  implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A]          = orderBy[A](_.ordinal)
-
-  implicit def indexOrder: Order[Index]                                     = orderBy[Index](_.get)
-  implicit def preciseOrder: Order[Precise]                                 = orderBy[Precise](_.get)
-  implicit def stringOrder: Order[String]                                   = Order.fromLong[String](_ compareTo _)
-  implicit def tuple2Order[A: Order, B: Order] : Order[(A, B)]              = orderBy[(A, B)](fst) | snd
-  implicit def tuple3Order[A: Order, B: Order, C: Order] : Order[(A, B, C)] = orderBy[(A, B, C)](_._1) | (_._2) | (_._3)
-
-  implicit def docEq: Hash[Doc]                = inheritEq
-  implicit def classWrapperEq: Hash[JavaClass] = inheritEq
-  implicit def classEq: Hash[Class[_]]         = inheritEq
-  implicit def pathEq: Eq[jPath]               = shownEq[jPath](inheritShow)
-  implicit def sizeEq: Hash[Size]              = inheritEq
-
-  implicit def tryEq[A](implicit z1: Eq[A], z2: Eq[Throwable]): Eq[Try[A]] = Eq {
-    case (Success(x), Success(y)) => x === y
-    case (Failure(x), Failure(y)) => x === y
-    case _                        => false
-  }
 }

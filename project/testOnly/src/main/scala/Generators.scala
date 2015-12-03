@@ -2,7 +2,7 @@ package psp
 package tests
 
 import Gen._
-import psp.std._, api._, StdShow._
+import psp._, std._, all._, api._, StdShow._
 
 package gen {
   class RegexGenerator(val letter: Gen[Char]) {
