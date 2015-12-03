@@ -11,6 +11,7 @@ object Build extends sbt.Build {
   def ammoniteVersion     = if (isAmmoniteDebug) "0.5.1-SNAPSHOT" else "0.5.0"
   def ammoniteDep         = "com.lihaoyi" % "ammonite-repl" % ammoniteVersion cross CrossVersion.full
   def consoleDependencies = List(jsr305, ammoniteDep)
+  def bonusArgs           = wordSeq(sys.env.getOrElse("SCALAC_ARGS", ""))
   def optimizeArgs        = wordSeq("-optimise -Yinline-warnings")
   def stdArgs             = wordSeq("-language:_ -Yno-predef -Yno-adapted-args -Yno-imports -unchecked") // -Ymacro-debug-verbose
   def testDependencies    = Def setting Seq(Deps.scalaReflect.value, scalacheck.copy(configurations = None))
@@ -62,7 +63,7 @@ object Build extends sbt.Build {
       crossScalaVersions :=  Seq(scalaVersion.value),
                 licenses :=  pspLicenses,
             organization :=  pspOrg,
-           scalacOptions ++= scalacOptionsFor(scalaBinaryVersion.value) ++ stdArgs,
+           scalacOptions ++= scalacOptionsFor(scalaBinaryVersion.value) ++ stdArgs ++ bonusArgs,
         triggeredMessage :=  Watched.clearWhenTriggered,
               incOptions ~=  (_ withNameHashing false)
   ) ++ p.crossSettings

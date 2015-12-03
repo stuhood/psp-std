@@ -6,11 +6,12 @@ import java.util.stream.Stream.{ builder => jStreamBuilder }
 
 object Java extends JavaCollections with JavaBuilders
 
-trait StdJava {
-  // implicit def viewJavaStream[A, CC[X] <: jStream[X]](xs: CC[A]): AtomicView[A, CC[A]] = new StreamView(xs)
+trait StdJava0 {
+  implicit def viewJavaStream[A, CC[X] <: jStream[X]](xs: CC[A]): AtomicView[A, CC[A]]               = new StreamView(xs)
   implicit def viewJavaIterable[A, CC[X] <: jIterable[X]](xs: CC[A]): AtomicView[A, CC[A]]           = new LinearView(Each java xs)
   implicit def viewJavaMap[K, V, CC[K, V] <: jMap[K, V]](xs: CC[K, V]): AtomicView[K -> V, CC[K, V]] = new LinearView(Each javaMap xs)
-
+}
+trait StdJava extends StdJava0 {
   implicit def unbuildJavaIterable[A, CC[X] <: jIterable[X]] : UnbuildsAs[A, CC[A]]        = Unbuilds[A, CC[A]](Each java _)
   implicit def unbuildJavaMap[K, V, CC[K, V] <: jMap[K, V]] : UnbuildsAs[K -> V, CC[K, V]] = Unbuilds[K -> V, CC[K, V]](Each javaMap _)
 
@@ -57,12 +58,13 @@ package ops {
   }
 
   final class JavaStreamOps[A](xs: jStream[A]) {
-    def take(n: Precise): jStream[A]   = xs limit n.getInt
-    def drop(n: Precise): jStream[A]   = xs skip n.getInt
-    def forall(p: ToBool[A]): Bool     = xs allMatch p
-    def exists(p: ToBool[A]): Bool     = xs anyMatch p
-    def foreach(f: A => Unit): Unit    = xs forEach f
-    def zhead(implicit z: Empty[A]): A = xs.findFirst.zget
+    def slice(n: IndexRange): jStream[A] = xs drop n.startInt take n.size.getInt
+    def take(n: Precise): jStream[A]     = xs limit n.getInt
+    def drop(n: Precise): jStream[A]     = xs skip n.getInt
+    def forall(p: ToBool[A]): Bool       = xs allMatch p
+    def exists(p: ToBool[A]): Bool       = xs anyMatch p
+    def foreach(f: A => Unit): Unit      = xs forEach f
+    def zhead(implicit z: Empty[A]): A   = xs.findFirst.zget
 
     // def forEachOrdered(x$1: java.util.function.Consumer[_ >: A]): Unit = ???
     // def close(): Unit = ???
