@@ -12,8 +12,15 @@ object Build extends sbt.Build {
   def ammoniteDep         = "com.lihaoyi" % "ammonite-repl" % ammoniteVersion cross CrossVersion.full
   def consoleDependencies = List(jsr305, ammoniteDep)
   def bonusArgs           = wordSeq(sys.env.getOrElse("SCALAC_ARGS", ""))
+  def encodingArgs        = wordSeq("-encoding utf8")
+  def pspArgs             = wordSeq("-language:_ -Yno-predef -Yno-imports")
+  def baseArgs            = wordSeq("-deprecation -unchecked -Xfuture -Yno-adapted-args")
+  def noisyArgs           = wordSeq("-Xlint -Ywarn-dead-code -Ywarn-numeric-widen -Ywarn-value-discard")
+  def warnArgs            = wordSeq("-Ywarn-unused -Ywarn-unused-import")
+  def macroDebugArgs      = wordSeq("-Ymacro-debug-verbose")
   def optimizeArgs        = wordSeq("-optimise -Yinline-warnings")
-  def stdArgs             = wordSeq("-language:_ -Yno-predef -Yno-adapted-args -Yno-imports -unchecked") // -Ymacro-debug-verbose
+  def stdArgs             = encodingArgs ++ pspArgs ++ baseArgs ++ warnArgs
+
   def testDependencies    = Def setting Seq(Deps.scalaReflect.value, scalacheck.copy(configurations = None))
 
   lazy val api = project setup "psp's non-standard api" also spire
