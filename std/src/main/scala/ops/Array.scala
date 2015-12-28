@@ -33,7 +33,7 @@ final class InPlace[A](val xs: Array[A]) extends AnyVal {
     case _                => false
   }
   private def midpoint: Int  = xs.length / 2
-  private def swap(i1: Int, i2: Int) {
+  private def swap(i1: Int, i2: Int): Unit = {
     val tmp = xs(i1)
     xs(i1) = xs(i2)
     xs(i2) = tmp
