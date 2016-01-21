@@ -25,7 +25,7 @@ trait ViewClass extends ShowSelf {
   def flatMap(f: Int => Foreach[Int]): This
   def foreach(f: Int => Unit): Unit
   def map(f: Int => Int): This
-  def slice(range: IndexRange): This
+  def slice(range: VindexRange): This
   def take(n: Precise): This
   def takeRight(n: Precise): This
   def takeWhile(p: ToBool[Int]): This
@@ -48,7 +48,7 @@ final case class ScalaViewClass(name: String, xs: scIterable[Int]) extends ViewC
   def flatMap(f: Int => Foreach[Int]) = xs flatMap (x => f(x).trav)
   def foreach(f: Int => Unit)         = xs foreach f
   def map(f: Int => Int)              = xs map f
-  def slice(range: IndexRange)        = xs slice (range.startInt, range.exclusiveEnd)
+  def slice(range: VindexRange)       = xs slice (range.startInt, range.exclusiveEnd)
   def take(n: Precise)                = xs take n.toInt
   def takeRight(n: Precise)           = xs takeRight n.toInt
   def takeWhile(p: ToBool[Int])       = xs takeWhile p
@@ -69,7 +69,7 @@ final case class PspViewClass(name: String, xs: View[Int]) extends ViewClass {
   def flatMap(f: Int => Foreach[Int]) = xs flatMap f
   def foreach(f: Int => Unit)         = xs foreach f
   def map(f: Int => Int)              = xs map f
-  def slice(range: IndexRange)        = xs drop range.startInt take range.size
+  def slice(range: VindexRange)       = xs drop range.startInt take range.size
   def take(n: Precise)                = xs take n
   def takeRight(n: Precise)           = xs takeRight n
   def takeWhile(p: ToBool[Int])       = xs takeWhile p

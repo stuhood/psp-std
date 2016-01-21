@@ -9,9 +9,9 @@ import Api._
 trait IsEmpty extends Any              { def isEmpty: Boolean }
 trait Opt[+A] extends Any with IsEmpty { def get: A           }
 
-sealed trait IndexOrNth extends Any with Opt[Long]
-trait Index             extends Any with IndexOrNth
-trait Nth               extends Any with IndexOrNth
+sealed trait Vindex extends Any with Opt[Long] { def indexValue: Long }
+trait Index             extends Any with Vindex { type This <: Index }
+trait Nth               extends Any with Vindex { type This <: Nth }
 
 sealed trait MaybeView extends Any                { def isView: Boolean      }
 trait IsView           extends Any with MaybeView { final def isView = true  }
@@ -31,8 +31,8 @@ trait Foreach[+A] extends Any {
 }
 
 trait Each[@fspec +A]    extends Any with Foreach[A] with NotView
-trait Indexed[@fspec +A] extends Any with Each[A]                 { def elemAt(i: Index): A }
-trait Direct[@fspec +A]  extends Any with Indexed[A]              { def size: Precise       }
+trait Indexed[@fspec +A] extends Any with Each[A]                 { def elemAt(i: Vindex): A }
+trait Direct[@fspec +A]  extends Any with Indexed[A]              { def size: Precise        }
 
 trait ExSet[A]     extends Any with Each[A] { def apply(x: A): Boolean    }
 trait ExMap[K, +V] extends Any              { def lookup: FiniteDom[K, V] }

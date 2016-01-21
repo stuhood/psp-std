@@ -58,13 +58,13 @@ package ops {
   }
 
   final class JavaStreamOps[A](xs: jStream[A]) {
-    def slice(n: IndexRange): jStream[A] = xs drop n.startInt take n.size.getInt
-    def take(n: Precise): jStream[A]     = xs limit n.getInt
-    def drop(n: Precise): jStream[A]     = xs skip n.getInt
-    def forall(p: ToBool[A]): Bool       = xs allMatch p
-    def exists(p: ToBool[A]): Bool       = xs anyMatch p
-    def foreach(f: A => Unit): Unit      = xs forEach f
-    def zhead(implicit z: Empty[A]): A   = xs.findFirst.zget
+    def slice(n: VindexRange): jStream[A] = xs drop n.startInt take n.size.getInt
+    def take(n: Precise): jStream[A]      = xs limit n.getInt
+    def drop(n: Precise): jStream[A]      = xs skip n.getInt
+    def forall(p: ToBool[A]): Bool        = xs allMatch p
+    def exists(p: ToBool[A]): Bool        = xs anyMatch p
+    def foreach(f: A => Unit): Unit       = xs forEach f
+    def zhead(implicit z: Empty[A]): A    = xs.findFirst.zget
 
     // def forEachOrdered(x$1: java.util.function.Consumer[_ >: A]): Unit = ???
     // def close(): Unit = ???

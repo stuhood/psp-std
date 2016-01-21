@@ -46,7 +46,7 @@ trait ViewOps[+A] extends Any {
   def mapZip[B](f: A => B): ZipView[A, B]                            = Zip.zip2(xs, xs map f)
   def mk_s(sep: Char)(implicit z: Show[A]): String                   = this mk_s sep.to_s
   def mk_s(sep: String)(implicit z: Show[A]): String                 = (xs map z.show).zfoldl[String]((res, x) => if (res == "") x else res append sep append x)
-  def slice(range: IndexRange): View[A]                              = xs drop range.startInt take range.size
+  def slice(range: VindexRange): View[A]                             = xs drop range.startInt take range.size
   def sliceWhile(p: ToBool[A], q: ToBool[A]): View[A]                = xs dropWhile p takeWhile q
   def tail: View[A]                                                  = xs drop 1
   def takeToFirst(p: ToBool[A]): View[A]                             = xs span !p mapRight (_ take 1) rejoin

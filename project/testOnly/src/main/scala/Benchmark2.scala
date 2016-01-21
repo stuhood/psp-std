@@ -43,7 +43,7 @@ object Benchmark2 {
       if (scala.util.Random.nextBoolean()) { do1 ; do2 } else { do2 ; do1 }
       print(".")
     }
-    println(s"..done. $total")
+    println(s"..benchmark complete, meaningless sum: $total")
     println("psp-std elapsed: %.3f ms".format(r1 / 1e6))
     println("  scala elapsed: %.3f ms".format(r2 / 1e6))
   }
