@@ -1,7 +1,6 @@
 package psp
 package std
 
-
 import api._, all._, StdShow._, StdEq._
 import Vec._
 import java.lang.{ Math => math }
@@ -434,9 +433,9 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
   private[std] def cleanRightEdge(cutIndex: Int): Unit = {
     val preCut = cutIndex - 1
 
-    (levelOf(cutIndex): @switch) match {
-      // we're actually sitting one block left if cutIndex lies on a block boundary
-      // this means that we'll end up erasing the whole block!!
+    // we're actually sitting one block left if cutIndex lies on a block boundary
+    // this means that we'll end up erasing the whole block!!
+    (levelOf(preCut): @switch) match {
       case 0 =>
         zeroRight(display0, cutIndex)
       case 1 =>

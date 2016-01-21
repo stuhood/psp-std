@@ -36,5 +36,6 @@ abstract class TestRunnerCommon {
       case ExMap()        => println(pp"\nAll tests passed.")
       case ExMap(ks @ _*) => println("Some tests failed in bundles: " + ks.mkString(", ")) ; throw new Exception
     }
+    Benchmark2 main array()
   }
 }

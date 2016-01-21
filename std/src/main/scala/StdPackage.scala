@@ -97,6 +97,7 @@ trait AllExplicit extends PspApi with PspCreators {
   def make1[CC[_]] : MakeHelper1[CC]   = new MakeHelper1[CC]
   def make2[CC[_,_]] : MakeHelper2[CC] = new MakeHelper2[CC]
 
+  def array[A: CTag](xs: A*): Array[A]              = xs.toArray[A]
   def cond[A](p: Bool, thenp: => A, elsep: => A): A = if (p) thenp else elsep
   def list[A](xs: A*): Plist[A]                     = new Conversions(view(xs: _*)) toPlist
   def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V]       = new Paired(vec(xs: _*))(Splitter(_._1, _._2)) toExMap
