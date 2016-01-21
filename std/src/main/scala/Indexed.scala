@@ -21,9 +21,9 @@ object Indexed {
   def apply[A](f: Index => A): Pure[A] = Pure(f)
 
   final case class Pure[A](f: Index => A) extends Indexed[A] {
-    def size                = Infinite // ...sometimes infinite via overflow, but hey
-    def isEmpty             = false
-    def elemAt(i: Index): A = f(i)
+    def size                 = Infinite // ...sometimes infinite via overflow, but hey
+    def isEmpty              = false
+    def elemAt(i: Vindex): A = f(i)
     @inline def foreach(f: A => Unit): Unit = {
       var current: Long = 0L
       while (true) { f(elemAt(Index(current))) ; current += 1 }
@@ -79,8 +79,8 @@ object Indexed {
 
     def iterator: scIterator[A]     = new MemoIterator(this)
     def foreach(f: A => Unit): Unit = iterator foreach f
-    def apply(index: Index): A      = advanceTo(index)
-    def elemAt(index: Index): A     = advanceTo(index)
+    def apply(index: Vindex): A     = advanceTo(index)
+    def elemAt(index: Vindex): A    = advanceTo(index)
     def size: Size                  = if (doneConsuming) seen else seen.atLeast
   }
 }

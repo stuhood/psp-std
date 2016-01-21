@@ -1,7 +1,6 @@
 package psp
 package std
 
-
 import api._, all._
 import Consecutive.empty
 
@@ -16,10 +15,10 @@ final class Consecutive[+A] private (val startInt: Int, val lastInt: Int, f: Int
 
   def size                              = Size(hops + 1)
   def exclusiveEnd: Int                 = lastInt + 1
-  def elemAt(index: Index): A           = f(startInt + index.getInt)
+  def elemAt(index: Vindex): A          = f(startInt + index.getInt)
   def foreach(g: A => Unit): Unit       = if (!isEmpty) lowlevel.ll.foreachConsecutive(startInt, lastInt, f andThen g)
   def containsInt(n: Int): Bool         = startInt <= n && n <= lastInt
-  def containsIndex(index: Index)       = size containsIndex index
+  def containsIndex(index: Vindex)      = size containsIndex index
   def map[B](g: A => B): Consecutive[B] = new Consecutive(startInt, lastInt, f andThen g)
   def asIndices: IndexRange             = startInt to lastInt map (i => Index(i))
 
@@ -28,7 +27,7 @@ final class Consecutive[+A] private (val startInt: Int, val lastInt: Int, f: Int
   def take(n: Precise): Consecutive[A]        = create(startInt, size min n)
   def takeRight(n: Precise): Consecutive[A]   = (size min n) |> (s => create(exclusiveEnd - s.toInt, s))
   def slice(s: Long, e: Long): Consecutive[A] = if (s < 0) slice(0, e) else if (e <= 0 || e <= s) empty else this drop s take e - s
-  def slice(r: IndexRange): Consecutive[A]    = slice(r.startInt, r.exclusiveEnd)
+  def slice(r: VindexRange): Consecutive[A]   = slice(r.startInt, r.exclusiveEnd)
 
   /** Shift the whole range to the left. */
   def << (n: Int): Consecutive[A] = create(startInt - n, size)

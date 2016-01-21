@@ -6,11 +6,12 @@ import java.nio.file.{ attribute => jnfa }
 import psp.api._
 import psp.ext.ExternalLibs
 
-trait StdAllParent extends PspApi {
+trait AllExplicit extends PspApi with PspCreators {
   // Type aliases I don't like enough to have in the API.
   type Bag[A]               = ExMap[A, Precise]
   type Bool                 = Boolean
   type CanBuild[-Elem, +To] = scala.collection.generic.CanBuildFrom[_, Elem, To]
+  type VindexRange          = Consecutive[api.Vindex]
   type IndexRange           = Consecutive[api.Index]
   type IntRange             = Consecutive[Int]
   type LongRange            = Consecutive[Long]
@@ -39,51 +40,35 @@ trait StdAllParent extends PspApi {
   def swap[A, B](x: A, y: B): B -> A   = scala.Tuple2(y, x)
 
   def inView[A](mf: Suspended[A]): View[A] = new LinearView(Each(mf))
-}
-private[std] object StdAllParent extends StdAllParent
 
-abstract class StdAll extends scala.AnyRef
-      with StdAllParent
-      with StdEmpty
-      with StdJava
-      with PrimitiveInstances
-      with AlgebraInstances
-      with StdImplicits
-      with PspCreators
-      with PspApi {
-
-  // Ugh. XXX
-  implicit def promoteSize(x: Long): Precise                     = Size(x)
-  implicit def promoteIndex(x: Long): Index                      = Index(x)
-  implicit def wrapClass(x: jClass): JavaClass                   = new JavaClassImpl(x)
-  implicit def conforms[A] : (A <:< A)                           = new conformance[A]
-  implicit def defaultRenderer: FullRenderer                     = new FullRenderer
-  implicit def constantPredicate[A](value: Boolean): ToBool[A]   = if (value) ConstantTrue else ConstantFalse
-  implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = f.toPartial
-  implicit def opsDirect[A](xs: Direct[A]): ops.DirectOps[A]     = new ops.DirectOps(xs)
-  implicit def opsForeach[A](xs: Foreach[A]): ops.ForeachOps[A]  = new ops.ForeachOps(xs)
+  final val NoIndex       = Index.invalid
+  final val NoFile: jFile = jFile("")
+  final val NoPath: jPath = jPath("")
+  final val NoUri: jUri   = jUri("")
 
   private def stdout                  = scala.Console.out
   private def putOut(msg: Any): Unit  = sideEffect(stdout print msg, stdout.flush())
   private def echoOut(msg: Any): Unit = stdout println msg
+  private def aops[A](x: A)           = new ops.AnyOps(x)
+  private def vops[A](x: View[A])     = new ops.IViewOps(x)
 
   def print[A: Show](x: A): Unit   = putOut(render(x))
   def println[A: Show](x: A): Unit = echoOut(render(x))
-  def anyprintln(x: Any): Unit     = echoOut(x.any_s)
+  def anyprintln(x: Any): Unit     = echoOut(aops(x).any_s)
 
-  def applyIfNonEmpty[A: Eq](x: A)(f: A => A)(implicit z: Empty[A]): A =
-    if (x === emptyValue[A]) x else f(x)
+  def applyIfNonEmpty[A](x: A)(f: A => A)(implicit e: Eq[A], z: Empty[A]): A =
+    if (e.eqv(x, z.empty)) x else f(x)
 
   def ??? : Nothing = throw new scala.NotImplementedError
 
-  def classOf[A: CTag](): Class[_ <: A]      = classTag[A].runtimeClass.castTo[Class[_ <: A]]
+  def classOf[A: CTag](): Class[_ <: A]      = classTag[A].runtimeClass.asInstanceOf[Class[_ <: A]]
   def classTag[A: CTag] : CTag[A]            = ?[CTag[A]]
-  def classFilter[A: CTag] : Partial[Any, A] = Partial(_.isClass[A], _.castTo[A])
+  def classFilter[A: CTag] : Partial[Any, A] = Partial(x => aops(x).isClass[A], x => aops(x).castTo[A])
 
   def transitiveClosure[A: Eq](root: A)(expand: A => Foreach[A]): View[A] = inView { f =>
-    def loop(in: View[A], seen: View[A]): Unit = in filterNot seen.contains match {
+    def loop(in: View[A], seen: View[A]): Unit = vops(in) filterNot (new ops.HasEq(seen) contains _) match {
       case Each() => ()
-      case in     => in foreach f ; loop(in flatMap expand, seen ++ in)
+      case in     => in foreach f ; loop(in flatMap expand, new DirectView((new Conversions(seen) toVec) ++ (new Conversions(in) toVec)))
     }
     loop(view(root), view())
   }
@@ -98,14 +83,14 @@ abstract class StdAll extends scala.AnyRef
   def assert(assertion: => Boolean, msg: => Any): Unit =
     if (!assertion) runtimeException("" + msg)
 
-  def abortTrace(msg: String): Nothing               = new RuntimeException(msg) |> (ex => try throw ex finally ex.printStackTrace)
-  def bufferMap[A, B: Empty](): scmMap[A, B]         = scmMap[A, B]() withDefaultValue emptyValue[B]
-  def indexRange(start: Long, end: Long): IndexRange = Index(start) until end
-  def noNull[A](value: A, orElse: => A): A           = if (value == null) orElse else value
-  def nullAs[A] : A                                  = null.asInstanceOf[A]
-  def option[A](p: Boolean, x: => A): Option[A]      = if (p) Some(x) else None
-  def randomPosInt(max: Int): Int                    = scala.util.Random.nextInt(max + 1)
-  def leftFormatString[A](n: Int): FormatFun         = new FormatFun(cond(n == 0, "%s", "%%-%ds" format n))
+  def abortTrace(msg: String): Nothing             = aops(new RuntimeException(msg)) |> (ex => try throw ex finally ex.printStackTrace)
+  def bufferMap[A, B: Empty](): scmMap[A, B]       = scmMap[A, B]() withDefaultValue emptyValue[B]
+  def indexRange(start: Int, end: Int): IndexRange = Consecutive.until(start, end) map (x => Index(x))
+  def noNull[A](value: A, orElse: => A): A         = if (value == null) orElse else value
+  def nullAs[A] : A                                = null.asInstanceOf[A]
+  def option[A](p: Boolean, x: => A): Option[A]    = if (p) Some(x) else None
+  def randomPosInt(max: Int): Int                  = scala.util.Random.nextInt(max + 1)
+  def leftFormatString[A](n: Int): FormatFun       = new FormatFun(cond(n == 0, "%s", new Pstring("%%-%ds") format n))
 
   def make[R](xs: R): RemakeHelper[R]  = new RemakeHelper[R](xs)
   def make0[R] : MakeHelper[R]         = new MakeHelper[R]
@@ -113,10 +98,10 @@ abstract class StdAll extends scala.AnyRef
   def make2[CC[_,_]] : MakeHelper2[CC] = new MakeHelper2[CC]
 
   def cond[A](p: Bool, thenp: => A, elsep: => A): A = if (p) thenp else elsep
-  def list[A](xs: A*): Plist[A]                     = xs.toPlist
-  def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V]       = xs.m.toExMap
-  def set[A: Eq](xs: A*): ExSet[A]                  = xs.toExSet
-  def vec[A](xs: A*): Vec[A]                        = xs.toVec
-  def view[A](xs: A*): View[A]                      = xs.toVec.m
-  def zip[A, B](xs: (A->B)*): ZipView[A, B]         = Zip zip1 xs.m
+  def list[A](xs: A*): Plist[A]                     = new Conversions(view(xs: _*)) toPlist
+  def rel[K: Eq, V](xs: (K->V)*): ExMap[K, V]       = new Paired(vec(xs: _*))(Splitter(_._1, _._2)) toExMap
+  def set[A: Eq](xs: A*): ExSet[A]                  = new Conversions(view(xs: _*)) toExSet
+  def vec[A](xs: A*): Vec[A]                        = Vec[A](xs: _*)
+  def view[A](xs: A*): DirectView[A, Vec[A]]        = new DirectView[A, Vec[A]](vec(xs: _*))
+  def zip[A, B](xs: (A->B)*): ZipView[A, B]         = Zip zip1 view(xs: _*)
 }

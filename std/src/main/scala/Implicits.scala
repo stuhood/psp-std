@@ -5,7 +5,37 @@ import api._
 import scala.{ collection => sc }
 import scala.math.Numeric
 import psp.std.{ lowlevel => ll }
-import StdAllParent._
+import exp._ // no implicit conversions in this file
+
+trait AllImplicit extends scala.AnyRef
+      with StdEmpty
+      with StdJava
+      with PrimitiveInstances
+      with AlgebraInstances
+      with StdImplicits
+{
+  self =>
+
+  import StdShow._
+
+  // Ugh. XXX
+  implicit def promoteSize(x: Long): Precise                     = Size(x)
+  implicit def promoteIndex(x: Long): Index                      = Index(x)
+  implicit def wrapClass(x: jClass): JavaClass                   = new JavaClassImpl(x)
+  implicit def conforms[A] : (A <:< A)                           = new conformance[A]
+  implicit def defaultRenderer: FullRenderer                     = new FullRenderer
+  implicit def constantPredicate[A](value: Boolean): ToBool[A]   = if (value) ConstantTrue else ConstantFalse
+  implicit def funToPartialFunction[A, B](f: Fun[A, B]): A ?=> B = f.toPartial
+  implicit def opsDirect[A](xs: Direct[A]): ops.DirectOps[A]     = new ops.DirectOps(xs)
+  implicit def opsForeach[A](xs: Foreach[A]): ops.ForeachOps[A]  = new ops.ForeachOps(xs)
+
+  implicit final class DocSeqOps(xs: Direct[Doc]) {
+    def joinLines: String = xs mapNow (x => render(x)) mk_s EOL
+  }
+
+  implicit def foreachDocShows[A: Show](xs: Foreach[A]): DocSeqOps =
+    new DocSeqOps(inView[A](xs foreach _) map (x => Doc(x)))
+}
 
 /** This file needs to not import `object all` because that's cycle city,
  *  as we start relying on importing the implicits that we ourselves are
@@ -20,10 +50,6 @@ trait StdImplicits extends scala.AnyRef
 
   self =>
 
-  implicit class DirectOpsLow[A](val xs: Direct[A]) {
-    def apply(i: Nth): A  = xs elemAt i.toIndex
-  }
-
   implicit def typeclassTupleCleave[A, B] : Cleaver[A -> B, A, B]       = Cleaver[A -> B, A, B](((_, _)), fst, snd)
   implicit def typeclassPlistSplit[A] : Splitter[Plist[A], A, Plist[A]] = Splitter(_.head, _.tail)
   implicit def scalaListSplit[A] : Splitter[sciList[A], A, sciList[A]]  = Splitter(_.head, _.tail)
@@ -34,8 +60,7 @@ trait StdImplicits extends scala.AnyRef
 
   // Promotion of the api type (which has as few methods as possible) to the
   // concrete type which has all the other ones.
-  implicit def promoteApiIndex(x: Index): Index.Impl                              = Index impl x
-  implicit def promoteApiNth(x: Nth): Nth.Impl                                    = Nth impl x
+  implicit def promoteApiVindex(x: Vindex): Index.Impl                            = Index impl Index(x.indexValue)
   implicit def promoteApiOrder[A](z: Order[A]): Order.Impl[A]                     = Order impl z
   implicit def promoteApiExSet[A](x: ExSet[A]): ExSet.Impl[A]                     = ExSet impl x
   implicit def promoteApiExMap[K, V](x: ExMap[K, V]): ExMap.Impl[K, V]            = ExMap impl x

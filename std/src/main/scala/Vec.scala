@@ -104,33 +104,33 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
 
   def to_s = "[ " + (this map (_.any_s) mk_s ", ") + " ]"
 
-  def lastIntIndex        = length - 1
-  def length: Int         = endIndex - startIndex
-  def size: Precise       = Size(length)
-  def elemAt(i: Index): A = apply(i.getInt)
-  def isEmpty             = length <= 0
+  def lastIntIndex         = length - 1
+  def length: Int          = endIndex - startIndex
+  def size: Precise        = Size(length)
+  def elemAt(i: Vindex): A = applyInt(i.getInt)
+  def isEmpty              = length <= 0
 
   @inline def foreach(f: A => Unit): Unit = {
     if (!isEmpty)
-      lowlevel.ll.foreachConsecutive(0, lastIntIndex, i => f(apply(i)))
+      lowlevel.ll.foreachConsecutive(0, lastIntIndex, i => f(applyInt(i)))
   }
 
-  def take(n: Index): Vec[A] =
+  def take(n: Vindex): Vec[A] =
     if (n <= 0) Vec.empty
     else if (n >= length) this
     else dropBack0(startIndex + n.getInt)
 
-  def drop(n: Index): Vec[A] =
+  def drop(n: Vindex): Vec[A] =
     if (n.get <= 0) this
     else if (n >= length) Vec.empty
     else dropFront0(startIndex + n.getInt)
 
-  def takeRight(n: Index): Vec[A] =
+  def takeRight(n: Vindex): Vec[A] =
     if (n.get <= 0) Vec.empty
     else if (n >= length) this
     else dropFront0(endIndex - n.getInt)
 
-  def dropRight(n: Index): Vec[A] =
+  def dropRight(n: Vindex): Vec[A] =
     if (n.get <= 0) this
     else if (endIndex - n.getInt > startIndex) dropBack0(endIndex - n.getInt)
     else Vec.empty
@@ -143,11 +143,11 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
   @inline def foldl[@fspec B](zero: B)(f: (B, A) => B): B = {
     var res = zero
     if (length > 0)
-      lowlevel.ll.foreachConsecutive(0, lastIntIndex, i => res = f(res, apply(i)))
+      lowlevel.ll.foreachConsecutive(0, lastIntIndex, i => res = f(res, applyInt(i)))
     res
   }
 
-  def updated(i: Index, elem: A): Vec[A] = updateAt(i.getInt, elem)
+  def updated(i: Vindex, elem: A): Vec[A] = updateAt(i.getInt, elem)
   def :+(elem: A): Vec[A] = appendBack(elem)
   def +:(elem: A): Vec[A] = appendFront(elem)
 
@@ -172,7 +172,7 @@ final class Vec[@fspec A](val startIndex: Int, val endIndex: Int, focus: Int) ex
   def iterator: VectorIterator[A]                    = initIterator(new VectorIterator[A](startIndex, endIndex))
   def reverseIterator: BiIterator.ReverseIterator[A] = BiIterator reverse this
   def reverse: Vec[A]                                = reverseIterator.toVec
-  def apply(index: Int): A                           = getElemWithFocus(checkRangeConvert(index))
+  def applyInt(index: Int): A                        = getElemWithFocus(checkRangeConvert(index))
 
   private def getElemWithFocus(idx: Int): A = getElem(idx, idx ^ focus)
   private[std] def checkRangeConvert(index: Int): Int = (

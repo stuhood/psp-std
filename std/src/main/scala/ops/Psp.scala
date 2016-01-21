@@ -103,7 +103,7 @@ final class SizeOps(val lhs: Size) extends AnyVal {
     case x: Atomic      => x
   }
 
-  def slice(range: IndexRange): Size = (this - range.startInt) min range.size
+  def slice(range: VindexRange): Size = (this - range.startInt) min range.size
 
   /** For instance taking the union of two sets. The new size is
    *  at least the size of the larger operand, but at most the sum

@@ -38,7 +38,7 @@ same: ZipView[Int, String] = [ 1 -> a, 2 -> bb, 3 -> ccc ]
 psp> println(same.rights mk_s '/')
 a/bb/ccc
 
-val modulus = 0 to 9 mapBy (_ % 3, _ mk_s '/') entries
+psp> val modulus = 0 to 9 mapBy (_ % 3, _ mk_s '/') entries
 modulus: ZipView[Int, String] = [ 0 -> 0/3/6/9, 1 -> 1/4/7, 2 -> 2/5/8 ]
 ```
 

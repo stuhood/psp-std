@@ -46,7 +46,7 @@ trait EqOrderInstances extends EqOrderInstances1 {
   // This one doesn't work if it's A <:< jEnum[A], but jEnum[_] is just enough to get what we need.
   implicit def enumOrder[A](implicit ev: A <:< jEnum[_]): Order[A]          = orderBy[A](_.ordinal)
 
-  implicit def indexOrder: Order[Index]                                     = orderBy[Index](_.get)
+  implicit def vindexOrder: Order[Vindex]                                   = orderBy[Vindex](_.indexValue)
   implicit def preciseOrder: Order[Precise]                                 = orderBy[Precise](_.get)
   implicit def stringOrder: Order[String]                                   = Order.fromLong[String](_ compareTo _)
   implicit def tuple2Order[A: Order, B: Order] : Order[(A, B)]              = orderBy[(A, B)](fst) | snd

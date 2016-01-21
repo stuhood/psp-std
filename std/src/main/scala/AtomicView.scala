@@ -6,11 +6,11 @@ import lowlevel.CircularBuffer
 
 sealed abstract class AtomicView[A, Repr] extends IBaseView[A, Repr] {
   type This <: AtomicView[A, Repr]
-  def foreachSlice(range: IndexRange)(f: A => Unit): Unit
+  def foreachSlice(range: VindexRange)(f: A => Unit): Unit
 }
 
 object FlattenSlice {
-  def unapply[A, Repr](xs: BaseView[A, Repr]): Option[(BaseView[A, Repr], IndexRange)] = xs match {
+  def unapply[A, Repr](xs: BaseView[A, Repr]): Option[(BaseView[A, Repr], VindexRange)] = xs match {
     case xs: DirectView[_, _]    => Some(xs -> xs.size.indices)
     case Mapped(xs, f)           => unapply(xs) map { case (xs, range) => (xs map f, range) }
     case Dropped(xs, Size.Zero)  => unapply(xs)
@@ -29,8 +29,8 @@ final class StreamView[A, Repr](underlying: jStream[A]) extends AtomicView[A, Re
   type This = StreamView[A, Repr]
   lazy val size: Precise = Size(underlying.count)
 
-  @inline def foreach(f: A => Unit): Unit                 = underlying.iterator foreach f
-  def foreachSlice(range: IndexRange)(f: A => Unit): Unit = underlying slice range foreach f
+  @inline def foreach(f: A => Unit): Unit                  = underlying.iterator foreach f
+  def foreachSlice(range: VindexRange)(f: A => Unit): Unit = underlying slice range foreach f
 }
 
 final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr] {
@@ -38,7 +38,7 @@ final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr]
 
   def size: Size = underlying.size
   @inline def foreach(f: A => Unit): Unit = underlying foreach f
-  def foreachSlice(range: IndexRange)(f: A => Unit): Unit = {
+  def foreachSlice(range: VindexRange)(f: A => Unit): Unit = {
     if (range.isEmpty) return
     val start   = range.head.get
     val last    = range.last.get
@@ -55,10 +55,10 @@ final class LinearView[A, Repr](underlying: Each[A]) extends AtomicView[A, Repr]
 final class DirectView[A, Repr](underlying: Direct[A]) extends AtomicView[A, Repr] {
   type This = DirectView[A, Repr]
 
-  def size: Precise                                       = underlying.size
-  def elemAt(i: Index): A                                 = underlying(i)
-  def foreach(f: A => Unit): Unit                         = size.indices foreach (i => f(elemAt(i)))
-  def foreachSlice(range: IndexRange)(f: A => Unit): Unit = size.indices slice range foreach (i => f(elemAt(i)))
+  def size: Precise                                        = underlying.size
+  def elemAt(i: Vindex): A                                 = underlying(i)
+  def foreach(f: A => Unit): Unit                          = size.indices foreach (i => f(elemAt(i)))
+  def foreachSlice(range: VindexRange)(f: A => Unit): Unit = size.indices slice range foreach (i => f(elemAt(i)))
 }
 
 sealed trait BaseView[+A, Repr] extends AnyRef with View[A] with ops.ViewOps[A] {
@@ -151,7 +151,7 @@ sealed abstract class CompositeView[A, B, Repr](val description: Doc, val sizeEf
       xs.foldl(CircularBuffer[A](n))((buf, x) => if (buf.isFull) sideEffect(buf, f(buf push x)) else buf += x)
   )
 
-  private def foreachSlice[A](xs: View[A], range: IndexRange, f: A => Unit): Unit = xs match {
+  private def foreachSlice[A](xs: View[A], range: VindexRange, f: A => Unit): Unit = xs match {
     case Mapped(prev, g) => foreachSlice(prev, range, g andThen f)
     case _               => xs.foreachSlice(range)(f)
   }
