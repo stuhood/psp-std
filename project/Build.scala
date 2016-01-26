@@ -12,14 +12,12 @@ object Build extends sbt.Build {
   def ammoniteDep         = "com.lihaoyi" % "ammonite-repl" % ammoniteVersion cross CrossVersion.full
   def consoleDependencies = List(jsr305, ammoniteDep)
   def bonusArgs           = wordSeq(sys.env.getOrElse("SCALAC_ARGS", ""))
-  def encodingArgs        = wordSeq("-encoding utf8")
-  def pspArgs             = wordSeq("-language:_ -Yno-predef -Yno-imports")
-  def baseArgs            = wordSeq("-deprecation -unchecked -Xfuture -Yno-adapted-args")
+  def pspArgs             = wordSeq("-encoding utf8 -language:_ -Yno-predef -Yno-imports -Yno-adapted-args")
+  def warnArgs            = wordSeq("-deprecation -unchecked -Xfuture -Ywarn-unused -Ywarn-unused-import")
   def noisyArgs           = wordSeq("-Xlint -Ywarn-dead-code -Ywarn-numeric-widen -Ywarn-value-discard")
-  def warnArgs            = wordSeq("-Ywarn-unused -Ywarn-unused-import")
   def macroDebugArgs      = wordSeq("-Ymacro-debug-verbose")
   def optimizeArgs        = wordSeq("-optimise -Yinline-warnings")
-  def stdArgs             = encodingArgs ++ pspArgs ++ baseArgs ++ warnArgs
+  def stdArgs             = pspArgs ++ warnArgs
 
   def testDependencies    = Def setting Seq(Deps.scalaReflect.value, scalacheck.copy(configurations = None))
 
@@ -44,7 +42,7 @@ object Build extends sbt.Build {
     if (isAmmoniteDebug)
       println(files mkString ("", "\n", "\n"))
 
-    forker(forkOpts, "-usejavacp" +: stdArgs)
+    forker(forkOpts, "-usejavacp" +: pspArgs)
   }
 
   implicit class ProjectOps(val p: Project) {
