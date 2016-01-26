@@ -2,4 +2,4 @@ addSbtPlugin("org.improving" % "psp-libsbt" % sys.props.getOrElse("libsbt.versio
 
 resolvers += Resolver.url("paulp/sbt-plugins", url("https://dl.bintray.com/paulp/sbt-plugins"))(Resolver.ivyStylePatterns)
 
-resolvers += "paulp/maven" at "https://dl.bintray.com/paulp/maven"
+resolvers += Resolver.jcenterRepo
