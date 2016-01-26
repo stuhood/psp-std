@@ -78,7 +78,7 @@ trait ShowInstances extends ShowEach {
   implicit def showIndex: Show[Index]                                   = showBy(_.get)
   implicit def showOption[A: Show] : Show[Option[A]]                    = Show(_.fold("-")(_.render))
   implicit def showPair[A: Show, B: Show] : Show[A -> B]                = Show(x => x._1 ~ " -> " ~ x._2 render)
-  implicit def showStackTraceElement: Show[java.lang.StackTraceElement] = Show(x => "\tat$x\n")
+  implicit def showStackTraceElement: Show[java.lang.StackTraceElement] = Show(x => s"\tat$x\n")
 
   implicit def showSize: Show[Size] = Show[Size] {
     case Finite(size)          => pp"$size"
