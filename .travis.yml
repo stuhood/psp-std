@@ -4,8 +4,6 @@ sudo: false
 cache:
   directories:
     - $HOME/.ivy2/cache
-    # - $HOME/.sbt
-    # - $HOME/.cache/pip
 
 language: scala
 script: bin/run-ci

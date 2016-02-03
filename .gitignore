@@ -6,5 +6,5 @@ project/local.properties
 target
 .target
 .project
-.pants.d
+.pants.*
 .pids
