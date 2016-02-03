@@ -4,16 +4,14 @@ sudo: false
 cache:
   directories:
     - $HOME/.ivy2/cache
-    - $HOME/.sbt
-    - $HOME/.cache/pip
+    # - $HOME/.sbt
+    # - $HOME/.cache/pip
 
 language: scala
-script: project/bin/run-travis
-jdk:
-  - oraclejdk8
-
+script: bin/run-ci
+jdk: oraclejdk8
 scala: 2.11.7
 
 # codecov
-before_install: pip install --user codecov
-after_success: codecov
+# before_install: pip install --user codecov
+# after_success: codecov
