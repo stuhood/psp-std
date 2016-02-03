@@ -4,7 +4,7 @@ sudo: false
 cache:
   directories:
     - $HOME/.m2/repository
-    - $HOME/.ivy2/cache
+    - $HOME/.ivy2/pants
     - $HOME/.sbt
     - $HOME/.zinc
     - $HOME/.cache/pip
@@ -12,8 +12,11 @@ cache:
     - .cache
     - .pants.d
 
+# Taken from the pantsbuild/pants .travis.yml.
 before_cache:
-  - find "$HOME/.ivy2" -name "ivydata-*.properties" -print0 | xargs -0 rm
+  - find build-support -name "*.py[co]" -print -delete
+  - find $HOME/.ivy2/pants -type f -name "ivydata-*.properties" -print -delete
+  - rm -fv $HOME/.ivy2/pants/*.{css,properties,xml,xsl}
 
 language: scala
 script: ./pants run :test
