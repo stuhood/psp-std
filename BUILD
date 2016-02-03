@@ -19,7 +19,7 @@ scala_library(
 scala_library(
   name         = 'test-support',
   sources      = zglobs('test/support/*'),
-  dependencies = [ ':std', ':scalacheck' ]
+  dependencies = [ ':std', ':scalacheck', ':junit' ]
 )
 scala_library(
   name         = 'test-logic',
@@ -28,7 +28,7 @@ scala_library(
 )
 jvm_binary(
   name         = 'test',
-  main         = 'psp.tests.TestRunner_211',
+  main         = 'psp.tests.TestRunner',
   dependencies = [ ':test-logic' ]
 )
 # TODO - how to make a console task which runs psp.ReplMain with the
