@@ -3,10 +3,20 @@ sudo: false
 
 cache:
   directories:
+    - $HOME/.m2/repository
     - $HOME/.ivy2/cache
+    - $HOME/.sbt
+    - $HOME/.zinc
+    - $HOME/.cache/pip
+    - $HOME/.cache/pants
+    - .cache
+    - .pants.d
+
+before_cache:
+  - find "$HOME/.ivy2" -name "ivydata-*.properties" -print0 | xargs -0 rm
 
 language: scala
-script: bin/run-ci
+script: ./pants run :test
 jdk: oraclejdk8
 scala: 2.11.7
 
