@@ -5,6 +5,13 @@ import scala.collection.immutable.StringOps
 import std._, api._, all._, StdEq._, StdShow._
 import Prop.forAll
 
+class BenchmarkTests {
+  @Test
+  def benchmarks(): Unit = Benchmark2 main array()
+  // @Test
+  // def oops(): Unit = junitAssert(false)
+}
+
 class EmptySpec extends ScalacheckBundle {
   def bundle = "Empty"
   class Bippy(val to_s: String) extends ShowSelf

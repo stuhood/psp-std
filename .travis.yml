@@ -19,7 +19,7 @@ before_cache:
   - rm -fv $HOME/.ivy2/pants/*.{css,properties,xml,xsl}
 
 language: scala
-script: ./pants run :test
+script: ./bin/test
 jdk: oraclejdk8
 scala: 2.11.7
 

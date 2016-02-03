@@ -1,4 +1,4 @@
 #!/bin/sh
 #
 
-./pants run :test "$@"
+./pants test.junit :test "$@"

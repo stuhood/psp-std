@@ -16,21 +16,18 @@ scala_library(
   sources      = zglobs('repl/*.scala'),
   dependencies = [ ':std', ':ammonite' ]
 )
+# Has to be separate from tests so macros are built first.
 scala_library(
   name         = 'test-support',
-  sources      = zglobs('test/support/*'),
+  sources      = zglobs('test/support/*.scala'),
   dependencies = [ ':std', ':scalacheck', ':junit' ]
 )
-scala_library(
-  name         = 'test-logic',
-  sources      = zglobs('test/tests/*.scala'),
+junit_tests(
+  name         = 'test',
+  sources      = zglobs('test/test/*.scala'),
   dependencies = [ ':test-support' ]
 )
-jvm_binary(
-  name         = 'test',
-  main         = 'psp.tests.TestRunner',
-  dependencies = [ ':test-logic' ]
-)
+
 # TODO - how to make a console task which runs psp.ReplMain with the
 # right options everywhere? We need a forked jvm invoked with the right
 # classpath, which passes -usejavacp and other options to ReplMain.
